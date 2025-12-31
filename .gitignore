@@ -1,0 +1,24 @@
+# Gradle
+.gradle/
+build/
+out/
+bin/
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Minecraft run directory
+run/
+# Java
+*.class
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Dev Stuff
+dev.json
+all_location.json

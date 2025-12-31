@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "id": "skysens",
+  "version": "${version}",
+  "name": "skysens",
+  "description": "",
+  "authors": [],
+  "contact": {},
+  "license": "All-Rights-Reserved",
+  "icon": "assets/skysens/icon.png",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-datagen": [
+      "de.vantrex.skysens.client.SkysensDataGenerator"
+    ],
+    "client": [
+      "de.vantrex.skysens.client.SkysensClient"
+    ],
+    "main": [
+      "de.vantrex.skysens.Skysens"
+    ]
+  },
+  "mixins": [
+    "skysens.mixins.json",
+    {
+      "config": "skysens.client.mixins.json",
+      "environment": "client"
+    }
+  ],
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
