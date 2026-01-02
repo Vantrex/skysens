@@ -1,8 +1,15 @@
 plugins {
+    // For 1.21.10 (obfuscated), Fabric recommends the remap plugin id (legacy "fabric-loom" still works)
+   // id("net.fabricmc.fabric-loom-remap") version "1.14-SNAPSHOT"
     id("fabric-loom") version "1.14-SNAPSHOT"
     id("maven-publish")
     id("io.freefair.lombok") version "9.1.0"
     id("com.gradleup.shadow") version "9.3.0"
+}
+
+repositories {
+    maven("https://repo.hypixel.net/repository/Hypixel/")
+    maven("https://maven.notenoughupdates.org/releases/")
 }
 
 val mod_version: String by project
@@ -20,7 +27,11 @@ base {
     archivesName.set(archives_base_name)
 }
 
-val shadowModImpl by configurations.creating {
+// put ONLY the deps you want shaded into these:
+val shadowImpl: Configuration by configurations.creating {
+    configurations.implementation.get().extendsFrom(this)
+}
+val shadowModImpl: Configuration by configurations.creating {
     configurations.modImplementation.get().extendsFrom(this)
 }
 
@@ -31,96 +42,94 @@ loom {
         register("skysens") {
             sourceSet(sourceSets.main.get())
             sourceSet(sourceSets["client"])
+
+            // recommended if you shade deps (dev env grouping)
+            configuration(shadowModImpl)
+            configuration(shadowImpl)
         }
     }
-}
-
-fabricApi {
-    configureDataGeneration {
-        client.set(true)
-    }
-}
-
-repositories {
-    maven("https://repo.hypixel.net/repository/Hypixel/")
-    maven("https://maven.notenoughupdates.org/releases/")
 }
 
 dependencies {
-    // To change the versions see the gradle.properties file
-    "minecraft"("com.mojang:minecraft:$minecraft_version")
-    "mappings"("net.fabricmc:yarn:$yarn_mappings:v2")
-    "modImplementation"("net.fabricmc:fabric-loader:$loader_version")
+    minecraft("com.mojang:minecraft:$minecraft_version")
+    mappings("net.fabricmc:yarn:$yarn_mappings:v2")
+    modImplementation("net.fabricmc:fabric-loader:$loader_version")
+    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabric_version")
 
-    "modImplementation"("net.fabricmc.fabric-api:fabric-api:$fabric_version")
-    "shadowModImpl"("org.notenoughupdates.moulconfig:modern-1.21.10:4.2.0-beta")
-    implementation("net.hypixel:mod-api:1.0.1")
-}
+    // ✅ shade + relocate MoulConfig (recommended by MoulConfig docs)
+    shadowModImpl("org.notenoughupdates.moulconfig:modern-1.21.10:4.2.0-beta")
 
-tasks.processResources {
-    inputs.property("version", mod_version)
-    inputs.property("minecraft_version", minecraft_version)
-    inputs.property("loader_version", loader_version)
-    filteringCharset = "UTF-8"
+    // ✅ provide Kotlin runtime via Fabric Language Kotlin (DON’T relocate kotlin.*)
+    // pick one:
+    compileOnly("net.fabricmc:fabric-language-kotlin:1.13.8+kotlin.2.3.0")
+    // (1.13.6+kotlin.2.2.20 is also a common pick for 1.21.10)
+    // modImplementation("net.fabricmc:fabric-language-kotlin:1.13.6+kotlin.2.2.20")
 
-    filesMatching("fabric.mod.json") {
-        expand(
-            "version" to mod_version,
-            "minecraft_version" to minecraft_version,
-            "loader_version" to loader_version
-        )
-    }
-}
+    // Hypixel Mod API:
+    // If you want it as an external required mod, keep it as modImplementation.
+    modImplementation("net.hypixel:mod-api:1.0.1")
 
-val targetJavaVersion = 21
-tasks.withType<JavaCompile>().configureEach {
-    // ensure that the encoding is set to UTF-8, no matter what the system default is
-    // this fixes some edge cases with special characters not displaying correctly
-    // see http://yodaconditions.net/blog/fix-for-java-file-encoding-problems-with-gradle.html
-    // If Javadoc is generated, this must be specified in that task too.
-    options.encoding = "UTF-8"
-    if (targetJavaVersion >= 10 || JavaVersion.current().isJava10Compatible()) {
-        options.release.set(targetJavaVersion)
-    }
-}
-
-tasks.shadowJar {
-    // Make sure to relocate MoulConfig to avoid version clashes with other mods
-    configurations = listOf(shadowModImpl)
-    relocate("io.github.notenoughupdates.moulconfig", "my.mod.deps.moulconfig")
-}
-
-java {
-    val javaVersion = JavaVersion.toVersion(targetJavaVersion)
-    if (JavaVersion.current() < javaVersion) {
-        toolchain.languageVersion.set(JavaLanguageVersion.of(targetJavaVersion))
-    }
-    // Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
-    // if it is present.
-    // If you remove this line, sources will not be generated.
-    withSourcesJar()
+    // If instead you want it INSIDE your jar, move it to shadowModImpl(...) — but only do this
+    // if you're sure the artifact is a "library jar" and not a full mod jar with its own fabric.mod.json.
+    // shadowModImpl("net.hypixel:mod-api:1.0.1")
 }
 
 tasks.jar {
-    from("LICENSE") {
-        rename { "${it}_${archives_base_name}" }
-    }
+    archiveClassifier.set("dev")
+    from("LICENSE.txt") { rename { "${it}_${archives_base_name}" } }
 }
 
-// configure the maven publication
-publishing {
-    publications {
-        create<MavenPublication>("mavenJava") {
-            artifactId = archives_base_name
-            from(components["java"])
-        }
-    }
 
-    // See https://docs.gradle.org/current/userguide/publishing_maven.html for information on how to set up publishing.
-    repositories {
-        // Add repositories to publish to here.
-        // Notice: This block does NOT have the same function as the block in the top level.
-        // The repositories here will be used for publishing your artifact, not for
-        // retrieving dependencies.
+tasks.shadowJar {
+    mergeServiceFiles()
+    configurations = listOf(shadowModImpl, shadowImpl)
+
+    // ✅ relocate MoulConfig package
+    relocate(
+        "io.github.notenoughupdates.moulconfig",
+        "de.vantrex.skysens.dependencies.moulconfig"
+    )
+
+    // ❌ do NOT relocate kotlin.*
+    // relocate("kotlin", "...") <-- remove
+
+    from(sourceSets.main.get().output)
+    from(sourceSets["client"].output)
+    from("LICENSE.txt") { rename { "${it}_${archives_base_name}" } }
+
+    archiveClassifier.set("dev-shadow")
+}
+
+
+/*
+tasks.shadowJar {
+    // ✅ REQUIRED for ServiceLoader (MoulConfig uses it)
+    mergeServiceFiles()
+
+    // If Gradle complains about duplicate entries, enable this:
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    configurations = listOf(shadowModImpl, shadowImpl)
+    relocate("io.github.notenoughupdates.moulconfig", "de.vantrex.skysens.dependencies.moulconfig")
+    // (and I'd still recommend NOT relocating kotlin.*, but that's separate)
+}
+ */
+tasks.remapJar {
+    dependsOn(tasks.shadowJar)
+    inputFile.set(tasks.shadowJar.flatMap { it.archiveFile })
+    archiveClassifier.set("") // this becomes your distributable jar
+}
+
+tasks.processResources {
+    val props = mapOf(
+        "version" to project.version.toString(),
+        "minecraft_version" to (project.findProperty("minecraft_version") as String),
+        "loader_version" to (project.findProperty("loader_version") as String),
+    )
+
+    inputs.properties(props)
+
+    filesMatching("fabric.mod.json") {
+        expand(props)
     }
 }

@@ -1,6 +1,5 @@
 package de.vantrex.skysens.client.enums.location.zone;
 
-import de.vantrex.skysens.client.service.Zone;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 

@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.service;
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.enums.location.SkyblockLocationEnum;
 import de.vantrex.skysens.client.enums.location.zone.ZoneEnum;
+import de.vantrex.skysens.client.model.Zone;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import lombok.Setter;
@@ -17,8 +18,6 @@ import org.jetbrains.annotations.Nullable;
 public class LocationService {
 
     private static final int TICKS_UNTIL_ZONE_CHECK = 60;
-
-    private static final MinecraftClient CLIENT = MinecraftClient.getInstance();
     private static final LocationService INSTANCE = new LocationService();
 
     private SkyblockLocationEnum currentLocation;
@@ -66,7 +65,7 @@ public class LocationService {
         final var oldZone = this.currentZone;
         if (zoneHasChanged(newZone)) {
             this.currentZone = newZone;
-            ClientUtil.sendMessage("Zone changed to " + getZoneName(newZone));
+            ClientUtil.sendDebug("Zone changed to " + getZoneName(newZone));
         }
     }
 
@@ -107,7 +106,7 @@ public class LocationService {
         SkyblockLocationEnum skyblockLocationEnum = getLocationFromMode(map);
         if (this.currentLocation != skyblockLocationEnum) {
             this.currentLocation = skyblockLocationEnum;
-            ClientUtil.sendMessage("Location changed to " + getLocationName(skyblockLocationEnum));
+            ClientUtil.sendDebug("Location changed to " + getLocationName(skyblockLocationEnum));
             this.zoneCheckTicksDown = 25;
         }
     }

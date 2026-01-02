@@ -21,11 +21,7 @@
     ]
   },
   "mixins": [
-    "skysens.mixins.json",
-    {
-      "config": "skysens.client.mixins.json",
-      "environment": "client"
-    }
+    "skysens.client.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",

@@ -3,10 +3,11 @@
   "minVersion": "0.8",
   "package": "de.vantrex.skysens.client.mixin",
   "mixins": [
-    "HandledScreenMixin"
   ],
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "HandledScreenMixin",
+    "LivingEntityMixin"
   ],
   "injectors": {
     "defaultRequire": 1

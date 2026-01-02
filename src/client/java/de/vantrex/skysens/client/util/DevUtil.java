@@ -27,7 +27,7 @@ public class DevUtil {
                         .stream()
                 .map(scoreboardEntry -> scoreboard.getScoreHolderTeam(scoreboardEntry.owner()))
                 .filter(Objects::nonNull)
-                .forEach(team -> ClientUtil.sendMessage(teamToString(team)));
+                .forEach(team -> ClientUtil.sendDebug(teamToString(team)));
     }
 
     private String teamToString(Team team) {

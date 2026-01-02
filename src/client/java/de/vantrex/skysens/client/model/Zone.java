@@ -1,4 +1,4 @@
-package de.vantrex.skysens.client.service;
+package de.vantrex.skysens.client.model;
 
 import de.vantrex.skysens.client.enums.location.SkyblockLocationEnum;
 import de.vantrex.skysens.client.enums.location.zone.*;
@@ -9,10 +9,9 @@ public class Zone<E extends Enum<E>> {
 
     private final ZoneEnum<E> zoneEnum;
 
-    ZoneEnum<E> getZoneEnum() {
+    public ZoneEnum<E> getZoneEnum() {
         return zoneEnum;
     }
-
 
     public static <E extends Enum<E>> Zone<E> fromScoreboardLine(String scoreboardLine, SkyblockLocationEnum currentLocation) {
         if (currentLocation == null || currentLocation.getZoneEnum() == null || scoreboardLine == null) {
