@@ -8,4 +8,6 @@ public interface ZoneEnum<T extends Enum<T>> {
 
     String getDisplayName();
 
+    String name();
+
 }

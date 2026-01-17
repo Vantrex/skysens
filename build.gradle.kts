@@ -61,7 +61,7 @@ dependencies {
 
     // ✅ provide Kotlin runtime via Fabric Language Kotlin (DON’T relocate kotlin.*)
     // pick one:
-    compileOnly("net.fabricmc:fabric-language-kotlin:1.13.8+kotlin.2.3.0")
+    modImplementation("net.fabricmc:fabric-language-kotlin:1.13.8+kotlin.2.3.0")
     // (1.13.6+kotlin.2.2.20 is also a common pick for 1.21.10)
     // modImplementation("net.fabricmc:fabric-language-kotlin:1.13.6+kotlin.2.2.20")
 

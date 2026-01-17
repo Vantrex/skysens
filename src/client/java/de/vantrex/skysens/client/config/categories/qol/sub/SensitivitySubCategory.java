@@ -9,21 +9,34 @@ import io.github.notenoughupdates.moulconfig.observer.Property;
 
 public class SensitivitySubCategory {
 
-    @ConfigOption(name = "Sensitivities per location", desc = "Enables the ability to set sensitivities per location")
+    @ConfigOption(name = "Sensitivities per location", desc = "Completely disables this feature")
     @ConfigEditorBoolean
     @Expose
     public boolean enablePerLocation = false;
 
-    @ConfigOption(name = "Skyblock Location", desc = "The location on skyblock to use")
+    @ConfigOption(name = "Skyblock Location", desc = "The location on Skyblock to use")
     @ConfigEditorDropdown
-    public Property<SkyblockLocationEnum> locationEnum = Property.of(SkyblockLocationEnum.HUB);
+    public transient Property<SkyblockLocationEnum> locationEnum = Property.of(SkyblockLocationEnum.HUB);
+
+    @ConfigOption(name = "Enable custom sensitivity for location", desc = "Enables custom sensitivity for the selected location")
+    @ConfigEditorBoolean
+    public transient Property<Boolean> enableForLocation = Property.of(false);
+
+    @ConfigOption(name = "Location Sensitivity", desc = "The sensitivity for the zone")
+    @ConfigEditorSlider(minValue = 1F, maxValue = 100.0F, minStep = 1F)
+    public transient Property<Float> locationSensitivity = Property.of(100F);
+
 
     @ConfigOption(name = "Zones", desc = "The zones to apply the sensitivity to")
     @ConfigEditorDynamicZoneDropdown(fieldName = "zones")
-    public Property<Integer> zones = Property.of(HubZoneEnum.VILLAGE.ordinal());
+    public transient Property<Integer> zones = Property.of(HubZoneEnum.VILLAGE.ordinal());
 
-    @ConfigOption(name = "Sensitivity", desc = "The sensitivity of the movement")
-    @ConfigEditorSlider(minValue = 0.1f, maxValue = 1.0f, minStep = 0.01f)
-    public Property<Float> sensitivity = Property.of(1.0f);
+    @ConfigOption(name = "Enable custom sensitivity for zone", desc = "Enables custom sensitivity for the selected zone")
+    @ConfigEditorBoolean
+    public transient Property<Boolean> enableForZone = Property.of(false);
+
+    @ConfigOption(name = "Zone Sensitivity", desc = "The sensitivity for the zone")
+    @ConfigEditorSlider(minValue = 1F, maxValue = 100.0F, minStep = 1F)
+    public transient  Property<Float> zoneSensitivity = Property.of(100F);
 
 }

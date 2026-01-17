@@ -3,6 +3,9 @@ package de.vantrex.skysens.client.service;
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.enums.location.SkyblockLocationEnum;
 import de.vantrex.skysens.client.enums.location.zone.ZoneEnum;
+import de.vantrex.skysens.client.event.EventListenerRegistry;
+import de.vantrex.skysens.client.event.impl.LocationChangeEvent;
+import de.vantrex.skysens.client.event.impl.ZoneChangeEvent;
 import de.vantrex.skysens.client.model.Zone;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
@@ -65,7 +68,8 @@ public class LocationService {
         final var oldZone = this.currentZone;
         if (zoneHasChanged(newZone)) {
             this.currentZone = newZone;
-            ClientUtil.sendDebug("Zone changed to " + getZoneName(newZone));
+            ZoneChangeEvent event = new ZoneChangeEvent((Zone<? extends ZoneEnum<?>>) oldZone, newZone);
+            EventListenerRegistry.REGISTRY.fireEvent(event);
         }
     }
 
@@ -105,7 +109,14 @@ public class LocationService {
         map = map.replace(" ", "_");
         SkyblockLocationEnum skyblockLocationEnum = getLocationFromMode(map);
         if (this.currentLocation != skyblockLocationEnum) {
+            final var oldLocation = this.currentLocation;
             this.currentLocation = skyblockLocationEnum;
+            LocationChangeEvent locationChangeEvent = new LocationChangeEvent(oldLocation, skyblockLocationEnum);
+            EventListenerRegistry.REGISTRY.fireEvent(locationChangeEvent);
+            final var oldZone = this.currentZone;
+            this.currentZone = null;
+            ZoneChangeEvent zoneChangeEvent = new ZoneChangeEvent((Zone<? extends ZoneEnum<?>>) oldZone, null);
+            EventListenerRegistry.REGISTRY.fireEvent(zoneChangeEvent);
             ClientUtil.sendDebug("Location changed to " + getLocationName(skyblockLocationEnum));
             this.zoneCheckTicksDown = 25;
         }

@@ -2,13 +2,11 @@ package de.vantrex.skysens.client.feature.bazaar;
 
 import de.vantrex.skysens.client.feature.SkySensFeature;
 import de.vantrex.skysens.client.util.ClientUtil;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Click;
 import net.minecraft.component.DataComponentTypes;
 import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenHandler;
 import net.minecraft.screen.slot.Slot;
-import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 

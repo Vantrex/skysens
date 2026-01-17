@@ -13,7 +13,7 @@ public class SwingAnimationSubCategory {
     public boolean enabled = false;
 
     @ConfigOption(name = "Swing animation speed", desc = "Custom swing animation speed")
-    @ConfigEditorSlider(minValue = 1, maxValue = 10, minStep = 1)
+    @ConfigEditorSlider(minValue = -10, maxValue = 10, minStep = 1)
     @Expose
     public int swingSpeed = 5;
 

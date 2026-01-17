@@ -7,6 +7,9 @@ import net.minecraft.sound.SoundEvent;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.text.Text;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Optional;
 
 @UtilityClass
 public class ClientUtil {
@@ -14,9 +17,17 @@ public class ClientUtil {
     private final MinecraftClient CLIENT = MinecraftClient.getInstance();
 
     public void sendMessage(@NotNull final String message) {
-        if (CLIENT.player != null) {
-            CLIENT.player.sendMessage(Text.literal(message), false);
-        }
+        sendMessage(Text.literal(message));
+    }
+
+    public void sendMessage(final @NotNull Text text) {
+        sendMessage(text, false);
+    }
+
+    public void sendMessage(final @NotNull Text text, final boolean overlay) {
+        if (CLIENT.player == null)
+            return;
+        CLIENT.player.sendMessage(text, overlay);
     }
 
     public void sendDebug(final @NotNull String message) {
@@ -30,4 +41,41 @@ public class ClientUtil {
         CLIENT.player.playSound(soundEvent, volume, pitch);
     }
 
+    public void sendTitle(final @NotNull String title) {
+        sendTitle(title, "");
+    }
+
+    public void sendSubtitle(final @NotNull String subtitle) {
+        sendTitle(null, subtitle);
+    }
+
+    public void sendSubtitle(final @NotNull Text subtitle) {
+        sendTitle(null, subtitle);
+    }
+
+    public void sendTitle(final @NotNull Text title) {
+        sendTitle(title, null);
+    }
+
+    public void sendTitle(final @Nullable String title, final @Nullable String subtitle) {
+        sendTitle(
+                Optional.ofNullable(title).map(Text::literal).orElse(null),
+                Optional.ofNullable(subtitle).map(Text::literal).orElse(null)
+        );
+    }
+
+    public void sendTitle(final @Nullable Text title, final @Nullable Text subtitle) {
+        if (CLIENT.player == null) return;
+        if (CLIENT.inGameHud == null) return;
+        if (title != null)
+            CLIENT.inGameHud.setTitle(title);
+        if (subtitle != null)
+            CLIENT.inGameHud.setSubtitle(subtitle);
+    }
+
+    public static void sendActionBar(@NotNull Text text) {
+        if (CLIENT.player == null) return;
+        if (CLIENT.inGameHud == null) return;
+        CLIENT.inGameHud.setOverlayMessage(text, false);
+    }
 }

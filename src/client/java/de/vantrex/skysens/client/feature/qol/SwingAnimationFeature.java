@@ -18,7 +18,7 @@ public class SwingAnimationFeature implements LivingEntityFeature {
     }
 
     private int calculateSwingSpeed() {
-        int adjustedSpeed = this.swingConfig.swingSpeed;
+        final int adjustedSpeed = this.swingConfig.swingSpeed;
         return BASE_SPEED - adjustedSpeed;
     }
 

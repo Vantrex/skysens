@@ -1,8 +1,9 @@
 package de.vantrex.skysens.client.config.gui;
 
+import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.enums.location.SkyblockLocationEnum;
 import de.vantrex.skysens.client.enums.location.zone.ZoneEnum;
-import de.vantrex.skysens.client.util.ZoneDropdownUtil;
+import de.vantrex.skysens.client.service.LocationService;
 import io.github.notenoughupdates.moulconfig.common.IFontRenderer;
 import io.github.notenoughupdates.moulconfig.common.IMinecraft;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
@@ -10,48 +11,47 @@ import io.github.notenoughupdates.moulconfig.gui.GuiComponent;
 import io.github.notenoughupdates.moulconfig.gui.GuiImmediateContext;
 import io.github.notenoughupdates.moulconfig.gui.MouseEvent;
 import io.github.notenoughupdates.moulconfig.gui.editors.ComponentEditor;
-import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorDropdown;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class GuiOptionEditorDynamicZoneDropdown extends ComponentEditor {
-    private List<? extends ZoneEnum<?>> values;
+    private final List<ZoneEnum<?>> values = new ArrayList<>();
     private boolean useOrdinal;
-    private Enum<?>[] constants;
+    private SkyblockLocationEnum lastLocation = null;
     private String valuesForSearch;
+    private int componentWidth = 0;
 
-    public GuiOptionEditorDynamicZoneDropdown(ProcessedOption option, String[] values) {
-        this(option, values, false);
-    }
-    // TODO: rework this entire thing to accept StructuredTexts and/or classes implementing a custom interfaces and/or a custom text mapper
-    public GuiOptionEditorDynamicZoneDropdown(
-            ProcessedOption option,
-            String[] values,
-            boolean forceGivenValues
-    ) {
+    public GuiOptionEditorDynamicZoneDropdown(ProcessedOption option, String fieldName) {
         super(option);
         Class<?> clazz = (Class<?>) option.getType();
-        if (Enum.class.isAssignableFrom(clazz) && !forceGivenValues) {
-            constants = (Enum<?>[]) (clazz).getEnumConstants();
-            this.values = new ArrayList<>();
-            for (Enum<?> constant : constants) {
-                this.values.add(StructuredText.of(constant.toString()));
-            }
-        } else {
-            this.values = Arrays.stream(values).map(StructuredText::of).collect(Collectors.toList());
-            assert values.length > 0;
-        }
         this.useOrdinal = clazz == int.class || clazz == Integer.class;
     }
-    int componentWidth = 0;
-    private GuiComponent dropdownOverlay = new GuiComponent() {
+
+    private void updateValues() {
+        SkyblockLocationEnum currentLocation = SkysensConfig.getInstance().qolCategory.sensitivity.locationEnum.get();
+        if (currentLocation == lastLocation && !values.isEmpty()) {
+            return;
+        }
+        lastLocation = currentLocation;
+        values.clear();
+        if (currentLocation != null && currentLocation.getZoneEnum() != null) {
+            ZoneEnum<?>[] constants = currentLocation.getZoneEnum().getEnumConstants();
+            if (constants != null) {
+                for (ZoneEnum<?> constant : constants) {
+                    values.add(constant);
+                }
+                values.add(null);
+            }
+        }
+        valuesForSearch = null;
+    }
+
+    private final GuiComponent dropdownOverlay = new GuiComponent() {
         @Override
         public int getWidth() {
             return componentWidth;
@@ -76,12 +76,10 @@ public class GuiOptionEditorDynamicZoneDropdown extends ComponentEditor {
                     for (int ordinal = 0; ordinal < values.size(); ordinal++) {
                         if (mouseY >= top + 3 + dropdownY && mouseY <= top + 3 + dropdownY + 12) {
                             int selected = ordinal;
-                            if (constants != null) {
-                                option.set(constants[selected]);
-                            } else if (useOrdinal) {
+                            if (useOrdinal) {
                                 option.set(selected);
                             } else {
-                                option.set(values.get(selected).getText());
+                                option.set(values.get(selected));
                             }
                         }
                         dropdownY += 12;
@@ -94,10 +92,11 @@ public class GuiOptionEditorDynamicZoneDropdown extends ComponentEditor {
 
         @Override
         public void render(@NotNull GuiImmediateContext context) {
+            updateValues();
             int selected = getSelectedIndex();
             StructuredText selectedString = StructuredText.of(" - Select - ");
             if (selected >= 0 && selected < values.size()) {
-                selectedString = values.get(selected);
+                selectedString = StructuredText.of(values.get(selected).getDisplayName());
             }
 
             int dropdownHeight = context.getHeight();
@@ -107,7 +106,6 @@ public class GuiOptionEditorDynamicZoneDropdown extends ComponentEditor {
             int outlineColour = 0xffffffff;
 
             context.getRenderContext().pushMatrix();
-            // TODO: do we even need that? (given the render order) context.getRenderContext().translate(0, 0, 100);
             int left = 0;
             int top = 0;
             context.getRenderContext().drawColoredRect(left, top, left + 1, top + dropdownHeight, outlineColour); //Left
@@ -119,12 +117,13 @@ public class GuiOptionEditorDynamicZoneDropdown extends ComponentEditor {
             context.getRenderContext().drawColoredRect(left + 1, top + 14 - 1, left + dropdownWidth - 1, top + 14, outlineColour); //Bar
             int dropdownY = 13;
             IFontRenderer fr = IMinecraft.INSTANCE.getDefaultFontRenderer();
-            for (StructuredText option : values) {
-                if (option.getText().isEmpty()) {
-                    option = StructuredText.of("<NONE>");
+            for (ZoneEnum<?> zone : values) {
+                StructuredText optionText = StructuredText.of(selectedName(zone));
+                if (optionText.getText().isEmpty()) {
+                    optionText = StructuredText.of("<NONE>");
                 }
                 context.getRenderContext().drawStringScaledMaxWidth(
-                        option,
+                        optionText,
                         fr,
                         left + 3,
                         top + 3 + dropdownY,
@@ -144,7 +143,8 @@ public class GuiOptionEditorDynamicZoneDropdown extends ComponentEditor {
             context.getRenderContext().popMatrix();
         }
     };
-    private GuiComponent component = wrapComponent(new GuiComponent() {
+
+    private final GuiComponent component = wrapComponent(new GuiComponent() {
         @Override
         public int getWidth() {
             return 80;
@@ -179,12 +179,12 @@ public class GuiOptionEditorDynamicZoneDropdown extends ComponentEditor {
 
         @Override
         public void render(@NotNull GuiImmediateContext context) {
+            updateValues();
             int dropdownWidth = context.getWidth();
             int selected = getSelectedIndex();
-            if (selected >= values.size()) selected = values.size();
             StructuredText selectedString = StructuredText.of(" - Select - ");
             if (selected >= 0 && selected < values.size()) {
-                selectedString = values.get(selected);
+                selectedString = StructuredText.of(values.get(selected).getDisplayName());
             }
 
             context.getRenderContext().drawDarkRect(
@@ -209,20 +209,32 @@ public class GuiOptionEditorDynamicZoneDropdown extends ComponentEditor {
         Object selectedObject = option.get();
         if (selectedObject == null) return -1;
         if (useOrdinal) {
-            return (int) selectedObject;
-        } else if (constants != null) {
-            return ((Enum) selectedObject).ordinal();
+            if (selectedObject instanceof Integer) {
+                int selected = (int) selectedObject;
+                if (selected >= 0 && selected < values.size()) {
+                    return selected;
+                }
+            }
+            return -1;
         } else {
-            return (values).stream().map(StructuredText::getText).collect(Collectors.toList()).indexOf(selectedObject);
+            return values.indexOf(selectedObject);
         }
     }
 
     @Override
     public boolean fulfillsSearch(String word) {
+        updateValues();
         if (valuesForSearch == null) {
-            valuesForSearch = values.stream().map(StructuredText::getText).collect(Collectors.joining(" ")).toLowerCase(Locale.ROOT);
+            valuesForSearch = values.stream()
+                    .map(ZoneEnum::getDisplayName)
+                    .collect(Collectors.joining(" "))
+                    .toLowerCase(Locale.ROOT);
         }
-        return super.fulfillsSearch(word) || valuesForSearch.contains(word);
+        return super.fulfillsSearch(word) || valuesForSearch.contains(word.toLowerCase(Locale.ROOT));
+    }
+
+    private String selectedName(ZoneEnum<?> zone) {
+        return zone == null ? "Location" : zone.getDisplayName();
     }
 
 }

@@ -38,7 +38,6 @@ public final class HypixelExtraAttributes {
                 || nbt.contains("uuid");
     }
 
-    /** Sucht rekursiv nach einem Compound mit genau diesem Key. */
     public static Optional<NbtCompound> findCompoundByKey(NbtElement element, String key) {
         if (element == null) return Optional.empty();
 

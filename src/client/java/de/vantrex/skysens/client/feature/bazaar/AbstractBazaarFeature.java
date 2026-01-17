@@ -4,7 +4,6 @@ import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.bazaar.BazaarCategory;
 import de.vantrex.skysens.client.feature.HandledScreenFeature;
 import de.vantrex.skysens.client.service.PlayerService;
-import de.vantrex.skysens.client.util.ClientUtil;
 import net.minecraft.component.type.LoreComponent;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
