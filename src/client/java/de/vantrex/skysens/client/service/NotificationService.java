@@ -52,7 +52,7 @@ public class NotificationService {
         if (!skysensClient.isOnSkyBlock()) {
             return;
         }
-        if (this.notificationGracePeriod != null || System.currentTimeMillis() < this.notificationGracePeriod ) {
+        if (this.notificationGracePeriod != null && System.currentTimeMillis() < this.notificationGracePeriod ) {
             return;
         }
         if (this.handleCurrentNotification()) {
@@ -93,7 +93,7 @@ public class NotificationService {
         }
         switch (displayType) {
             case CHAT -> ClientUtil.sendMessage(notification.getText());
-            case TITLE -> ClientUtil.sendTitle(notification.getText(), notification.getSubtitle());
+            case TITLE -> ClientUtil.sendTitle(notification.getText(), notification.getSubtitle(), 0, 25, 10);
             case ACTION_BAR -> ClientUtil.sendActionBar(notification.getText());
         }
     }
@@ -106,7 +106,7 @@ public class NotificationService {
     }
 
     private void init() {
-        SkysensClient.SCHEDULER.scheduleAtFixedRate(this::handleNotifications, 5, 500, TimeUnit.MILLISECONDS);
+        SkysensClient.SCHEDULER.scheduleAtFixedRate(this::handleNotifications, 500, 500, TimeUnit.MILLISECONDS);
     }
 
     public record CurrentNotification(Notification notification, long displayUntil) {

@@ -2,6 +2,7 @@ package de.vantrex.skysens.client;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import de.vantrex.skysens.client.config.SkysensConfig;
+import de.vantrex.skysens.client.handler.ChatHandler;
 import de.vantrex.skysens.client.handler.TickHandlers;
 import de.vantrex.skysens.client.handler.UseHandlers;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
@@ -49,6 +50,7 @@ public class SkysensClient implements ClientModInitializer {
         SensitivityService.getInstance().initConfigHooks();
         UseHandlers.register();
         TickHandlers.register();
+        ChatHandler.register();
     }
 
     private void createConfigDirectory() {

@@ -50,28 +50,31 @@ public class ClientUtil {
     }
 
     public void sendSubtitle(final @NotNull Text subtitle) {
-        sendTitle(null, subtitle);
+        sendTitle(null, subtitle, 0, 60, 0);
     }
 
     public void sendTitle(final @NotNull Text title) {
-        sendTitle(title, null);
+        sendTitle(title, null, 0, 60, 0);
     }
 
     public void sendTitle(final @Nullable String title, final @Nullable String subtitle) {
         sendTitle(
                 Optional.ofNullable(title).map(Text::literal).orElse(null),
-                Optional.ofNullable(subtitle).map(Text::literal).orElse(null)
+                Optional.ofNullable(subtitle).map(Text::literal).orElse(null),
+                0, 60, 0
         );
     }
 
-    public void sendTitle(final @Nullable Text title, final @Nullable Text subtitle) {
+    public void sendTitle(final @Nullable Text title, final @Nullable Text subtitle, int fadeInTicks, int stayTicks, int fadeOutTicks) {
         if (CLIENT.player == null) return;
         if (CLIENT.inGameHud == null) return;
         if (title != null)
             CLIENT.inGameHud.setTitle(title);
         if (subtitle != null)
             CLIENT.inGameHud.setSubtitle(subtitle);
+        CLIENT.inGameHud.setTitleTicks(fadeInTicks, stayTicks, fadeOutTicks);
     }
+
 
     public static void sendActionBar(@NotNull Text text) {
         if (CLIENT.player == null) return;

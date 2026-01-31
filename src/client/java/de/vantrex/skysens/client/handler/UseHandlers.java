@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.handler;
 
+import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.feature.FeatureRegistry;
 import de.vantrex.skysens.client.service.FeatureService;
 import de.vantrex.skysens.client.util.ClientUtil;
@@ -22,6 +23,9 @@ public class UseHandlers {
     }
 
     private static void handleItemRightClick(final PlayerEntity playerEntity, final Hand hand) {
+        if (!SkysensClient.getInstance().isOnSkyBlock()) {
+            return;
+        }
         ClientUtil.sendDebug("Right click detected");
         final ItemStack itemStack = playerEntity.getStackInHand(hand);
         ClientUtil.sendDebug("Item in hand: " + itemStack.getItem().getName().getString());

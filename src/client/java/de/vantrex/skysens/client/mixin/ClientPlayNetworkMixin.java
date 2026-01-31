@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import java.util.regex.Pattern;
 
 @Mixin(ClientPlayNetworkHandler.class)
-public abstract class TitleRewriteMixin {
+public abstract class ClientPlayNetworkMixin {
 
     /**
      * Removes:
@@ -45,7 +45,7 @@ public abstract class TitleRewriteMixin {
                     target = "Lnet/minecraft/client/gui/hud/InGameHud;setTitle(Lnet/minecraft/text/Text;)V"
             )
     )
-    private Text yourmod$rewriteTitle(Text title) {
+    private Text skysens$rewriteTitle(Text title) {
         return rewrite(title);
     }
 
@@ -56,7 +56,8 @@ public abstract class TitleRewriteMixin {
                     target = "Lnet/minecraft/client/gui/hud/InGameHud;setSubtitle(Lnet/minecraft/text/Text;)V"
             )
     )
-    private Text yourmod$rewriteSubtitle(Text subtitle) {
+    private Text skysens$rewriteSubtitle(Text subtitle) {
         return rewrite(subtitle);
     }
+
 }

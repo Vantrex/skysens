@@ -9,7 +9,7 @@
     "HandledScreenMixin",
     "LivingEntityMixin",
     "MouseMixin",
-    "TitleRewriteMixin"
+    "ClientPlayNetworkMixin"
   ],
   "injectors": {
     "defaultRequire": 1
