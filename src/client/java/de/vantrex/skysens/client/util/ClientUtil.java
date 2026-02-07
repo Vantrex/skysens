@@ -81,4 +81,13 @@ public class ClientUtil {
         if (CLIENT.inGameHud == null) return;
         CLIENT.inGameHud.setOverlayMessage(text, false);
     }
+
+    /**
+     * Strips Minecraft legacy formatting codes (§x) from the given string.
+     * @param text The text to strip formatting codes from
+     * @return The text without formatting codes
+     */
+    public static String stripFormattingCodes(@NotNull String text) {
+        return text.replaceAll("§.", "");
+    }
 }
