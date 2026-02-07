@@ -48,6 +48,10 @@ public class SkysensConfig extends Config {
     @Expose
     public DevCategory devCategory = new DevCategory();
 
+    @Category(name = "Dungeon", desc = "Dungeon Options")
+    @Expose
+    public de.vantrex.skysens.client.dungeon.config.DungeonCategory dungeonCategory = new de.vantrex.skysens.client.dungeon.config.DungeonCategory();
+
     @Override
     public void saveNow() {
         super.saveNow();

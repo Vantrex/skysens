@@ -35,6 +35,10 @@ public class FeatureService {
 
         this.featureRegistry.register(new PickaxeAbilityResetNotificationFeature());
 
+        // Dungeon Features
+        new de.vantrex.skysens.client.feature.impl.dungeon.BossWaypointsFeature();
+        new de.vantrex.skysens.client.feature.impl.dungeon.TerminalTimerFeature();
+
     }
 
 

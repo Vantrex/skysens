@@ -5,6 +5,7 @@ import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.handler.ChatHandler;
 import de.vantrex.skysens.client.handler.TickHandlers;
 import de.vantrex.skysens.client.handler.UseHandlers;
+import de.vantrex.skysens.client.dungeon.DungeonStateManager;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
 import de.vantrex.skysens.client.service.LocationService;
 import de.vantrex.skysens.client.service.SensitivityService;
@@ -51,6 +52,7 @@ public class SkysensClient implements ClientModInitializer {
         UseHandlers.register();
         TickHandlers.register();
         ChatHandler.register();
+        DungeonStateManager.getInstance();
     }
 
     private void createConfigDirectory() {
