@@ -13,7 +13,7 @@ public class EventListenerRegistry {
 
     private final Map<Class<? extends SkysensEvent>, List<SkysensListener<? extends SkysensEvent>>> listeners = new HashMap<>();
 
-    public void registerListener(SkysensListener<? extends SkysensEvent> listener, Class<? extends SkysensEvent> eventClass) {
+    public <T extends SkysensEvent> void registerListener(SkysensListener<T> listener, Class<T> eventClass) {
         listeners.computeIfAbsent(eventClass, k -> new ArrayList<>()).add(listener);
     }
 

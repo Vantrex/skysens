@@ -1,28 +1,22 @@
 package de.vantrex.skysens.client.feature.mining.notification;
 
-import com.mojang.authlib.GameProfile;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.feature.SkySensFeature;
 import de.vantrex.skysens.client.model.Notification;
 import de.vantrex.skysens.client.service.LocationService;
 import de.vantrex.skysens.client.service.NotificationService;
-import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.LocationUtil;
-import net.minecraft.network.message.MessageType;
-import net.minecraft.network.message.SignedMessage;
 import net.minecraft.text.Style;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
-import org.jetbrains.annotations.Nullable;
 
-import java.time.Instant;
 import java.util.regex.Pattern;
 
 @SkySensFeature
 public class PickaxeAbilityResetNotificationFeature implements GameMessageListeningFeature {
 
-    private static final Pattern MINING_ABILITY_PATTERN = Pattern.compile("^\\S+\\s+is now available!$");
+    private static final Pattern MINING_ABILITY_PATTERN = Pattern.compile("^(.+) is now available!$");
 
     private final NotificationService notificationService = NotificationService.getInstance();
     private final LocationService locationService = LocationService.getInstance();
