@@ -4,13 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import de.vantrex.skysens.client.dungeon.model.DungeonSplit;
 import de.vantrex.skysens.client.util.ClientUtil;
-import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
 import lombok.Getter;
 
 import java.io.InputStream;
