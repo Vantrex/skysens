@@ -5,10 +5,10 @@ import de.vantrex.skysens.client.feature.FeatureRegistry;
 import de.vantrex.skysens.client.service.FeatureService;
 import de.vantrex.skysens.client.util.ClientUtil;
 import net.fabricmc.fabric.api.event.player.UseItemCallback;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
 
 public class UseHandlers {
 
@@ -16,17 +16,17 @@ public class UseHandlers {
 
     public static void register() {
         UseItemCallback.EVENT
-                .register((playerEntity, world, hand) -> {
-                    handleItemRightClick(playerEntity, hand);
-                    return ActionResult.PASS;
+                .register((player, level, hand) -> {
+                    handleItemRightClick(player, hand);
+                    return InteractionResult.PASS;
                 });
     }
 
-    private static void handleItemRightClick(final PlayerEntity playerEntity, final Hand hand) {
+    private static void handleItemRightClick(final Player player, final InteractionHand hand) {
         if (!SkysensClient.getInstance().isOnSkyBlock()) {
             return;
         }
-        final ItemStack itemStack = playerEntity.getStackInHand(hand);
+        final ItemStack itemStack = player.getItemInHand(hand);
         for (final var feature : FEATURE_REGISTRY.getItemRightClickFeature()) {
             if (feature.isActive()) {
                 feature.onItemRightClick(itemStack);

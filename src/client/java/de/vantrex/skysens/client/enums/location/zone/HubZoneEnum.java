@@ -45,6 +45,7 @@ public enum HubZoneEnum implements ZoneEnum<HubZoneEnum> {
     ARTISTS_ABODE("Artist's Abode", "⏣ Artist's Abode"),
     BLACKSMITHS_HOUSE("Blacksmith's House", "⏣ Blacksmith's House"),
     CARNIVAL("Carnival", "⏣ Carnival"),
+    BARN("Barn", "⏣ Barn"),
 
     ;
 

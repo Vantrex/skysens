@@ -11,9 +11,13 @@ import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import lombok.Setter;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.scoreboard.*;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.Objective;
+import net.minecraft.world.scores.PlayerScoreEntry;
+import net.minecraft.world.scores.PlayerTeam;
+import net.minecraft.world.scores.Scoreboard;
 import org.jetbrains.annotations.Nullable;
 
 @Getter
@@ -38,7 +42,7 @@ public class LocationService {
         return INSTANCE;
     }
 
-    private void updateZone(MinecraftClient client) {
+    private void updateZone(Minecraft client) {
         if (!this.skysens.isOnSkyBlock()) {
             return;
         }
@@ -49,21 +53,21 @@ public class LocationService {
         if (this.currentLocation == null) {
             return;
         }
-        final ClientWorld world = client.world;
+        final ClientLevel world = client.level;
         if (world == null) {
             return;
         }
         if (world.getScoreboard() == null || world.getScoreboard().getObjectives() == null) {
             return;
         }
-        ScoreboardObjective objective = world.getScoreboard().getObjectiveForSlot(ScoreboardDisplaySlot.SIDEBAR);
+        Objective objective = world.getScoreboard().getDisplayObjective(DisplaySlot.SIDEBAR);
         if (objective == null) {
             return;
         }
         this.updateZoneFromScoreboard(world.getScoreboard(), objective);
     }
 
-    private void updateZoneFromScoreboard(Scoreboard scoreboard, ScoreboardObjective sidebar) {
+    private void updateZoneFromScoreboard(Scoreboard scoreboard, Objective sidebar) {
         Zone<? extends ZoneEnum<?>> newZone = this.getZoneFromScoreboard(scoreboard, sidebar);
         final var oldZone = this.currentZone;
         if (zoneHasChanged(newZone)) {
@@ -87,13 +91,13 @@ public class LocationService {
         return this.currentZone.getZoneEnum() != newZone.getZoneEnum();
     }
 
-    private Zone<? extends ZoneEnum<?>> getZoneFromScoreboard(Scoreboard scoreboard, ScoreboardObjective sidebar) {
-        for (ScoreboardEntry scoreboardEntry : scoreboard.getScoreboardEntries(sidebar)) {
-            Team team = scoreboard.getScoreHolderTeam(scoreboardEntry.owner());
+    private Zone<? extends ZoneEnum<?>> getZoneFromScoreboard(Scoreboard scoreboard, Objective sidebar) {
+        for (PlayerScoreEntry scoreboardEntry : scoreboard.listPlayerScores(sidebar)) {
+            PlayerTeam team = scoreboard.getPlayersTeam(scoreboardEntry.owner());
             if (team == null) {
                 continue;
             }
-            String line = team.getPrefix().getString() + team.getSuffix().getString();
+            String line = team.getPlayerPrefix().getString() + team.getPlayerSuffix().getString();
             final Zone<? extends ZoneEnum<?>> zoneFromLine = Zone.fromScoreboardLine(line, this.currentLocation);
             if (zoneFromLine != null)
                 return zoneFromLine;

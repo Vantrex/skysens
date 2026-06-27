@@ -1,7 +1,7 @@
 package de.vantrex.skysens.client.util;
 
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,14 +21,14 @@ public final class DungeonStatParser {
     private static final Pattern STAR_PATTERN =
             Pattern.compile("([✪★]+)");
 
-    public static Optional<DungeonStats> parse(List<Text> tooltipLines) {
+    public static Optional<DungeonStats> parse(List<Component> tooltipLines) {
         String tier = null;
         String quality = null;
 
         // Iterate all tooltip lines, stripped of color codes
-        for (Text t : tooltipLines) {
+        for (Component t : tooltipLines) {
             String raw = t.getString();
-            String s = Formatting.strip(raw);
+            String s = ChatFormatting.stripFormatting(raw);
             if (s == null) continue;
 
             // Tier like: "Dungeon Item Tier: III" (or "3")
@@ -47,7 +47,7 @@ public final class DungeonStatParser {
         // Heuristic fallback: look for stars in the first line (item name)
         // and treat star count as a "tier-ish" signal if you want.
         if (tier == null && !tooltipLines.isEmpty()) {
-            String name = Formatting.strip(tooltipLines.get(0).getString());
+            String name = ChatFormatting.stripFormatting(tooltipLines.get(0).getString());
             if (name != null) {
                 Matcher m = STAR_PATTERN.matcher(name);
                 if (m.find()) {

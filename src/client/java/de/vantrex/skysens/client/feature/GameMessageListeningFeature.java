@@ -1,8 +1,8 @@
 package de.vantrex.skysens.client.feature;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 
 public interface GameMessageListeningFeature extends Feature {
 
-    void onGameMessage(Text message, boolean overlay);
+    void onGameMessage(Component message, boolean overlay);
 }

@@ -7,9 +7,9 @@ import de.vantrex.skysens.client.model.Notification;
 import de.vantrex.skysens.client.service.LocationService;
 import de.vantrex.skysens.client.service.NotificationService;
 import de.vantrex.skysens.client.util.LocationUtil;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 
 import java.util.regex.Pattern;
 
@@ -29,7 +29,7 @@ public class PickaxeAbilityResetNotificationFeature implements GameMessageListen
 
 
     @Override
-    public void onGameMessage(Text message, boolean overlay) {
+    public void onGameMessage(Component message, boolean overlay) {
         if (!isActive()) {
             return;
         }
@@ -41,10 +41,10 @@ public class PickaxeAbilityResetNotificationFeature implements GameMessageListen
         }
     }
 
-    private Text buildTitle() {
-        return Text
+    private Component buildTitle() {
+        return Component
                 .literal("Mining Ability available!")
-                .fillStyle(Style.EMPTY.withColor(Formatting.GREEN));
+                .withStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
     }
 
 }

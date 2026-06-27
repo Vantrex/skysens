@@ -238,4 +238,3 @@ public class GuiOptionEditorDynamicZoneDropdown extends ComponentEditor {
     }
 
 }
-

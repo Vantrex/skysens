@@ -1,25 +1,24 @@
 package de.vantrex.skysens.client.util;
 
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.ListTag;
 
 import java.util.Optional;
-import java.util.OptionalInt;
 
 public final class HypixelExtraAttributes {
 
     private HypixelExtraAttributes() {
     }
 
-    public static Optional<NbtCompound> getExtraAttributes(ItemStack stack) {
-        NbtComponent custom = stack.get(DataComponentTypes.CUSTOM_DATA);
+    public static Optional<CompoundTag> getExtraAttributes(ItemStack stack) {
+        CustomData custom = stack.get(DataComponents.CUSTOM_DATA);
         if (custom == null) return Optional.empty();
 
-        NbtCompound root = custom.copyNbt();
+        CompoundTag root = custom.copyTag();
 
         if (looksLikeExtraAttributes(root)) {
             return Optional.of(root);
@@ -31,41 +30,41 @@ public final class HypixelExtraAttributes {
 
         return Optional.empty();
     }
-    private static boolean looksLikeExtraAttributes(NbtCompound nbt) {
+    private static boolean looksLikeExtraAttributes(CompoundTag nbt) {
         return nbt.contains("id")
                 || nbt.contains("baseStatBoostPercentage")
                 || nbt.contains("item_tier")
                 || nbt.contains("uuid");
     }
 
-    public static Optional<NbtCompound> findCompoundByKey(NbtElement element, String key) {
+    public static Optional<CompoundTag> findCompoundByKey(Tag element, String key) {
         if (element == null) return Optional.empty();
 
-        if (element instanceof NbtCompound c) {
+        if (element instanceof CompoundTag c) {
             if (c.contains(key)) {
                 return c.getCompound(key);
             }
-            for (String k : c.getKeys()) {
-                Optional<NbtCompound> found = findCompoundByKey(c.get(k), key);
+            for (String k : c.keySet()) {
+                Optional<CompoundTag> found = findCompoundByKey(c.get(k), key);
                 if (found.isPresent()) return found;
             }
-        } else if (element instanceof NbtList list) {
+        } else if (element instanceof ListTag list) {
             for (int i = 0; i < list.size(); i++) {
-                Optional<NbtCompound> found = findCompoundByKey(list.get(i), key);
+                Optional<CompoundTag> found = findCompoundByKey(list.get(i), key);
                 if (found.isPresent()) return found;
             }
         }
 
         return Optional.empty();
     }
-    public static Optional<Integer> getInt(NbtCompound ea, String key) {
+    public static Optional<Integer> getInt(CompoundTag ea, String key) {
         if (ea != null && ea.contains(key)) {
             return ea.getInt(key);
         }
         return Optional.empty();
     }
 
-    public static Optional<String> getString(NbtCompound ea, String key) {
+    public static Optional<String> getString(CompoundTag ea, String key) {
         if (ea != null && ea.contains(key)) {
             return ea.getString(key);
         }

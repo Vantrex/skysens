@@ -43,7 +43,8 @@ public enum GalateaZoneEnum implements ZoneEnum<GalateaZoneEnum> {
     WEST_REACHES("West Reaches", "⏣ West Reaches"),
     WESTBOUND_WETLANDS("Westbound Wetlands", "⏣ Westbound Wetlands"),
     WYRMGROVE_TOMB("Wyrmgrove Tomb", "⏣ Wyrmgrove Tomb"),
-    BACKWATER_BAYOU("Backwater Bayou", "⏣ Backwater Bayou"),
+    TORRHUS_CANYON("Torrhus Canyon", "⏣ Torrhus Canyon"),
+    LUNARISE("Lunarise", "⏣ Lunarise"),
     ;
 
     private final String displayName;

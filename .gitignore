@@ -23,3 +23,10 @@ Thumbs.db
 dev.json
 all_location.json
 install.sh
+.codegraph/
+# Cursor IDE config
+.cursor/
+
+# Fabric Loom generated version metadata
+fabric_*.json
+fabric_meta_*.json

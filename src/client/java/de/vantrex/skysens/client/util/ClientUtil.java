@@ -2,10 +2,9 @@ package de.vantrex.skysens.client.util;
 
 import de.vantrex.skysens.client.config.SkysensConfig;
 import lombok.experimental.UtilityClass;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.sounds.SoundEvent;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,20 +13,24 @@ import java.util.Optional;
 @UtilityClass
 public class ClientUtil {
 
-    private final MinecraftClient CLIENT = MinecraftClient.getInstance();
+    private final Minecraft CLIENT = Minecraft.getInstance();
 
     public void sendMessage(@NotNull final String message) {
-        sendMessage(Text.literal(message));
+        sendMessage(Component.literal(message));
     }
 
-    public void sendMessage(final @NotNull Text text) {
+    public void sendMessage(final @NotNull Component text) {
         sendMessage(text, false);
     }
 
-    public void sendMessage(final @NotNull Text text, final boolean overlay) {
+    public void sendMessage(final @NotNull Component text, final boolean overlay) {
         if (CLIENT.player == null)
             return;
-        CLIENT.player.sendMessage(text, overlay);
+        if (overlay) {
+            CLIENT.player.sendOverlayMessage(text);
+        } else {
+            CLIENT.player.sendSystemMessage(text);
+        }
     }
 
     public void sendDebug(final @NotNull String message) {
@@ -49,36 +52,36 @@ public class ClientUtil {
         sendTitle(null, subtitle);
     }
 
-    public void sendSubtitle(final @NotNull Text subtitle) {
+    public void sendSubtitle(final @NotNull Component subtitle) {
         sendTitle(null, subtitle, 0, 60, 0);
     }
 
-    public void sendTitle(final @NotNull Text title) {
+    public void sendTitle(final @NotNull Component title) {
         sendTitle(title, null, 0, 60, 0);
     }
 
     public void sendTitle(final @Nullable String title, final @Nullable String subtitle) {
         sendTitle(
-                Optional.ofNullable(title).map(Text::literal).orElse(null),
-                Optional.ofNullable(subtitle).map(Text::literal).orElse(null),
+                Optional.ofNullable(title).map(Component::literal).orElse(null),
+                Optional.ofNullable(subtitle).map(Component::literal).orElse(null),
                 0, 60, 0
         );
     }
 
-    public void sendTitle(final @Nullable Text title, final @Nullable Text subtitle, int fadeInTicks, int stayTicks, int fadeOutTicks) {
+    public void sendTitle(final @Nullable Component title, final @Nullable Component subtitle, int fadeInTicks, int stayTicks, int fadeOutTicks) {
         if (CLIENT.player == null) return;
-        if (CLIENT.inGameHud == null) return;
+        if (CLIENT.gui == null) return;
         if (title != null)
-            CLIENT.inGameHud.setTitle(title);
+            CLIENT.gui.setTitle(title);
         if (subtitle != null)
-            CLIENT.inGameHud.setSubtitle(subtitle);
-        CLIENT.inGameHud.setTitleTicks(fadeInTicks, stayTicks, fadeOutTicks);
+            CLIENT.gui.setSubtitle(subtitle);
+        CLIENT.gui.setTimes(fadeInTicks, stayTicks, fadeOutTicks);
     }
 
 
-    public static void sendActionBar(@NotNull Text text) {
+    public static void sendActionBar(@NotNull Component text) {
         if (CLIENT.player == null) return;
-        if (CLIENT.inGameHud == null) return;
-        CLIENT.inGameHud.setOverlayMessage(text, false);
+        if (CLIENT.gui == null) return;
+        CLIENT.gui.setOverlayMessage(text, false);
     }
 }

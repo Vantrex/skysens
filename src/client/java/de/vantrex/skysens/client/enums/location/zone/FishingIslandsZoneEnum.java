@@ -5,18 +5,16 @@ import lombok.RequiredArgsConstructor;
 
 @Getter
 @RequiredArgsConstructor
-public enum TheBarnZoneEnum implements ZoneEnum<TheBarnZoneEnum> {
+public enum FishingIslandsZoneEnum implements ZoneEnum<FishingIslandsZoneEnum> {
 
-    WINDMILL("Windmill", "⏣ Windmill"),
-    THE_BARN("The Barn", "⏣ The Barn"),
-
+    BACKWATER_BAYOU("Backwater Bayou", "⏣ Backwater Bayou"),
     ;
 
     private final String displayName;
     private final String scoreboardName;
 
     @Override
-    public Class<TheBarnZoneEnum> getZoneClass() {
-        return TheBarnZoneEnum.class;
+    public Class<FishingIslandsZoneEnum> getZoneClass() {
+        return FishingIslandsZoneEnum.class;
     }
 }

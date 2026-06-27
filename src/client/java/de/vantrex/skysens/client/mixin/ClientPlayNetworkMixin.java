@@ -1,14 +1,14 @@
 package de.vantrex.skysens.client.mixin;
 
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.text.Text;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 import java.util.regex.Pattern;
 
-@Mixin(ClientPlayNetworkHandler.class)
+@Mixin(ClientPacketListener.class)
 public abstract class ClientPlayNetworkMixin {
 
     /**
@@ -24,7 +24,7 @@ public abstract class ClientPlayNetworkMixin {
     private static final Pattern REMOVE_DONT_ACTION =
             Pattern.compile("\\s*(?:\\band\\b\\s*)?don['’]?t\\s+[^!]+!\\s*", Pattern.CASE_INSENSITIVE);
 
-    private static Text rewrite(Text in) {
+    private static Component rewrite(Component in) {
         if (in == null) return null;
 
         String s = in.getString();
@@ -35,28 +35,28 @@ public abstract class ClientPlayNetworkMixin {
         // Clean up leftover whitespace
         s = s.replaceAll("\\s{2,}", " ").trim();
 
-        return Text.literal(s).setStyle(in.getStyle());
+        return Component.literal(s).setStyle(in.getStyle());
     }
 
     @ModifyArg(
-            method = "onTitle",
+            method = "setTitleText",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/hud/InGameHud;setTitle(Lnet/minecraft/text/Text;)V"
+                    target = "Lnet/minecraft/client/gui/Gui;setTitle(Lnet/minecraft/network/chat/Component;)V"
             )
     )
-    private Text skysens$rewriteTitle(Text title) {
+    private Component skysens$rewriteTitle(Component title) {
         return rewrite(title);
     }
 
     @ModifyArg(
-            method = "onSubtitle",
+            method = "setSubtitleText",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/hud/InGameHud;setSubtitle(Lnet/minecraft/text/Text;)V"
+                    target = "Lnet/minecraft/client/gui/Gui;setSubtitle(Lnet/minecraft/network/chat/Component;)V"
             )
     )
-    private Text skysens$rewriteSubtitle(Text subtitle) {
+    private Component skysens$rewriteSubtitle(Component subtitle) {
         return rewrite(subtitle);
     }
 

@@ -17,11 +17,11 @@ import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.scoreboard.Scoreboard;
-import net.minecraft.scoreboard.ScoreboardDisplaySlot;
-import net.minecraft.scoreboard.ScoreboardObjective;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.scores.DisplaySlot;
+import net.minecraft.world.scores.Objective;
+import net.minecraft.world.scores.Scoreboard;
 import de.vantrex.skysens.client.dungeon.model.DungeonSplit;
 
 import java.util.List;
@@ -79,7 +79,7 @@ public class DungeonStateManager implements GameMessageListeningFeature, AfterTi
     }
 
     @Override
-    public void onGameMessage(Text message, boolean overlay) {
+    public void onGameMessage(Component message, boolean overlay) {
         if (!this.inDungeon ||  this.currentFloor == null) return;
         
         String msg = message.getString();
@@ -120,12 +120,12 @@ public class DungeonStateManager implements GameMessageListeningFeature, AfterTi
     @Override
     public void afterTick() {
         if (!this.inDungeon) return;
-        MinecraftClient client = MinecraftClient.getInstance();
+        Minecraft client = Minecraft.getInstance();
         
         // Detection for Master Mode vs Normal and Floor Number
-        if (client.world != null && client.world.getScoreboard() != null) {
-            Scoreboard scoreboard = client.world.getScoreboard();
-            ScoreboardObjective objective = scoreboard.getObjectiveForSlot(ScoreboardDisplaySlot.SIDEBAR);
+        if (client.level != null && client.level.getScoreboard() != null) {
+            Scoreboard scoreboard = client.level.getScoreboard();
+            Objective objective = scoreboard.getDisplayObjective(DisplaySlot.SIDEBAR);
             if (objective != null) {
                 String title = objective.getDisplayName().getString();
                  if (title.contains("(M7)")) {

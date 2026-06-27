@@ -11,13 +11,13 @@ import de.vantrex.skysens.client.service.NotificationService;
 import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.HypixelExtraAttributes;
 import de.vantrex.skysens.client.util.Lazy;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.NbtComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.CustomData;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.ChatFormatting;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -53,8 +53,7 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
         this.warningReceived = false;
         notificationService.sendNotification(Notification.builder()
                 .text(this.buildTitle())
-                .subtitle(Text.literal("You will be notified once the buff is about to expire!").
-                        fillStyle(Style.EMPTY.withColor(TextColor.fromFormatting(Formatting.WHITE))))
+                .subtitle(Component.literal("You will be notified once the buff is about to expire!").withStyle(Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.WHITE))))
                 .build());
     }
 
@@ -76,10 +75,10 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
         }
     }
 
-    private Text buildTitle() {
-        return Text
+    private Component buildTitle() {
+        return Component
                 .literal("Powder Pumpkin")
-                .fillStyle(Style.EMPTY.withColor(Formatting.GREEN));
+                .withStyle(Style.EMPTY.withColor(ChatFormatting.GREEN));
     }
 
     private void sendWarning() {
@@ -87,8 +86,8 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
                 .sendNotification(
                         Notification.builder()
                                 .text(this.buildTitle())
-                                .subtitle(Text.literal("Your Filet O' Fortune buff is about to expire!").fillStyle(
-                                        Style.EMPTY.withColor(TextColor.fromFormatting(Formatting.YELLOW))
+                                .subtitle(Component.literal("Your Filet O' Fortune buff is about to expire!").withStyle(
+                                        Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.YELLOW))
                                 ))
                                 .build()
                 );
@@ -100,8 +99,8 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
                 .sendNotification(
                         Notification.builder()
                                 .text(this.buildTitle())
-                                .subtitle(Text.literal("Your Powder Pumpkin buff has expired!").fillStyle(
-                                        Style.EMPTY.withColor(TextColor.fromFormatting(Formatting.RED))
+                                .subtitle(Component.literal("Your Powder Pumpkin buff has expired!").withStyle(
+                                        Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.RED))
                                 ))
                                 .build()
                 );
@@ -113,7 +112,7 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
     }
 
     private boolean isMiningPumpkin(final @NotNull ItemStack item) {
-        NbtComponent test = item.get(DataComponentTypes.CUSTOM_DATA);
+        CustomData test = item.get(DataComponents.CUSTOM_DATA);
         return HypixelExtraAttributes.getExtraAttributes(item)
                 .flatMap(nbtCompound -> nbtCompound.getString("id"))
                 .filter(id -> id.equals(ITEM_ID))

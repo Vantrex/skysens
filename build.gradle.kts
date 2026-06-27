@@ -1,7 +1,5 @@
 plugins {
-    // For 1.21.10 (obfuscated), Fabric recommends the remap plugin id (legacy "fabric-loom" still works)
-   // id("net.fabricmc.fabric-loom-remap") version "1.14-SNAPSHOT"
-    id("fabric-loom") version "1.14-SNAPSHOT"
+    id("net.fabricmc.fabric-loom") version "1.17.12"
     id("maven-publish")
     id("io.freefair.lombok") version "9.1.0"
     id("com.gradleup.shadow") version "9.3.0"
@@ -12,13 +10,21 @@ repositories {
     maven("https://maven.notenoughupdates.org/releases/")
 }
 
-val mod_version: String by project
-val maven_group: String by project
-val archives_base_name: String by project
-val minecraft_version: String by project
-val yarn_mappings: String by project
-val loader_version: String by project
-val fabric_version: String by project
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(25))
+    }
+}
+
+val mod_version: String = (project.findProperty("mod_version") as? String) ?: "1.0-SNAPSHOT"
+val maven_group: String = (project.findProperty("maven_group") as? String) ?: "de.vantrex"
+val archives_base_name: String = (project.findProperty("archives_base_name") as? String) ?: "skysens"
+val minecraft_version: String = (project.findProperty("minecraft_version") as? String) ?: "26.1.2"
+val loader_version: String = (project.findProperty("loader_version") as? String) ?: "0.19.3"
+val fabric_version: String = (project.findProperty("fabric_version") as? String) ?: "0.153.0+26.1.2"
+val hypixel_mod_api_version: String = (project.findProperty("hypixel_mod_api_version") as? String) ?: "1.0.2"
+val moulconfig_version: String = (project.findProperty("moulconfig_version") as? String) ?: "4.7.2"
+val fabric_language_kotlin_version: String = (project.findProperty("fabric_language_kotlin_version") as? String) ?: "1.13.12+kotlin.2.4.0"
 
 version = mod_version
 group = maven_group
@@ -27,12 +33,12 @@ base {
     archivesName.set(archives_base_name)
 }
 
-// put ONLY the deps you want shaded into these:
+// Shadow configurations
 val shadowImpl: Configuration by configurations.creating {
     configurations.implementation.get().extendsFrom(this)
 }
 val shadowModImpl: Configuration by configurations.creating {
-    configurations.modImplementation.get().extendsFrom(this)
+    configurations.implementation.get().extendsFrom(this)
 }
 
 loom {
@@ -41,9 +47,7 @@ loom {
     mods {
         register("skysens") {
             sourceSet(sourceSets.main.get())
-            sourceSet(sourceSets["client"])
-
-            // recommended if you shade deps (dev env grouping)
+            sourceSet(sourceSets.named("client").get())
             configuration(shadowModImpl)
             configuration(shadowImpl)
         }
@@ -52,83 +56,53 @@ loom {
 
 dependencies {
     minecraft("com.mojang:minecraft:$minecraft_version")
-    mappings("net.fabricmc:yarn:$yarn_mappings:v2")
-    modImplementation("net.fabricmc:fabric-loader:$loader_version")
-    modImplementation("net.fabricmc.fabric-api:fabric-api:$fabric_version")
+    implementation("net.fabricmc:fabric-loader:$loader_version")
+    implementation("net.fabricmc.fabric-api:fabric-api:$fabric_version")
 
-    // ✅ shade + relocate MoulConfig (recommended by MoulConfig docs)
-    shadowModImpl("org.notenoughupdates.moulconfig:modern-1.21.10:4.2.0-beta")
+    // MoulConfig (shaded)
+    shadowModImpl("org.notenoughupdates.moulconfig:modern-26.1:$moulconfig_version") {
+        exclude(module = "fabric-api")
+        exclude(module = "minecraft")
+    }
 
-    // ✅ provide Kotlin runtime via Fabric Language Kotlin (DON’T relocate kotlin.*)
-    // pick one:
-    modImplementation("net.fabricmc:fabric-language-kotlin:1.13.8+kotlin.2.3.0")
-    // (1.13.6+kotlin.2.2.20 is also a common pick for 1.21.10)
-    // modImplementation("net.fabricmc:fabric-language-kotlin:1.13.6+kotlin.2.2.20")
+    // Fabric Language Kotlin
+    implementation("net.fabricmc:fabric-language-kotlin:$fabric_language_kotlin_version")
 
-    // Hypixel Mod API:
-    // If you want it as an external required mod, keep it as modImplementation.
-    modImplementation("net.hypixel:mod-api:1.0.1")
+    // Hypixel Mod API
+    implementation("net.hypixel:mod-api:$hypixel_mod_api_version")
 
-    // If instead you want it INSIDE your jar, move it to shadowModImpl(...) — but only do this
-    // if you're sure the artifact is a "library jar" and not a full mod jar with its own fabric.mod.json.
-    // shadowModImpl("net.hypixel:mod-api:1.0.1")
+
 }
-
-tasks.jar {
-    archiveClassifier.set("dev")
-    from("LICENSE.txt") { rename { "${it}_${archives_base_name}" } }
-}
-
 
 tasks.shadowJar {
     mergeServiceFiles()
-    configurations = listOf(shadowModImpl, shadowImpl)
-
-    // ✅ relocate MoulConfig package
-    relocate(
-        "io.github.notenoughupdates.moulconfig",
-        "de.vantrex.skysens.dependencies.moulconfig"
-    )
-
-    // ❌ do NOT relocate kotlin.*
-    // relocate("kotlin", "...") <-- remove
-
-    from(sourceSets.main.get().output)
-    from(sourceSets["client"].output)
-    from("LICENSE.txt") { rename { "${it}_${archives_base_name}" } }
-
-    archiveClassifier.set("dev-shadow")
-}
-
-
-/*
-tasks.shadowJar {
-    // ✅ REQUIRED for ServiceLoader (MoulConfig uses it)
-    mergeServiceFiles()
-
-    // If Gradle complains about duplicate entries, enable this:
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
-
     configurations = listOf(shadowModImpl, shadowImpl)
     relocate("io.github.notenoughupdates.moulconfig", "de.vantrex.skysens.dependencies.moulconfig")
-    // (and I'd still recommend NOT relocating kotlin.*, but that's separate)
+    from(sourceSets.main.get().output)
+    from(sourceSets.named("client").get().output)
+    from("LICENSE.txt") { rename { "${it}_${archives_base_name}" } }
+    archiveClassifier.set("")
 }
- */
-tasks.remapJar {
-    dependsOn(tasks.shadowJar)
-    inputFile.set(tasks.shadowJar.flatMap { it.archiveFile })
-    archiveClassifier.set("") // this becomes your distributable jar
+
+
+tasks.jar {
+    manifest {
+        attributes(
+            "Implementation-Title" to archives_base_name,
+            "Implementation-Version" to project.version
+        )
+    }
+    archiveClassifier.set("dev")
+    from("LICENSE.txt") { rename { "${it}_${archives_base_name}" } }
 }
 
 tasks.processResources {
     val props = mapOf(
         "version" to project.version.toString(),
-        "minecraft_version" to (project.findProperty("minecraft_version") as String),
-        "loader_version" to (project.findProperty("loader_version") as String),
+        "minecraft_version" to minecraft_version,
+        "loader_version" to loader_version,
     )
-
     inputs.properties(props)
-
     filesMatching("fabric.mod.json") {
         expand(props)
     }

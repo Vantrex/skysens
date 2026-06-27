@@ -1,10 +1,10 @@
 package de.vantrex.skysens.client.feature;
 
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -14,10 +14,10 @@ public interface HandledScreenFeature extends Feature {
 
     Pattern inventoryName();
 
-    default void draw$Head(DrawContext context, Slot slot, CallbackInfo ci) {
+    default void draw$Head(GuiGraphicsExtractor context, Slot slot, CallbackInfo ci) {
     }
 
-    default void mouseClicked$Head(Click click, boolean doubled, ScreenHandler screenHandler, int screenX, int screenY, CallbackInfoReturnable<Boolean> cir) {
+    default void mouseClicked$Head(MouseButtonEvent click, boolean doubled, AbstractContainerMenu menu, int screenX, int screenY, CallbackInfoReturnable<Boolean> cir) {
     }
 
 
@@ -25,7 +25,7 @@ public interface HandledScreenFeature extends Feature {
         return inventoryName().matcher(name).matches();
     }
 
-    default boolean isInventory(Text text) {
+    default boolean isInventory(Component text) {
         return text != null && this.isInventoryName(text.getString());
     }
 
@@ -39,9 +39,9 @@ public interface HandledScreenFeature extends Feature {
         return pointX >= (double) (x - 1) && pointX < (double) (x + width + 1) && pointY >= (double) (y - 1) && pointY < (double) (y + height + 1);
     }
 
-    default Slot getSlotAt(double mouseX, double mouseY, ScreenHandler handler, int screenX, int screenY) {
-        for (Slot slot : handler.slots) {
-            if (slot.isEnabled() && this.isPointOverSlot(slot, mouseX, mouseY, screenX, screenY)) {
+    default Slot getSlotAt(double mouseX, double mouseY, AbstractContainerMenu menu, int screenX, int screenY) {
+        for (Slot slot : menu.slots) {
+            if (slot.isActive() && this.isPointOverSlot(slot, mouseX, mouseY, screenX, screenY)) {
                 return slot;
             }
         }

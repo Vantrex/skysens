@@ -2,7 +2,6 @@ package de.vantrex.skysens.client.handler;
 
 import de.vantrex.skysens.client.feature.FeatureRegistry;
 import de.vantrex.skysens.client.service.FeatureService;
-import de.vantrex.skysens.client.util.ClientUtil;
 import net.fabricmc.fabric.api.client.message.v1.ClientReceiveMessageEvents;
 
 public class ChatHandler {

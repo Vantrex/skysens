@@ -12,12 +12,12 @@ import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.HypixelExtraAttributes;
 import de.vantrex.skysens.client.util.Lazy;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.ChatFormatting;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Optional;
@@ -55,8 +55,7 @@ public class FiletOFortuneNotificationFeature implements ItemRightClickFeature, 
         this.warningReceived = false;
         notificationService.sendNotification(Notification.builder()
                 .text(this.buildTitle())
-                .subtitle(Text.literal("You will be notified once the buff is about to expire!").
-                        fillStyle(Style.EMPTY.withColor(TextColor.fromFormatting(Formatting.WHITE))))
+                .subtitle(Component.literal("You will be notified once the buff is about to expire!").withStyle(Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.WHITE))))
                 .build());
     }
 
@@ -78,10 +77,10 @@ public class FiletOFortuneNotificationFeature implements ItemRightClickFeature, 
         }
     }
 
-    private Text buildTitle() {
-        return Text
+    private Component buildTitle() {
+        return Component
                 .literal("Filet O' Fortune")
-                .fillStyle(Style.EMPTY.withColor(Formatting.BLUE));
+                .withStyle(Style.EMPTY.withColor(ChatFormatting.BLUE));
     }
 
     private void sendWarning() {
@@ -89,8 +88,8 @@ public class FiletOFortuneNotificationFeature implements ItemRightClickFeature, 
                 .sendNotification(
                         Notification.builder()
                                 .text(this.buildTitle())
-                                .subtitle(Text.literal("Your Filet O' Fortune buff is about to expire!").fillStyle(
-                                        Style.EMPTY.withColor(TextColor.fromFormatting(Formatting.YELLOW))
+                                .subtitle(Component.literal("Your Filet O' Fortune buff is about to expire!").withStyle(
+                                        Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.YELLOW))
                                 ))
                                 .build()
                 );
@@ -102,8 +101,8 @@ public class FiletOFortuneNotificationFeature implements ItemRightClickFeature, 
                 .sendNotification(
                         Notification.builder()
                                 .text(this.buildTitle())
-                                .subtitle(Text.literal("Your Filet O' Fortune buff has expired!").fillStyle(
-                                        Style.EMPTY.withColor(TextColor.fromFormatting(Formatting.RED))
+                                .subtitle(Component.literal("Your Filet O' Fortune buff has expired!").withStyle(
+                                        Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.RED))
                                 ))
                                 .build()
                 );

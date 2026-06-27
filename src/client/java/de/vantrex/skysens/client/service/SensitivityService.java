@@ -11,7 +11,7 @@ import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -149,7 +149,7 @@ public class SensitivityService {
 
     private Float convertFloatSensitivityToIntegerLikeFloat(Float sensitivity) {
         if (sensitivity == null) {
-            return (float) (int)(MinecraftClient.getInstance().options.getMouseSensitivity().getValue().floatValue() * 100);
+            return (float) (int)(Minecraft.getInstance().options.sensitivity().get().floatValue() * 100);
         }
         return (float) (int) (sensitivity * 100);
     }
@@ -171,7 +171,7 @@ public class SensitivityService {
     }
 
     private float translatedMinecraftClientSensitivity() {
-        return this.convertFloatSensitivityToIntegerLikeFloat(MinecraftClient.getInstance().options.getMouseSensitivity().getValue().floatValue());
+        return this.convertFloatSensitivityToIntegerLikeFloat(Minecraft.getInstance().options.sensitivity().get().floatValue());
     }
     
 }

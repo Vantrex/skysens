@@ -2,11 +2,11 @@ package de.vantrex.skysens.client.feature.bazaar;
 
 import de.vantrex.skysens.client.feature.SkySensFeature;
 import io.github.notenoughupdates.moulconfig.ChromaColour;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.component.type.LoreComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.slot.Slot;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.regex.Pattern;
@@ -20,8 +20,8 @@ public class BazaarHighlightFeature extends AbstractBazaarFeature {
     }
 
     @Override
-    public void draw$Head(DrawContext context, Slot slot, CallbackInfo ci) {
-        final ItemStack stack = slot.getStack();
+    public void draw$Head(GuiGraphicsExtractor context, Slot slot, CallbackInfo ci) {
+        final ItemStack stack = slot.getItem();
         if (stack.isEmpty()) {
             return;
         }
@@ -35,7 +35,7 @@ public class BazaarHighlightFeature extends AbstractBazaarFeature {
         if (!this.shouldHighlight(orderType)) {
             return;
         }
-        final LoreComponent lore = stack.get(DataComponentTypes.LORE);
+        final ItemLore lore = stack.get(DataComponents.LORE);
         if (lore == null) {
             return;
         }
@@ -49,7 +49,7 @@ public class BazaarHighlightFeature extends AbstractBazaarFeature {
         context.fill(x, y, x + 16, y + 16, color);
     }
 
-    private int determineColor(final LoreComponent lore, OrderType orderType) {
+    private int determineColor(final ItemLore lore, OrderType orderType) {
         boolean isFilled = super.isFilled(lore);
         return switch (orderType) {
             case BUY -> isFilled && bazaarCategory.highlightOwnBuyOrders.useDifferentColorFilledItems

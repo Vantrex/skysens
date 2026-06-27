@@ -9,6 +9,7 @@
   "license": "All-Rights-Reserved",
   "icon": "assets/skysens/icon.png",
   "environment": "client",
+  "accessWidener": "skysens.accesswidener",
   "entrypoints": {
     "fabric-datagen": [
       "de.vantrex.skysens.client.SkysensDataGenerator"
@@ -25,7 +26,7 @@
   ],
   "depends": {
     "fabricloader": ">=${loader_version}",
-    "fabric": "*",
-    "minecraft": "${minecraft_version}"
+    "minecraft": ">=26.1.2",
+    "java": ">=25"
   }
 }
