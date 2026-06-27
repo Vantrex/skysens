@@ -39,9 +39,7 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
 
     @Override
     public void onItemRightClick(@NotNull ItemStack item) {
-        ClientUtil.sendDebug("Powder Pumpkin on right click detected");
         if (!isMiningPumpkin(item)) {
-            ClientUtil.sendDebug("Item is not a Powder Pumpkin");
             return;
         }
         final Number current = keyValueStore.get().get(KEY);
@@ -58,7 +56,6 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
                 .subtitle(Text.literal("You will be notified once the buff is about to expire!").
                         fillStyle(Style.EMPTY.withColor(TextColor.fromFormatting(Formatting.WHITE))))
                 .build());
-        ClientUtil.sendDebug("Powder Pumpkin buff consumed");
     }
 
     @Override
@@ -117,11 +114,6 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
 
     private boolean isMiningPumpkin(final @NotNull ItemStack item) {
         NbtComponent test = item.get(DataComponentTypes.CUSTOM_DATA);
-        ClientUtil.sendDebug("NBT Component: " + test);
-        HypixelExtraAttributes.getExtraAttributes(item)
-                .ifPresent(nbtCompound -> {
-                    ClientUtil.sendDebug("NBT Compound: " + nbtCompound.toString());
-                });
         return HypixelExtraAttributes.getExtraAttributes(item)
                 .flatMap(nbtCompound -> nbtCompound.getString("id"))
                 .filter(id -> id.equals(ITEM_ID))

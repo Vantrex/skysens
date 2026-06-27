@@ -30,6 +30,9 @@ public class PickaxeAbilityResetNotificationFeature implements GameMessageListen
 
     @Override
     public void onGameMessage(Text message, boolean overlay) {
+        if (!isActive()) {
+            return;
+        }
         final String messageAsString = message.getString();
         if (MINING_ABILITY_PATTERN.matcher(messageAsString).matches()) {
             notificationService.sendNotification(Notification.builder()
