@@ -4,19 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import de.vantrex.skysens.client.dungeon.model.DungeonSplit;
 import de.vantrex.skysens.client.util.ClientUtil;
-import net.fabricmc.fabric.api.resource.IdentifiableResourceReloadListener;
-import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
-import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
 import lombok.Getter;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +35,7 @@ public class SplitManager {
                 ClientUtil.sendDebug("Failed to find splits.json in resources");
                 return;
             }
-            try (Reader reader = new InputStreamReader(stream)) {
+            try (Reader reader = new InputStreamReader(stream, StandardCharsets.UTF_8)) {
                 Type type = new TypeToken<Map<String, List<DungeonSplit>>>() {}.getType();
                 this.splits = GSON.fromJson(reader, type);
                 ClientUtil.sendDebug("Loaded " + splits.size() + " floor configurations from splits.json");

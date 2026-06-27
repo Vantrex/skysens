@@ -7,5 +7,5 @@ public class DungeonSplit {
     private String name;
     private String start;
     private String end;
-    private int color;
+    private long color;
 }
