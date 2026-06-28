@@ -58,7 +58,6 @@ public class FiletOFortuneNotificationFeature implements ItemRightClickFeature, 
                 .subtitle(Text.literal("You will be notified once the buff is about to expire!").
                         fillStyle(Style.EMPTY.withColor(TextColor.fromFormatting(Formatting.WHITE))))
                 .build());
-        ClientUtil.sendDebug("Filet O' Fortune buff consumed");
     }
 
     @Override

@@ -26,12 +26,8 @@ public class UseHandlers {
         if (!SkysensClient.getInstance().isOnSkyBlock()) {
             return;
         }
-        ClientUtil.sendDebug("Right click detected");
         final ItemStack itemStack = playerEntity.getStackInHand(hand);
-        ClientUtil.sendDebug("Item in hand: " + itemStack.getItem().getName().getString());
-        ClientUtil.sendDebug("feature list size: " + FEATURE_REGISTRY.getItemRightClickFeature().size());
         for (final var feature : FEATURE_REGISTRY.getItemRightClickFeature()) {
-            ClientUtil.sendDebug("Checking feature: " + feature.getClass().getSimpleName());
             if (feature.isActive()) {
                 feature.onItemRightClick(itemStack);
             }
