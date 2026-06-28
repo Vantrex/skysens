@@ -86,7 +86,10 @@ public class DungeonStateManager implements GameMessageListeningFeature, AfterTi
         List<DungeonSplit> splits = SplitManager.getInstance().getSplitsForFloor(this.currentFloor.getKey());
         
         for (DungeonSplit split : splits) {
-            if (msg.contains(split.getStart())) {
+            // Strip formatting codes from split.getStart() before comparison
+            // since message.getString() doesn't include formatting codes
+            String splitStartStripped = ClientUtil.stripFormattingCodes(split.getStart());
+            if (msg.contains(splitStartStripped)) {
                 ClientUtil.sendDebug("Split started: " + split.getName());
                 updatePhaseFromSplit(split);
                 break; 

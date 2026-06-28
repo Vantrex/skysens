@@ -10,11 +10,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @UtilityClass
 public class ClientUtil {
 
     private final MinecraftClient CLIENT = MinecraftClient.getInstance();
+    private static final Pattern FORMATTING_CODE_PATTERN = Pattern.compile("§.");
 
     public void sendMessage(@NotNull final String message) {
         sendMessage(Text.literal(message));
@@ -80,5 +82,14 @@ public class ClientUtil {
         if (CLIENT.player == null) return;
         if (CLIENT.inGameHud == null) return;
         CLIENT.inGameHud.setOverlayMessage(text, false);
+    }
+
+    /**
+     * Strips Minecraft legacy formatting codes (§x) from the given string.
+     * @param text The text to strip formatting codes from
+     * @return The text without formatting codes
+     */
+    public static String stripFormattingCodes(@NotNull String text) {
+        return FORMATTING_CODE_PATTERN.matcher(text).replaceAll("");
     }
 }
