@@ -1,0 +1,79 @@
+# ---------------------------------------------------------------------------
+# skysens-server
+#
+# Persistence choice: PostgreSQL + Flyway in every real environment; H2 in the
+# `dev` profile only, so the skeleton boots with nothing installed. Rationale is
+# in ARCHITECTURE.md (ADR-004).
+#
+# ddl-auto is `validate` everywhere. Flyway owns the schema; Hibernate is never
+# allowed to create or mutate it.
+# ---------------------------------------------------------------------------
+spring:
+  application:
+    name: skysens-server
+  profiles:
+    default: dev
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+
+server:
+  port: 8080
+  error:
+    include-message: never
+    include-stacktrace: never
+
+skysens:
+  # Advertised in the version manifest (§5.7).
+  manifest:
+    latest-mod-version: 1.0-SNAPSHOT
+    minimum-mod-version: 1.0-SNAPSHOT
+    message-of-the-day: ""
+    # TODO(deferred): remote feature kill-switches, keyed by feature id.
+    feature-flags: {}
+  auth:
+    access-token-ttl: PT30M
+    refresh-token-ttl: P30D
+    handshake-challenge-ttl: PT2M
+    mojang-has-joined-url: https://sessionserver.mojang.com/session/minecraft/hasJoined
+  rate-limit:
+    # TODO(deferred): enforce these in RateLimitConfig.
+    anonymous-requests-per-minute: 60
+    authenticated-requests-per-minute: 300
+    publishes-per-day: 20
+
+---
+spring:
+  config:
+    activate:
+      on-profile: dev
+  datasource:
+    url: jdbc:h2:mem:skysens;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  flyway:
+    enabled: false
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+logging:
+  level:
+    de.vantrex.skysens: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: prod
+  datasource:
+    url: ${SKYSENS_DB_URL}
+    username: ${SKYSENS_DB_USER}
+    password: ${SKYSENS_DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true

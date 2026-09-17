@@ -1,0 +1,1433 @@
+[
+  {
+    "id": "HUB_ISLAND",
+    "name": "Hub Island",
+    "scoreboard_name": "Hub Island",
+    "zones": [
+      {
+        "id": "ABIPHONES_AND_CO",
+        "name": "Abiphones & Co.",
+        "scoreboard_name": "⏣ Abiphones & Co."
+      },
+      {
+        "id": "ARCHERY_RANGE",
+        "name": "Archery Range",
+        "scoreboard_name": "⏣ Archery Range"
+      },
+      {
+        "id": "ARTISTS_ABODE",
+        "name": "Artist's Abode",
+        "scoreboard_name": "⏣ Artist's Abode"
+      },
+      {
+        "id": "AUCTION_HOUSE",
+        "name": "Auction House",
+        "scoreboard_name": "⏣ Auction House"
+      },
+      {
+        "id": "BANK",
+        "name": "Bank",
+        "scoreboard_name": "⏣ Bank"
+      },
+      {
+        "id": "BAZAAR_ALLEY",
+        "name": "Bazaar Alley",
+        "scoreboard_name": "⏣ Bazaar Alley"
+      },
+      {
+        "id": "BLACKSMITHS_HOUSE",
+        "name": "Blacksmith's House",
+        "scoreboard_name": "⏣ Blacksmith's House"
+      },
+      {
+        "id": "BUILDERS_HOUSE",
+        "name": "Builder's House",
+        "scoreboard_name": "⏣ Builder's House"
+      },
+      {
+        "id": "CANVAS_ROOM",
+        "name": "Canvas Room",
+        "scoreboard_name": "⏣ Canvas Room"
+      },
+      {
+        "id": "CARNIVAL",
+        "name": "Carnival",
+        "scoreboard_name": "⏣ Carnival"
+      },
+      {
+        "id": "COAL_MINE",
+        "name": "Coal Mine",
+        "scoreboard_name": "⏣ Coal Mine"
+      },
+      {
+        "id": "HUB_CRYPTS",
+        "name": "Hub Crypts",
+        "scoreboard_name": "⏣ Hub Crypts"
+      },
+      {
+        "id": "COLOSSEUM",
+        "name": "Colosseum",
+        "scoreboard_name": "⏣ Colosseum"
+      },
+      {
+        "id": "COMMUNITY_CENTER",
+        "name": "Community Center",
+        "scoreboard_name": "⏣ Community Center"
+      },
+      {
+        "id": "DARK_AUCTION",
+        "name": "Dark Auction",
+        "scoreboard_name": "⏣ Dark Auction"
+      },
+      {
+        "id": "ELECTION_ROOM",
+        "name": "Election Room",
+        "scoreboard_name": "⏣ Election Room"
+      },
+      {
+        "id": "FARM",
+        "name": "Farm",
+        "scoreboard_name": "⏣ Farm"
+      },
+      {
+        "id": "FARMHOUSE",
+        "name": "Farmhouse",
+        "scoreboard_name": "⏣ Farmhouse"
+      },
+      {
+        "id": "FASHION_SHOP",
+        "name": "Fashion Shop",
+        "scoreboard_name": "⏣ Fashion Shop"
+      },
+      {
+        "id": "FISHERMANS_HUT",
+        "name": "Fisherman's Hut",
+        "scoreboard_name": "⏣ Fisherman's Hut"
+      },
+      {
+        "id": "FISHING_OUTPOST",
+        "name": "Fishing Outpost",
+        "scoreboard_name": "⏣ Fishing Outpost"
+      },
+      {
+        "id": "FLOWER_HOUSE",
+        "name": "Flower House",
+        "scoreboard_name": "⏣ Flower House"
+      },
+      {
+        "id": "FOREST",
+        "name": "Forest",
+        "scoreboard_name": "⏣ Forest"
+      },
+      {
+        "id": "GRAVEYARD",
+        "name": "Graveyard",
+        "scoreboard_name": "⏣ Graveyard"
+      },
+      {
+        "id": "LIBRARY",
+        "name": "Library",
+        "scoreboard_name": "⏣ Library"
+      },
+      {
+        "id": "MOUNTAIN",
+        "name": "Mountain",
+        "scoreboard_name": "⏣ Mountain"
+      },
+      {
+        "id": "MUSEUM",
+        "name": "Museum",
+        "scoreboard_name": "⏣ Museum"
+      },
+      {
+        "id": "RABBIT_HOUSE",
+        "name": "Rabbit House",
+        "scoreboard_name": "⏣ Rabbit House"
+      },
+      {
+        "id": "REGALIA_ROOM",
+        "name": "Regalia Room",
+        "scoreboard_name": "⏣ Regalia Room"
+      },
+      {
+        "id": "RUINS",
+        "name": "Ruins",
+        "scoreboard_name": "⏣ Ruins"
+      },
+      {
+        "id": "SHENS_AUCTION",
+        "name": "Shen's Auction",
+        "scoreboard_name": "⏣ Shen's Auction"
+      },
+      {
+        "id": "TAVERN",
+        "name": "Tavern",
+        "scoreboard_name": "⏣ Tavern"
+      },
+      {
+        "id": "TRADE_CENTER",
+        "name": "Trade Center",
+        "scoreboard_name": "⏣ Trade Center"
+      },
+      {
+        "id": "THAUMATURGIST",
+        "name": "Thaumaturgist",
+        "scoreboard_name": "⏣ Thaumaturgist"
+      },
+      {
+        "id": "UNINCORPORATED",
+        "name": "Unincorporated",
+        "scoreboard_name": "⏣ Unincorporated"
+      },
+      {
+        "id": "VILLAGE",
+        "name": "Village",
+        "scoreboard_name": "⏣ Village"
+      },
+      {
+        "id": "WILDERNESS",
+        "name": "Wilderness",
+        "scoreboard_name": "⏣ Wilderness"
+      },
+      {
+        "id": "WIZARD_TOWER",
+        "name": "Wizard Tower",
+        "scoreboard_name": "⏣ Wizard Tower"
+      }
+    ]
+  },
+  {
+    "id": "SPIDERS_DEN",
+    "name": "Spider's Den",
+    "scoreboard_name": "⏣ Spider's Den",
+    "zones": [
+      {
+        "id": "ARACHNES_BURROW",
+        "name": "Arachne's Burrow",
+        "scoreboard_name": "⏣ Arachne's Burrow"
+      },
+      {
+        "id": "ARACHNES_SANCTUARY",
+        "name": "Arachne's Sanctuary",
+        "scoreboard_name": "⏣ Arachne's Sanctuary"
+      },
+      {
+        "id": "ARCHAEOLOGISTS_CAMP",
+        "name": "Archaeologist's Camp",
+        "scoreboard_name": "⏣ Archaeologist's Camp"
+      },
+      {
+        "id": "GRANDMAS_HOUSE",
+        "name": "Grandma's House",
+        "scoreboard_name": "⏣ Grandma's House"
+      },
+      {
+        "id": "GRAVEL_MINES",
+        "name": "Gravel Mines",
+        "scoreboard_name": "⏣ Gravel Mines"
+      },
+      {
+        "id": "SPIDER_MOUND",
+        "name": "Spider Mound",
+        "scoreboard_name": "⏣ Spider Mound"
+      }
+    ]
+  },
+  {
+    "id": "THE_END",
+    "name": "The End",
+    "scoreboard_name": "⏣ The End",
+    "zones": [
+      {
+        "id": "DRAGONS_NEST",
+        "name": "Dragon's Nest",
+        "scoreboard_name": "⏣ Dragon's Nest"
+      },
+      {
+        "id": "VOID_SEPULTURE",
+        "name": "Void Sepulture",
+        "scoreboard_name": "⏣ Void Sepulture"
+      },
+      {
+        "id": "VOID_SLATE",
+        "name": "Void Slate",
+        "scoreboard_name": "⏣ Void Slate"
+      },
+      {
+        "id": "ZEALOT_BRUISER_HIDEOUT",
+        "name": "Zealot Bruiser Hideout",
+        "scoreboard_name": "⏣ Zealot Bruiser Hideout"
+      }
+    ]
+  },
+  {
+    "id": "CRIMSON_ISLE",
+    "name": "Crimson Isle",
+    "scoreboard_name": "⏣ Crimson Isle",
+    "zones": [
+      {
+        "id": "AURAS_LAB",
+        "name": "Aura's Lab",
+        "scoreboard_name": "⏣ Aura's Lab"
+      },
+      {
+        "id": "BARBARIAN_OUTPOST",
+        "name": "Barbarian Outpost",
+        "scoreboard_name": "⏣ Barbarian Outpost"
+      },
+      {
+        "id": "BELLY_OF_THE_BEAST",
+        "name": "Belly of the Beast",
+        "scoreboard_name": "⏣ Belly of the Beast"
+      },
+      {
+        "id": "BLAZING_VOLCANO",
+        "name": "Blazing Volcano",
+        "scoreboard_name": "⏣ Blazing Volcano"
+      },
+      {
+        "id": "BURNING_DESERT",
+        "name": "Burning Desert",
+        "scoreboard_name": "⏣ Burning Desert"
+      },
+      {
+        "id": "CATHEDRAL",
+        "name": "Cathedral",
+        "scoreboard_name": "⏣ Cathedral"
+      },
+      {
+        "id": "CHIEFS_HUT",
+        "name": "Chief's Hut",
+        "scoreboard_name": "⏣ Chief's Hut"
+      },
+      {
+        "id": "COMMUNITY_CENTER",
+        "name": "Community Center",
+        "scoreboard_name": "⏣ Community Center"
+      },
+      {
+        "id": "COURTYARD",
+        "name": "Courtyard",
+        "scoreboard_name": "⏣ Courtyard"
+      },
+      {
+        "id": "CRIMSON_FIELDS",
+        "name": "Crimson Fields",
+        "scoreboard_name": "⏣ Crimson Fields"
+      },
+      {
+        "id": "DOJO",
+        "name": "Dojo",
+        "scoreboard_name": "⏣ Dojo"
+      },
+      {
+        "id": "DRAGONTAIL_AUCTION_HOUSE",
+        "name": "Dragontail Auction House",
+        "scoreboard_name": "⏣ Dragontail Auction House"
+      },
+      {
+        "id": "DRAGONTAIL_BANK",
+        "name": "Dragontail Bank",
+        "scoreboard_name": "⏣ Dragontail Bank"
+      },
+      {
+        "id": "DRAGONTAIL_BAZAAR",
+        "name": "Dragontail Bazaar",
+        "scoreboard_name": "⏣ Dragontail Bazaar"
+      },
+      {
+        "id": "DRAGONTAIL_BLACKSMITH",
+        "name": "Dragontail Blacksmith",
+        "scoreboard_name": "⏣ Dragontail Blacksmith"
+      },
+      {
+        "id": "DRAGONTAIL_MINION_SHOP",
+        "name": "Dragontail Minion Shop",
+        "scoreboard_name": "⏣ Dragontail Minion Shop"
+      },
+      {
+        "id": "DRAGONTAIL_TOWNSQUARE",
+        "name": "Dragontail Townsquare",
+        "scoreboard_name": "⏣ Dragontail Townsquare"
+      },
+      {
+        "id": "DRAGONTAIL",
+        "name": "Dragontail",
+        "scoreboard_name": "⏣ Dragontail"
+      },
+      {
+        "id": "FORGOTTEN_SKULL",
+        "name": "Forgotten Skull",
+        "scoreboard_name": "⏣ Forgotten Skull"
+      },
+      {
+        "id": "IGRUPANS_CHICKEN_COOP",
+        "name": "Igrupan's Chicken Coop",
+        "scoreboard_name": "⏣ Igrupan's Chicken Coop"
+      },
+      {
+        "id": "IGRUPANS_HOUSE",
+        "name": "Igrupan's House",
+        "scoreboard_name": "⏣ Igrupan's House"
+      },
+      {
+        "id": "MAGE_COUNCIL",
+        "name": "Mage Council",
+        "scoreboard_name": "⏣ Mage Council"
+      },
+      {
+        "id": "MAGE_OUTPOST",
+        "name": "Mage Outpost",
+        "scoreboard_name": "⏣ Mage Outpost"
+      },
+      {
+        "id": "MAGMA_CHAMBER",
+        "name": "Magma Chamber",
+        "scoreboard_name": "⏣ Magma Chamber"
+      },
+      {
+        "id": "MATRIARCHS_LAIR",
+        "name": "Matriarch's Lair",
+        "scoreboard_name": "⏣ Matriarch's Lair"
+      },
+      {
+        "id": "MYSTIC_MARSH",
+        "name": "Mystic Marsh",
+        "scoreboard_name": "⏣ Mystic Marsh"
+      },
+      {
+        "id": "ODGERS_HUT",
+        "name": "Odger's Hut",
+        "scoreboard_name": "⏣ Odger's Hut"
+      },
+      {
+        "id": "PLHLEGBLAST_POOL",
+        "name": "Plhlegblast Pool",
+        "scoreboard_name": "⏣ Plhlegblast Pool"
+      },
+      {
+        "id": "RUINS_OF_ASHFANG",
+        "name": "Ruins of Ashfang",
+        "scoreboard_name": "⏣ Ruins of Ashfang"
+      },
+      {
+        "id": "SCARLETON_AUCTION_HOUSE",
+        "name": "Scarleton Auction House",
+        "scoreboard_name": "⏣ Scarleton Auction House"
+      },
+      {
+        "id": "SCARLETON_BANK",
+        "name": "Scarleton Bank",
+        "scoreboard_name": "⏣ Scarleton Bank"
+      },
+      {
+        "id": "SCARLETON_BAZAAR",
+        "name": "Scarleton Bazaar",
+        "scoreboard_name": "⏣ Scarleton Bazaar"
+      },
+      {
+        "id": "SCARLETON_BLACKSMITH",
+        "name": "Scarleton Blacksmith",
+        "scoreboard_name": "⏣ Scarleton Blacksmith"
+      },
+      {
+        "id": "SCARLETON_MINION_SHOP",
+        "name": "Scarleton Minion Shop",
+        "scoreboard_name": "⏣ Scarleton Minion Shop"
+      },
+      {
+        "id": "SCARLETON_PLAZA",
+        "name": "Scarleton Plaza",
+        "scoreboard_name": "⏣ Scarleton Plaza"
+      },
+      {
+        "id": "SCARLETON",
+        "name": "Scarleton",
+        "scoreboard_name": "⏣ Scarleton"
+      },
+      {
+        "id": "SMOLDERING_TOMB",
+        "name": "Smoldering Tomb",
+        "scoreboard_name": "⏣ Smoldering Tomb"
+      },
+      {
+        "id": "STRONGHOLD",
+        "name": "Stronghold",
+        "scoreboard_name": "⏣ Stronghold"
+      },
+      {
+        "id": "THE_BASTION",
+        "name": "The Bastion",
+        "scoreboard_name": "⏣ The Bastion"
+      },
+      {
+        "id": "THE_DUKEDOM",
+        "name": "The Dukedom",
+        "scoreboard_name": "⏣ The Dukedom"
+      },
+      {
+        "id": "THE_WASTELAND",
+        "name": "The Wasteland",
+        "scoreboard_name": "⏣ The Wasteland"
+      },
+      {
+        "id": "THRONE_ROOM",
+        "name": "Throne Room",
+        "scoreboard_name": "⏣ Throne Room"
+      }
+    ]
+  },
+  {
+    "id": "THE_BARN",
+    "name": "The Barn",
+    "scoreboard_name": "⏣ The Barn",
+    "zones": [
+      {
+        "id": "WINDMILL",
+        "name": "Windmill",
+        "scoreboard_name": "⏣ Windmill"
+      }
+    ]
+  },
+  {
+    "id": "MUSHROOM_DESERT",
+    "name": "Mushroom Desert",
+    "scoreboard_name": "⏣ Mushroom Desert",
+    "zones": [
+      {
+        "id": "DESERT_MOUNTAIN",
+        "name": "Desert Mountain",
+        "scoreboard_name": "⏣ Desert Mountain"
+      },
+      {
+        "id": "DESERT_SETTLEMENT",
+        "name": "Desert Settlement",
+        "scoreboard_name": "⏣ Desert Settlement"
+      },
+      {
+        "id": "GLOWING_MUSHROOM_CAVE",
+        "name": "Glowing Mushroom Cave",
+        "scoreboard_name": "⏣ Glowing Mushroom Cave"
+      },
+      {
+        "id": "JAKES_HOUSE",
+        "name": "Jake's House",
+        "scoreboard_name": "⏣ Jake's House"
+      },
+      {
+        "id": "OASIS",
+        "name": "Oasis",
+        "scoreboard_name": "⏣ Oasis"
+      },
+      {
+        "id": "OVERGROWN_MUSHROOM_CAVE",
+        "name": "Overgrown Mushroom Cave",
+        "scoreboard_name": "⏣ Overgrown Mushroom Cave"
+      },
+      {
+        "id": "MUSHROOM_GORGE",
+        "name": "Mushroom Gorge",
+        "scoreboard_name": "⏣ Mushroom Gorge"
+      },
+      {
+        "id": "SHEPHERDS_KEEP",
+        "name": "Shepherd's Keep",
+        "scoreboard_name": "⏣ Shepherd's Keep"
+      },
+      {
+        "id": "TRAPPERS_DEN",
+        "name": "Trapper's Den",
+        "scoreboard_name": "⏣ Trapper's Den"
+      }
+    ]
+  },
+  {
+    "id": "GOLD_MINE",
+    "name": "Gold Mine",
+    "scoreboard_name": "⏣ Gold Mine"
+  },
+  {
+    "id": "DEEP_CAVERNS",
+    "name": "Deep Caverns",
+    "scoreboard_name": "⏣ Deep Caverns",
+    "zones": [
+      {
+        "id": "GUNPOWDER_MINES",
+        "name": "Gunpowder Mines",
+        "scoreboard_name": "⏣ Gunpowder Mines"
+      },
+      {
+        "id": "LAPIS_QUARRY",
+        "name": "Lapis Quarry",
+        "scoreboard_name": "⏣ Lapis Quarry"
+      },
+      {
+        "id": "PIGMENS_DEN",
+        "name": "Pigmen's Den",
+        "scoreboard_name": "⏣ Pigmen's Den"
+      },
+      {
+        "id": "SLIMEHILL",
+        "name": "Slimehill",
+        "scoreboard_name": "⏣ Slimehill"
+      },
+      {
+        "id": "DIAMOND_RESERVE",
+        "name": "Diamond Reserve",
+        "scoreboard_name": "⏣ Diamond Reserve"
+      },
+      {
+        "id": "OBSIDIAN_SANCTUARY",
+        "name": "Obsidian Sanctuary",
+        "scoreboard_name": "⏣ Obsidian Sanctuary"
+      }
+    ]
+  },
+  {
+    "id": "DWARVEN_MINES",
+    "name": "Dwarven Mines",
+    "scoreboard_name": "⏣ Dwarven Mines",
+    "zones": [
+      {
+        "id": "ABANDONED_QUARRY",
+        "name": "Abandoned Quarry",
+        "scoreboard_name": "⏣ Abandoned Quarry"
+      },
+      {
+        "id": "CLIFFSIDE_VEINS",
+        "name": "Cliffside Veins",
+        "scoreboard_name": "⏣ Cliffside Veins"
+      },
+      {
+        "id": "DIVANS_GATEWAY",
+        "name": "Divan's Gateway",
+        "scoreboard_name": "⏣ Divan's Gateway"
+      },
+      {
+        "id": "DWARVEN_BASE_CAMP",
+        "name": "Dwarven Base Camp",
+        "scoreboard_name": "⏣ Dwarven Base Camp"
+      },
+      {
+        "id": "DWARVEN_VILLAGE",
+        "name": "Dwarven Village",
+        "scoreboard_name": "⏣ Dwarven Village"
+      },
+      {
+        "id": "DWARVEN_TAVERN",
+        "name": "Dwarven Tavern",
+        "scoreboard_name": "⏣ Dwarven Tavern"
+      },
+      {
+        "id": "FAR_RESERVE",
+        "name": "Far Reserve",
+        "scoreboard_name": "⏣ Far Reserve"
+      },
+      {
+        "id": "FOSSIL_RESEARCH_CENTER",
+        "name": "Fossil Research Center",
+        "scoreboard_name": "⏣ Fossil Research Center"
+      },
+      {
+        "id": "GATES_TO_THE_MINES",
+        "name": "Gates to the Mines",
+        "scoreboard_name": "⏣ Gates to the Mines"
+      },
+      {
+        "id": "GOBLIN_BURROWS",
+        "name": "Goblin Burrows",
+        "scoreboard_name": "⏣ Goblin Burrows"
+      },
+      {
+        "id": "GLACITE_TUNNELS",
+        "name": "Glacite Tunnels",
+        "scoreboard_name": "⏣ Glacite Tunnels"
+      },
+      {
+        "id": "GREAT_GLACITE_LAKE",
+        "name": "Great Glacite Lake",
+        "scoreboard_name": "⏣ Great Glacite Lake"
+      },
+      {
+        "id": "GREAT_ICE_WALL",
+        "name": "Great Ice Wall",
+        "scoreboard_name": "⏣ Great Ice Wall"
+      },
+      {
+        "id": "RAMPARTS_QUARRY",
+        "name": "Rampart's Quarry",
+        "scoreboard_name": "⏣ Rampart's Quarry"
+      },
+      {
+        "id": "MINERS_GUILD",
+        "name": "Miner's Guild",
+        "scoreboard_name": "⏣ Miner's Guild"
+      },
+      {
+        "id": "ROYAL_MINES",
+        "name": "Royal Mines",
+        "scoreboard_name": "⏣ Royal Mines"
+      },
+      {
+        "id": "ROYAL_PALACE",
+        "name": "Royal Palace",
+        "scoreboard_name": "⏣ Royal Palace"
+      },
+      {
+        "id": "ARISTOCRAT_PASSAGE",
+        "name": "Aristocrat Passage",
+        "scoreboard_name": "⏣ Aristocrat Passage"
+      },
+      {
+        "id": "BARRACKS_OF_HEROES",
+        "name": "Barracks of Heroes",
+        "scoreboard_name": "⏣ Barracks of Heroes"
+      },
+      {
+        "id": "GRAND_LIBRARY",
+        "name": "Grand Library",
+        "scoreboard_name": "⏣ Grand Library"
+      },
+      {
+        "id": "HANGING_COURT",
+        "name": "Hanging Court",
+        "scoreboard_name": "⏣ Hanging Court"
+      },
+      {
+        "id": "PALACE_BRIDGE",
+        "name": "Palace Bridge",
+        "scoreboard_name": "⏣ Palace Bridge"
+      },
+      {
+        "id": "ROYAL_QUARTERS",
+        "name": "Royal Quarters",
+        "scoreboard_name": "⏣ Royal Quarters"
+      },
+      {
+        "id": "THE_FORGE",
+        "name": "The Forge",
+        "scoreboard_name": "⏣ The Forge"
+      },
+      {
+        "id": "FORGE_BASIN",
+        "name": "Forge Basin",
+        "scoreboard_name": "⏣ Forge Basin"
+      },
+      {
+        "id": "THE_LIFT",
+        "name": "The Lift",
+        "scoreboard_name": "⏣ The Lift"
+      },
+      {
+        "id": "THE_MIST",
+        "name": "The Mist",
+        "scoreboard_name": "⏣ The Mist"
+      },
+      {
+        "id": "UPPER_MINES",
+        "name": "Upper Mines",
+        "scoreboard_name": "⏣ Upper Mines"
+      }
+    ]
+  },
+  {
+    "id": "CRYSTAL_HOLLOWS",
+    "name": "Crystal Hollows",
+    "scoreboard_name": "⏣ Crystal Hollows",
+    "zones": [
+      {
+        "id": "CRYSTAL_NUCLEUS",
+        "name": "Crystal Nucleus",
+        "scoreboard_name": "⏣ Crystal Nucleus"
+      },
+      {
+        "id": "DRAGONS_LAIR",
+        "name": "Dragon's Lair",
+        "scoreboard_name": "⏣ Dragon's Lair"
+      },
+      {
+        "id": "FAIRY_GROTTO",
+        "name": "Fairy Grotto",
+        "scoreboard_name": "⏣ Fairy Grotto"
+      },
+      {
+        "id": "GOBLIN_HOLDOUT",
+        "name": "Goblin Holdout",
+        "scoreboard_name": "⏣ Goblin Holdout"
+      },
+      {
+        "id": "GOBLIN_QUEENS_DEN",
+        "name": "Goblin Queen's Den",
+        "scoreboard_name": "⏣ Goblin Queen's Den"
+      },
+      {
+        "id": "JUNGLE",
+        "name": "Jungle",
+        "scoreboard_name": "⏣ Jungle"
+      },
+      {
+        "id": "JUNGLE_TEMPLE",
+        "name": "Jungle Temple",
+        "scoreboard_name": "⏣ Jungle Temple"
+      },
+      {
+        "id": "MAGMA_FIELDS",
+        "name": "Magma Fields",
+        "scoreboard_name": "⏣ Magma Fields"
+      },
+      {
+        "id": "KHAZAD_DUM",
+        "name": "Khazad-dum",
+        "scoreboard_name": "⏣ Khazad-dûm"
+      },
+      {
+        "id": "MITHRIL_DEPOSITS",
+        "name": "Mithril Deposits",
+        "scoreboard_name": "⏣ Mithril Deposits"
+      },
+      {
+        "id": "MINES_OF_DIVAN",
+        "name": "Mines of Divan",
+        "scoreboard_name": "⏣ Mines of Divan"
+      },
+      {
+        "id": "PRECURSOR_REMNANTS",
+        "name": "Precursor Remnants",
+        "scoreboard_name": "⏣ Precursor Remnants"
+      },
+      {
+        "id": "LOST_PRECURSOR_CITY",
+        "name": "Lost Precursor City",
+        "scoreboard_name": "⏣ Lost Precursor City"
+      }
+    ]
+  },
+  {
+    "id": "THE_PARK",
+    "name": "The Park",
+    "scoreboard_name": "The Park",
+    "zones": [
+      {
+        "id": "BIRCH_PARK",
+        "name": "Birch Park",
+        "scoreboard_name": "⏣ Birch Park"
+      },
+      {
+        "id": "DARK_THICKET",
+        "name": "Dark Thicket",
+        "scoreboard_name": "⏣ Dark Thicket"
+      },
+      {
+        "id": "HOWLING_CAVE",
+        "name": "Howling Cave",
+        "scoreboard_name": "⏣ Howling Cave"
+      },
+      {
+        "id": "TRIALS_OF_FIRE",
+        "name": "Trials of Fire",
+        "scoreboard_name": "⏣ Trials of Fire"
+      },
+      {
+        "id": "JUNGLE_ISLAND",
+        "name": "Jungle Island",
+        "scoreboard_name": "⏣ Jungle Island"
+      },
+      {
+        "id": "SPIRIT_CAVE",
+        "name": "Spirit Cave",
+        "scoreboard_name": "⏣ Spirit Cave"
+      },
+      {
+        "id": "SAVANNA_WOODLAND",
+        "name": "Savanna Woodland",
+        "scoreboard_name": "⏣ Savanna Woodland"
+      },
+      {
+        "id": "SOUL_CAVE",
+        "name": "Soul Cave",
+        "scoreboard_name": "⏣ Soul Cave"
+      },
+      {
+        "id": "MELODYS_PLATEAU",
+        "name": "Melody's Plateau",
+        "scoreboard_name": "⏣ Melody's Plateau"
+      },
+      {
+        "id": "SPRUCE_WOODS",
+        "name": "Spruce Woods",
+        "scoreboard_name": "⏣ Spruce Woods"
+      },
+      {
+        "id": "LONELY_ISLAND",
+        "name": "Lonely Island",
+        "scoreboard_name": "⏣ Lonely Island"
+      },
+      {
+        "id": "VIKING_LONGHOUSE",
+        "name": "Viking Longhouse",
+        "scoreboard_name": "⏣ Viking Longhouse"
+      }
+    ]
+  },
+  {
+    "id": "GALATEA",
+    "name": "Galatea",
+    "scoreboard_name": "⏣ Galatea",
+    "zones": [
+      {
+        "id": "MOONGLADE_MARSH",
+        "name": "Moonglade Marsh",
+        "scoreboard_name": "⏣ Moonglade Marsh"
+      },
+      {
+        "id": "ANCIENT_RUINS",
+        "name": "Ancient Ruins",
+        "scoreboard_name": "⏣ Ancient Ruins"
+      },
+      {
+        "id": "BUBBLEBOOST_COLUMN",
+        "name": "Bubbleboost Column",
+        "scoreboard_name": "⏣ Bubbleboost Column"
+      },
+      {
+        "id": "DIVE_EMBER_PASS",
+        "name": "Dive-Ember Pass",
+        "scoreboard_name": "⏣ Dive-Ember Pass"
+      },
+      {
+        "id": "DRIPTOAD_DELVE",
+        "name": "Driptoad Delve",
+        "scoreboard_name": "⏣ Driptoad Delve"
+      },
+      {
+        "id": "DRIPTOAD_PASS",
+        "name": "Driptoad Pass",
+        "scoreboard_name": "⏣ Driptoad Pass"
+      },
+      {
+        "id": "DROWNED_RELIQUARY",
+        "name": "Drowned Reliquary",
+        "scoreboard_name": "⏣ Drowned Reliquary"
+      },
+      {
+        "id": "EVERGREEN_PLATEAU",
+        "name": "Evergreen Plateau",
+        "scoreboard_name": "⏣ Evergreen Plateau"
+      },
+      {
+        "id": "FOREST_TEMPLE",
+        "name": "Forest Temple",
+        "scoreboard_name": "⏣ Forest Temple"
+      },
+      {
+        "id": "FUSION_HOUSE",
+        "name": "Fusion House",
+        "scoreboard_name": "⏣ Fusion House"
+      },
+      {
+        "id": "KELPWOVEN_TUNNELS",
+        "name": "Kelpwoven Tunnels",
+        "scoreboard_name": "⏣ Kelpwoven Tunnels"
+      },
+      {
+        "id": "MOONGLADES_EDGE",
+        "name": "Moonglade's Edge",
+        "scoreboard_name": "⏣ Moonglade's Edge"
+      },
+      {
+        "id": "MURKWATER_DEPTHS",
+        "name": "Murkwater Depths",
+        "scoreboard_name": "⏣ Murkwater Depths"
+      },
+      {
+        "id": "MURKWATER_LOCH",
+        "name": "Murkwater Loch",
+        "scoreboard_name": "⏣ Murkwater Loch"
+      },
+      {
+        "id": "MURKWATER_OUTPOST",
+        "name": "Murkwater Outpost",
+        "scoreboard_name": "⏣ Murkwater Outpost"
+      },
+      {
+        "id": "MURKWATER_SHALLOWS",
+        "name": "Murkwater Shallows",
+        "scoreboard_name": "⏣ Murkwater Shallows"
+      },
+      {
+        "id": "NORTH_REACHES",
+        "name": "North Reaches",
+        "scoreboard_name": "⏣ North Reaches"
+      },
+      {
+        "id": "NORTH_WETLANDS",
+        "name": "North Wetlands",
+        "scoreboard_name": "⏣ North Wetlands"
+      },
+      {
+        "id": "RED_HOUSE",
+        "name": "Red House",
+        "scoreboard_name": "⏣ Red House"
+      },
+      {
+        "id": "REEFGUARD_PASS",
+        "name": "Reefguard Pass",
+        "scoreboard_name": "⏣ Reefguard Pass"
+      },
+      {
+        "id": "SIDE_EMBER_WAY",
+        "name": "Side-Ember Way",
+        "scoreboard_name": "⏣ Side-Ember Way"
+      },
+      {
+        "id": "STRIDE_EMBER_FISSURE",
+        "name": "Stride-Ember Fissure",
+        "scoreboard_name": "⏣ Stride-Ember Fissure"
+      },
+      {
+        "id": "SOUTH_REACHES",
+        "name": "South Reaches",
+        "scoreboard_name": "⏣ South Reaches"
+      },
+      {
+        "id": "SOUTH_WETLANDS",
+        "name": "South Wetlands",
+        "scoreboard_name": "⏣ South Wetlands"
+      },
+      {
+        "id": "SWAMPCUT_INC",
+        "name": "SwampCut Inc.",
+        "scoreboard_name": "⏣ SwampCut Inc."
+      },
+      {
+        "id": "TANGLEBURGS_PATH",
+        "name": "Tangleburg's Path",
+        "scoreboard_name": "⏣ Tangleburg's Path"
+      },
+      {
+        "id": "TANGLEBURG",
+        "name": "Tangleburg",
+        "scoreboard_name": "⏣ Tangleburg"
+      },
+      {
+        "id": "TANGLEBURG_LIBRARY",
+        "name": "Tangleburg Library",
+        "scoreboard_name": "⏣ Tangleburg Library"
+      },
+      {
+        "id": "TANGLEBURG_BANK",
+        "name": "Tangleburg Bank",
+        "scoreboard_name": "⏣ Tangleburg Bank"
+      },
+      {
+        "id": "TOMB_FLOODWAY",
+        "name": "Tomb Floodway",
+        "scoreboard_name": "⏣ Tomb Floodway"
+      },
+      {
+        "id": "TRANQUIL_PASS",
+        "name": "Tranquil Pass",
+        "scoreboard_name": "⏣ Tranquil Pass"
+      },
+      {
+        "id": "TRANQUILITY_SANCTUM",
+        "name": "Tranquility Sanctum",
+        "scoreboard_name": "⏣ Tranquility Sanctum"
+      },
+      {
+        "id": "VERDANT_SUMMIT",
+        "name": "Verdant Summit",
+        "scoreboard_name": "⏣ Verdant Summit"
+      },
+      {
+        "id": "WEST_REACHES",
+        "name": "West Reaches",
+        "scoreboard_name": "⏣ West Reaches"
+      },
+      {
+        "id": "WESTBOUND_WETLANDS",
+        "name": "Westbound Wetlands",
+        "scoreboard_name": "⏣ Westbound Wetlands"
+      },
+      {
+        "id": "WYRMGROVE_TOMB",
+        "name": "Wyrmgrove Tomb",
+        "scoreboard_name": "⏣ Wyrmgrove Tomb"
+      },
+      {
+        "id": "BACKWATER_BAYOU",
+        "name": "Backwater Bayou",
+        "scoreboard_name": "⏣ Backwater Bayou"
+      }
+    ]
+  },
+  {
+    "id": "JERRYS_WORKSHOP",
+    "name": "Jerry's Workshop",
+    "scoreboard_name": "⏣ Jerry's Workshop",
+    "zones": [
+      {
+        "id": "EINARYS_EMPORIUM",
+        "name": "Einary's Emporium",
+        "scoreboard_name": "⏣ Einary's Emporium"
+      },
+      {
+        "id": "GARYS_SHACK",
+        "name": "Gary's Shack",
+        "scoreboard_name": "⏣ Gary's Shack"
+      },
+      {
+        "id": "GLACIAL_CAVE",
+        "name": "Glacial Cave",
+        "scoreboard_name": "⏣ Glacial Cave"
+      },
+      {
+        "id": "HOT_SPRINGS",
+        "name": "Hot Springs",
+        "scoreboard_name": "⏣ Hot Springs"
+      },
+      {
+        "id": "JERRY_POND",
+        "name": "Jerry Pond",
+        "scoreboard_name": "⏣ Jerry Pond"
+      },
+      {
+        "id": "MOUNT_JERRY",
+        "name": "Mount Jerry",
+        "scoreboard_name": "⏣ Mount Jerry"
+      },
+      {
+        "id": "REFLECTIVE_POND",
+        "name": "Reflective Pond",
+        "scoreboard_name": "⏣ Reflective Pond"
+      },
+      {
+        "id": "SHERRYS_SHOWROOM",
+        "name": "Sherry's Showroom",
+        "scoreboard_name": "⏣ Sherry's Showroom"
+      },
+      {
+        "id": "SUNKEN_JERRY_POND",
+        "name": "Sunken Jerry Pond",
+        "scoreboard_name": "⏣ Sunken Jerry Pond"
+      },
+      {
+        "id": "TERRYS_SHACK",
+        "name": "Terry's Shack",
+        "scoreboard_name": "⏣ Terry's Shack"
+      }
+    ]
+  },
+  {
+    "id": "RIFT_DIMENSION",
+    "name": "Rift Dimension",
+    "scoreboard_name": "ф Rift Dimension",
+    "zones": [
+      {
+        "id": "AROUND_COLOSSEUM",
+        "name": "Around Colosseum",
+        "scoreboard_name": "ф Around Colosseum"
+      },
+      {
+        "id": "BARRIER_STREET",
+        "name": "Barrier Street",
+        "scoreboard_name": "ф Barrier Street"
+      },
+      {
+        "id": "BARRY_CENTER",
+        "name": "Barry Center",
+        "scoreboard_name": "ф Barry Center"
+      },
+      {
+        "id": "BARRY_HQ",
+        "name": "Barry HQ",
+        "scoreboard_name": "ф Barry HQ"
+      },
+      {
+        "id": "BLACK_LAGOON",
+        "name": "Black Lagoon",
+        "scoreboard_name": "ф Black Lagoon"
+      },
+      {
+        "id": "BOOK_IN_A_BOOK",
+        "name": "Book in a Book",
+        "scoreboard_name": "ф Book in a Book"
+      },
+      {
+        "id": "BROKEN_CAGE",
+        "name": "Broken Cage",
+        "scoreboard_name": "ф Broken Cage"
+      },
+      {
+        "id": "CAKE_HOUSE",
+        "name": "Cake House",
+        "scoreboard_name": "ф Cake House"
+      },
+      {
+        "id": "CEREBRAL_CITADEL",
+        "name": "Cerebral Citadel",
+        "scoreboard_name": "ф Cerebral Citadel"
+      },
+      {
+        "id": "COLOSSEUM",
+        "name": "Colosseum",
+        "scoreboard_name": "ф Colosseum"
+      },
+      {
+        "id": "CONTINUUM",
+        "name": "Continuum",
+        "scoreboard_name": "ф Continuum"
+      },
+      {
+        "id": "DOLPHIN_TRAINER",
+        "name": "Dolphin Trainer",
+        "scoreboard_name": "ф Dolphin Trainer"
+      },
+      {
+        "id": "DREADFARM",
+        "name": "Dreadfarm",
+        "scoreboard_name": "ф Dreadfarm"
+      },
+      {
+        "id": "DEJA_VU_ALLEY",
+        "name": "Déjà Vu Alley",
+        "scoreboard_name": "ф Déjà Vu Alley"
+      },
+      {
+        "id": "EMPTY_BANK",
+        "name": "Empty Bank",
+        "scoreboard_name": "ф Empty Bank"
+      },
+      {
+        "id": "ENIGMAS_CRIB",
+        "name": "Enigma's Crib",
+        "scoreboard_name": "ф Enigma's Crib"
+      },
+      {
+        "id": "FAIRYLOSOPHY_TOWER",
+        "name": "Fairylosophy Tower",
+        "scoreboard_name": "ф Fairylosophy Tower"
+      },
+      {
+        "id": "GREAT_BEANSTALK",
+        "name": "Great Beanstalk",
+        "scoreboard_name": "ф Great Beanstalk"
+      },
+      {
+        "id": "HALF_EATEN_CAVE",
+        "name": "Half-Eaten Cave",
+        "scoreboard_name": "ф Half-Eaten Cave"
+      },
+      {
+        "id": "INFESTED_HOUSE",
+        "name": "Infested House",
+        "scoreboard_name": "ф Infested House"
+      },
+      {
+        "id": "LAGOON_CAVE",
+        "name": "Lagoon Cave",
+        "scoreboard_name": "ф Lagoon Cave"
+      },
+      {
+        "id": "LAGOON_HUT",
+        "name": "Lagoon Hut",
+        "scoreboard_name": "ф Lagoon Hut"
+      },
+      {
+        "id": "LEECHES_LAIR",
+        "name": "Leeches Lair",
+        "scoreboard_name": "ф Leeches Lair"
+      },
+      {
+        "id": "LIVING_CAVE",
+        "name": "Living Cave",
+        "scoreboard_name": "ф Living Cave"
+      },
+      {
+        "id": "LIVING_STILLNESS",
+        "name": "Living Stillness",
+        "scoreboard_name": "ф Living Stillness"
+      },
+      {
+        "id": "LONELY_TERRACE",
+        "name": "Lonely Terrace",
+        "scoreboard_name": "ф Lonely Terrace"
+      },
+      {
+        "id": "MIRRORVERSE",
+        "name": "Mirrorverse",
+        "scoreboard_name": "ф Mirrorverse"
+      },
+      {
+        "id": "THE_MOUNTAINTOP",
+        "name": "The Mountaintop",
+        "scoreboard_name": "ф The Mountaintop"
+      },
+      {
+        "id": "MURDER_HOUSE",
+        "name": "Murder House",
+        "scoreboard_name": "ф Murder House"
+      },
+      {
+        "id": "OTHERSIDE",
+        "name": "Otherside",
+        "scoreboard_name": "ф Otherside"
+      },
+      {
+        "id": "OUBLIETTE",
+        "name": "Oubliette",
+        "scoreboard_name": "ф Oubliette"
+      },
+      {
+        "id": "PHOTON_PATHWAY",
+        "name": "Photon Pathway",
+        "scoreboard_name": "ф Photon Pathway"
+      },
+      {
+        "id": "PUMPGROTTO",
+        "name": "Pumpgrotto",
+        "scoreboard_name": "ф Pumpgrotto"
+      },
+      {
+        "id": "RIFT_GALLERY_ENTRANCE",
+        "name": "Rift Gallery Entrance",
+        "scoreboard_name": "ф Rift Gallery Entrance"
+      },
+      {
+        "id": "RIFT_GALLERY",
+        "name": "Rift Gallery",
+        "scoreboard_name": "ф Rift Gallery"
+      },
+      {
+        "id": "ROSES_END",
+        "name": "Rose's End",
+        "scoreboard_name": "ф Rose's End"
+      },
+      {
+        "id": "SHIFTED_TAVERN",
+        "name": "Shifted Tavern",
+        "scoreboard_name": "ф Shifted Tavern"
+      },
+      {
+        "id": "STILLGORE_CHATEAU",
+        "name": "Stillgore Chateau",
+        "scoreboard_name": "ф Stillgore Château"
+      },
+      {
+        "id": "TAYLORS",
+        "name": "Taylor's",
+        "scoreboard_name": "ф Taylor's"
+      },
+      {
+        "id": "THE_BASTION",
+        "name": "The Bastion",
+        "scoreboard_name": "ф The Bastion"
+      },
+      {
+        "id": "THE_VENTS",
+        "name": "The Vents",
+        "scoreboard_name": "ф The Vents"
+      },
+      {
+        "id": "TIME_CHAMBER",
+        "name": "Time Chamber",
+        "scoreboard_name": "ф Time Chamber"
+      },
+      {
+        "id": "TRIAL_GROUNDS",
+        "name": "Trial Grounds",
+        "scoreboard_name": "ф Trial Grounds"
+      },
+      {
+        "id": "VILLAGE_PLAZA",
+        "name": "Village Plaza",
+        "scoreboard_name": "ф Village Plaza"
+      },
+      {
+        "id": "WALK_OF_FAME",
+        "name": "Walk of Fame",
+        "scoreboard_name": "ф Walk of Fame"
+      },
+      {
+        "id": "WEST_VILLAGE",
+        "name": "West Village",
+        "scoreboard_name": "ф West Village"
+      },
+      {
+        "id": "WIZARDMAN_BUREAU",
+        "name": "Wizardman Bureau",
+        "scoreboard_name": "ф Wizardman Bureau"
+      },
+      {
+        "id": "WIZARD_BRAWL",
+        "name": "Wizard Brawl",
+        "scoreboard_name": "ф Wizard Brawl"
+      },
+      {
+        "id": "WIZARD_TOWER",
+        "name": "Wizard Tower",
+        "scoreboard_name": "ф Wizard Tower"
+      },
+      {
+        "id": "WYLD_WOODS",
+        "name": "Wyld Woods",
+        "scoreboard_name": "ф Wyld Woods"
+      },
+      {
+        "id": "YOUR_ISLAND",
+        "name": "Your Island",
+        "scoreboard_name": "ф \"Your\" Island"
+      }
+    ]
+  },
+  {
+    "id": "BLAZING_FORTRESS",
+    "name": "Blazing Fortress",
+    "scoreboard_name": "⏣ Blazing Fortress"
+  },
+  {
+    "id": "FLOATING_ISLANDS",
+    "name": "Floating Islands",
+    "scoreboard_name": "Floating Islands"
+  },
+  {
+    "id": "BARTER_BANK_SHOW",
+    "name": "Barter Bank Show",
+    "scoreboard_name": "ф Barter Bank Show"
+  },
+  {
+    "id": "SNOWBALL_FIGHT_CAVE",
+    "name": "Snowball Fight Cave",
+    "scoreboard_name": "⏣ Snowball Fight Cave"
+  },
+  {
+    "id": "OPERATION_MAYHEM",
+    "name": "Operation Mayhem",
+    "scoreboard_name": "⏣ Operation Mayhem"
+  },
+  {
+    "id": "PRIVATE_ISLAND",
+    "name": "Private Island",
+    "scoreboard_name": "⏣ Private Island"
+  },
+  {
+    "id": "THE_GARDEN",
+    "name": "The Garden",
+    "scoreboard_name": "⏣ The Garden"
+  },
+  {
+    "id": "JERRYS_WORKSHOP_JERRY_POND",
+    "name": "Jerry's Workshop / Jerry Pond",
+    "scoreboard_name": "⏣ Jerry's Workshop / ⏣ Jerry Pond"
+  },
+  {
+    "id": "DUNGEON_HUB",
+    "name": "Dungeon Hub",
+    "scoreboard_name": "⏣ Dungeon Hub"
+  },
+  {
+    "id": "LIMBO",
+    "name": "Limbo",
+    "scoreboard_name": "⏣ Limbo"
+  }
+]
