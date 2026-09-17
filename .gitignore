@@ -20,6 +20,7 @@ run/
 Thumbs.db
 
 # Dev Stuff
+MODULARIZATION_PROMPT.md
 dev.json
 all_location.json
 install.sh
