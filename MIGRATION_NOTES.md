@@ -68,17 +68,25 @@ layer is only ever an asynchronous refresher of that cache (ADR-010).
 
 | Path | Contents |
 |---|---|
-| `skysens-common/…/dto/**` | Wire DTOs as records, one package per domain |
-| `skysens-common/…/api/**` | Plain-Java contract interfaces mirroring the §7 endpoint table |
+| `skysens-common/…/dto/auth/**` | The 4 handshake records — the only wire contract |
 | `skysens-common/…/version/ApiVersion` | API version constant + compatibility check |
-| `skysens-server/**` | Spring Boot skeleton: controllers, services + stub impls, repositories, entities, mappers, security, exception handling, `application.yml` with `dev`/`prod` profiles |
-| `skysens-mod/…/client/net/**` | `SkysensApiClient`, `ApiEndpoints`, `SkysensSession`, `cache/`, `mapper/`, `sync/` — skeleton only |
+| `skysens-server/**` | Bare Spring Boot app + the auth mechanism: `security/` (Mojang verifier, token filter, principal), `AuthController`, `AuthService`. No persistence layer |
+| `skysens-mod/…/client/net/**` | `SkysensApiClient`, `SkysensSession`, `ApiEndpoints` — the connection base classes, stubbed |
 | `skysens-mod/…/config/categories/server/ServerCategory` | Six opt-in toggles, all defaulting to off |
 | `ARCHITECTURE.md`, `MIGRATION_NOTES.md` | This design record |
 
+An earlier revision of this branch also generated a seven-domain server structure
+(7 controllers, 14 service types, 5 field-less entities, 5 repositories, 4 empty
+mappers) and 26 DTO/contract types in `skysens-common`, plus `client/net/{cache,
+sync,mapper}`. **All of it was removed** — see ADR-011. It described endpoints
+nobody had committed to building. The design record survives in `ARCHITECTURE.md`
+§5 and §7, both explicitly marked as planned rather than built.
+
 **Nothing new is wired in.** `client/net/` is not referenced from
 `SkysensClient.onInitializeClient()`, no feature calls it, and every stub body
-carries a `TODO(deferred): <what>` marker.
+carries a `TODO(deferred): <what>` marker. The server has no persistence
+dependencies at all — add JPA and Flyway in the same commit as the first entity that
+needs them, not before.
 
 The one change to an existing file's behaviour surface is the new `ServerCategory`
 field on `SkysensConfig`. It adds a "Server" tab to the config GUI with six toggles
@@ -114,7 +122,7 @@ files deserialize unchanged and simply gain the new defaults.
 |---|---|
 | `./gradlew build` succeeds at the root, all three modules | ✅ verified |
 | `./gradlew :skysens-mod:shadowJar` produces a jar, MoulConfig relocation intact | ✅ verified (see point 4 above) |
-| `./gradlew :skysens-server:bootRun` starts with no Minecraft or Fabric on its classpath | ✅ verified — context loads and the server runtime classpath contains zero `minecraft`/`fabric` entries |
+| `./gradlew :skysens-server:bootRun` starts with no Minecraft or Fabric on its classpath | ✅ verified — starts in 0.5s; `POST /api/v1/auth/handshake` returns 500 from its stub; the server runtime classpath contains zero `minecraft`/`fabric` entries |
 | `skysens-common` compiles with neither Minecraft, Fabric nor Spring | ✅ verified — its runtime classpath is literally empty; gson and annotations are `compileOnly` |
 | Every stub carries a `TODO(deferred)` marker | ✅ verified |
 | No behavioural change; zero features migrated | ✅ by construction, argued above |
@@ -133,3 +141,6 @@ files deserialize unchanged and simply gain the new defaults.
    survival after account deletion, and the in-mod privacy notice.
 5. Decide whether `client/net/` ever needs `Lazy`; if so, move it with an explicit
    Guava dependency rather than duplicating it.
+6. Build the server out one domain at a time (ADR-011). Each one brings its own
+   DTO in `skysens-common`, its controller and service, and — for the first one that
+   persists anything — the JPA/Flyway dependencies and a real migration.

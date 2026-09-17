@@ -7,11 +7,22 @@ This document records the module split, the dependency rules, the shared domains
 the identity decision, the endpoint contract, the legal position, and every
 architectural decision made along the way.
 
-> **Status.** This pass produced **structure only**: module layout, build files,
-> package trees, DTO/interface signatures and an endpoint contract. No business
-> logic was written, no feature was migrated, and nothing in `client/net/` is wired
-> into `SkysensClient.onInitializeClient()`. Every place real logic belongs carries
-> a `TODO(deferred): <what>` marker.
+> **Status — read this first.**
+>
+> What **exists** today: the three-module split, the shared domain classes extracted
+> from the mod, the **auth mechanism** (client session holder + server handshake
+> endpoints and Mojang verifier, all stubbed), and the **connection base classes**
+> in the mod (`SkysensApiClient`, `SkysensSession`, `ApiEndpoints`).
+>
+> What is **designed but deliberately not built**: every shared domain in §5, every
+> endpoint in §7 except `/auth/**`, and all persistence. Those sections are a
+> forward-looking record, not a description of code. The server was cut back to a
+> bare skeleton plus auth on purpose (ADR-011) so it can be grown deliberately
+> rather than filled in from a template.
+>
+> No business logic was written, no feature was migrated, and nothing in
+> `client/net/` is wired into `SkysensClient.onInitializeClient()`. Every stub body
+> carries a `TODO(deferred): <what>` marker.
 
 ---
 
@@ -38,8 +49,8 @@ skysens/                        root — conventions only, no code, NO Loom
                    │  implementation(project(":skysens-common"))
                    │
           ┌────────┴────────┐
-          │ skysens-server  │   Spring Boot 4.1.1, JPA, Flyway
-          │  (HTTP service) │
+          │ skysens-server  │   Spring Boot 4.1.1, web + validation.
+          │  (HTTP service) │   No persistence layer yet.
           └─────────────────┘
 ```
 
@@ -180,20 +191,25 @@ fit.
 
 ```
 de/vantrex/skysens/common/
-├── api/            contract interfaces mirroring §7 (plain Java, no Spring)
-├── domain/
+├── domain/         extracted from the mod, unchanged apart from package
 │   ├── dungeon/    DungeonSplit + 5 dungeon enums
 │   ├── location/   SkyblockLocationEnum, Zone, zone/ (18 types)
 │   ├── notification/  NotificationDisplayTypeEnum
 │   └── sensitivity/   SensitivityConfiguration
-├── dto/            wire DTOs (records), one package per domain
+├── dto/auth/       the 4 handshake records — the only wire contract so far
 ├── util/           NumberUtil
 └── version/        ApiVersion — constant + compatibility check
 ```
 
 ---
 
-## 5. Shared domains
+## 5. Shared domains — planned, not built
+
+> **None of this exists in code.** No DTO, controller, entity or endpoint below is
+> implemented; the DTO records that previously sketched them were removed (ADR-011).
+> This table is the design record for what the server is *for*, to be built one
+> domain at a time.
+
 
 | # | Domain | DTO(s) | Direction | Notes |
 |---|---|---|---|---|
@@ -282,7 +298,11 @@ filter fails **open** on the anonymous surface and closed everywhere else.
 
 ---
 
-## 7. Endpoint contract
+## 7. Endpoint contract — planned, not built
+
+> **Only `/api/v1/auth/**` exists**, and its handlers are `TODO(deferred)` stubs that
+> return 500. Every other row below is a design target with no code behind it.
+
 
 All paths are versioned under `/api/v1/`. `ApiEndpoints` in the mod derives its
 constants from `ApiVersion.PATH_SEGMENT` so a version bump cannot leave a stale path
@@ -353,17 +373,16 @@ enhancement layer, never a dependency of correctness. The full table lives in
   the contract enforceable rather than aspirational.
 - **Disabled in config (the default): no request is constructed at all.** A fresh
   install makes zero network requests.
-- Timeout / 5xx / other 4xx → empty result, cache untouched, exponential backoff up
-  to 30 min. An outage is indistinguishable from "offline" to a feature.
-- 401 → drop the token, one re-handshake; a second 401 disables authenticated sync
+- Timeout / 5xx / other 4xx → empty result, whatever local value the caller holds is
+  untouched. An outage is indistinguishable from "offline" to a feature.
+- 401 → drop the token, one re-handshake; a second 401 disables authenticated calls
   for the session.
-- Version mismatch (426, or a manifest outside the supported window) → all sync
-  permanently disabled for the session, one debug line. Never retried: the answer
-  cannot change until the user updates.
-- **Stale is not absent.** An expired cache entry is still served; expiry only means
-  "worth refreshing in the background". Bundled resources (`splits.json`,
-  `assets/all_locations.json`) are the floor, so there is no state in which a
-  feature has no data.
+- Version mismatch (426) → backend calls permanently disabled for the session, one
+  debug line. Never retried: the answer cannot change until the user updates.
+- **Stale is not absent.** When a cache layer is eventually added, an expired entry
+  must still be served; expiry means only "worth refreshing in the background".
+  Bundled resources (`splits.json`, `assets/all_locations.json`) are the floor, so
+  there is no state in which a feature has no data.
 - **Threading:** all network work runs on the existing 2-thread
   `SkysensClient.SCHEDULER`. No per-feature executors. Results are applied on the
   client thread via `Minecraft.getInstance().execute(...)`. Because the pool is
@@ -372,8 +391,9 @@ enhancement layer, never a dependency of correctness. The full table lives in
 ### Config toggles
 
 Declared in `client/config/categories/server/ServerCategory.java` and registered in
-`SkysensConfig` as a "Server" category. **Declarations only — nothing reads them
-yet.** All default to off:
+`SkysensConfig` as a "Server" category. **Declarations only — `SkysensApiClient`
+will read them, but nothing calls it yet.** All default to off, so a fresh install
+makes zero network requests:
 
 `serverEnabled`, `serverBaseUrl`, `shareDungeonRuns`, `shareSensitivityProfiles`,
 `downloadRemoteAssets`, `honourRemoteFeatureFlags`.
@@ -463,18 +483,21 @@ the root would attempt to provide and remap Minecraft for the Spring module.
 `from(sourceSets…)`.** See §1. Option (a) over option (b) for Gradle 9 /
 configuration-cache compatibility and correct task dependencies.
 
-**ADR-004 — Persistence: PostgreSQL + Flyway, with H2 only in the `dev` profile.**
-Recommended and adopted rather than left open. The data is relational and will be
-queried relationally — runs belong to players, splits belong to runs, personal bests
-are a projection over run history, and profile browsing needs paging and sorting
-over a shared table. Postgres also gives proper `uuid` and `jsonb` types, which
-matter because `SensitivityConfiguration` is a nested document that is stored whole
-and never queried into. Flyway rather than `ddl-auto`: the schema is a versioned
-artefact that must migrate forward on a live database, and `ddl-auto` is
-`validate`/`none` in every profile so Hibernate can never mutate it. H2 is confined
-to the `dev` profile so the skeleton boots with nothing installed; it runs in
-PostgreSQL compatibility mode and with Flyway disabled, and it is never the target
-of a migration.
+**ADR-004 — Persistence deferred; PostgreSQL + Flyway recommended when it lands.**
+The server currently has **no persistence layer at all** — no JPA, no Flyway, no
+JDBC driver, no datasource config. Entities with no fields and repositories with no
+queries are not a foundation, they are a guess, and they were removed (ADR-011). Add
+the dependencies in the same commit as the first entity that needs them.
+
+The recommendation, for when that happens: **PostgreSQL + Flyway**. The data is
+relational and will be queried relationally — runs belong to players, splits belong
+to runs, personal bests are a projection over run history, and profile browsing
+needs paging and sorting over a shared table. Postgres also gives proper `uuid` and
+`jsonb` types, which matter because `SensitivityConfiguration` is a nested document
+that is stored whole and never queried into. Flyway rather than `ddl-auto`: the
+schema is a versioned artefact that must migrate forward on a live database. If a
+zero-install dev profile is wanted, H2 in PostgreSQL compatibility mode with Flyway
+disabled is the usual answer — but it should never be the target of a migration.
 
 **ADR-005 — Identity via the Mojang session-server handshake; UUID is the canonical
 key.** See §6. *Alternatives rejected:* (a) trusting `PlayerService.currentPlayerName`
@@ -515,3 +538,28 @@ The repository layer stays the source of truth features read from; `client/net/`
 only ever an asynchronous refresher of that cache. This is what makes the
 offline-first requirement structural rather than a matter of discipline in each
 feature.
+
+**ADR-011 — The server is a bare skeleton plus auth; speculative scaffolding was
+removed.** The first pass generated a full seven-domain layered structure: 7
+controllers, 7 service interfaces with 7 stub impls, 5 field-less JPA entities, 5
+repositories, 4 empty mappers, and 26 DTO/contract types in `skysens-common` — 76
+files describing endpoints nobody had committed to building. Of those, 72 were
+removed and 4 kept (the auth DTOs). That is a template, not
+a design, and every one of those files was something to delete or rewrite later.
+
+**Kept:** the auth mechanism end to end (`server/security/` + `AuthController` +
+`AuthService`, and `client/net/SkysensSession` on the mod side), the connection base
+classes in the mod (`SkysensApiClient`, `ApiEndpoints`), the four auth DTOs in
+`skysens-common`, `ApiVersion`, and the `ServerCategory` opt-in toggles the client
+reads. Authentication is the one piece that genuinely must be settled before
+anything else can be built on top, and it is inherently two-sided, which is why its
+DTOs stay in `skysens-common` rather than moving to the server.
+
+**Removed:** everything else listed above, plus `client/net/{cache,sync,mapper}` —
+caching, sync scheduling and DTO mapping are support layers for features that do not
+exist, and their right shape will be obvious only once one does. The design record
+for all of it survives in §5 and §7, which is the useful part.
+
+*Consequence:* `skysens-common` no longer contains a wire contract beyond auth, so
+the "impossible to drift" property of ADR-001 currently applies only to the shared
+domain classes and the auth DTOs. It re-applies to each new domain as it is added.

@@ -1,6 +1,5 @@
 package de.vantrex.skysens.server.controller;
 
-import de.vantrex.skysens.common.api.AuthApi;
 import de.vantrex.skysens.common.dto.auth.AuthHandshakeCompleteRequest;
 import de.vantrex.skysens.common.dto.auth.AuthHandshakeStartResponse;
 import de.vantrex.skysens.common.dto.auth.RefreshTokenRequest;
@@ -20,18 +19,16 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
-public class AuthController implements AuthApi {
+public class AuthController {
 
     private final AuthService authService;
 
-    @Override
     @PostMapping("/handshake")
     public AuthHandshakeStartResponse startHandshake() {
         // TODO(deferred): mint a one-shot serverId challenge and stash it with a TTL
         throw new UnsupportedOperationException("TODO(deferred): handshake start");
     }
 
-    @Override
     @PostMapping("/handshake/complete")
     public SessionTokenDto completeHandshake(@Valid @RequestBody final AuthHandshakeCompleteRequest request) {
         // TODO(deferred): verify via Mojang hasJoined, then mint a session token
@@ -39,14 +36,12 @@ public class AuthController implements AuthApi {
         throw new UnsupportedOperationException("TODO(deferred): handshake completion");
     }
 
-    @Override
     @PostMapping("/refresh")
     public SessionTokenDto refresh(@Valid @RequestBody final RefreshTokenRequest request) {
         // TODO(deferred): rotate the refresh token and issue a fresh access token
         throw new UnsupportedOperationException("TODO(deferred): token refresh");
     }
 
-    @Override
     @DeleteMapping("/account")
     public void deleteAccount() {
         // TODO(deferred): GDPR erasure (§8) — delete runs, PBs, published profiles

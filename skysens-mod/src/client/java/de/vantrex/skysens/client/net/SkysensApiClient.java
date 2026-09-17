@@ -92,14 +92,14 @@ public final class SkysensApiClient {
     }
 
     /**
-     * Conditional GET for versioned assets (§5.4). Sends {@code If-None-Match} and
-     * treats {@code 304} as success-with-no-change, leaving the cache alone.
+     * Conditional GET. Sends {@code If-None-Match} and treats {@code 304} as
+     * success-with-no-change, so a caller holding a cached copy can keep it.
      */
     public <T> CompletableFuture<Optional<T>> getIfChanged(final String path,
                                                            final String cachedEtag,
                                                            final Class<T> responseType) {
         // TODO(deferred): If-None-Match handling; 304 -> Optional.empty() WITHOUT
-        //                 invalidating the cached copy.
+        //                 signalling that the caller's cached copy is stale.
         return CompletableFuture.completedFuture(Optional.empty());
     }
 }
