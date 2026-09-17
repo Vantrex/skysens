@@ -2,7 +2,7 @@ package de.vantrex.skysens.client.mixin;
 
 import de.vantrex.skysens.client.feature.LivingEntityFeature;
 import de.vantrex.skysens.client.service.FeatureService;
-import net.minecraft.entity.LivingEntity;
+import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -15,7 +15,7 @@ public abstract class LivingEntityMixin  {
     @Unique
     private final FeatureService featureService = FeatureService.getInstance();
 
-    @Inject(method = {"getHandSwingDuration"}, at = {@At("HEAD")}, cancellable = true)
+    @Inject(method = {"getCurrentSwingDuration"}, at = {@At("HEAD")}, cancellable = true)
     private void getHandSwingDuration$Head(CallbackInfoReturnable<Integer> cir) {
         for (LivingEntityFeature livingEntityFeature : featureService.getFeatureRegistry().getLivingEntityFeature()) {
             if (livingEntityFeature.isActive()) {

@@ -5,19 +5,20 @@ import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.handler.ChatHandler;
 import de.vantrex.skysens.client.handler.TickHandlers;
 import de.vantrex.skysens.client.handler.UseHandlers;
+import de.vantrex.skysens.client.dungeon.DungeonStateManager;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
 import de.vantrex.skysens.client.service.LocationService;
 import de.vantrex.skysens.client.service.SensitivityService;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.loader.api.FabricLoader;
 import net.hypixel.data.type.GameType;
 import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 
 import java.io.File;
 import java.util.concurrent.Executors;
@@ -51,6 +52,7 @@ public class SkysensClient implements ClientModInitializer {
         UseHandlers.register();
         TickHandlers.register();
         ChatHandler.register();
+        DungeonStateManager.getInstance();
     }
 
     private void createConfigDirectory() {
@@ -85,15 +87,15 @@ public class SkysensClient implements ClientModInitializer {
 
     private void registerCommands() {
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> {
-            dispatcher.register(ClientCommandManager.literal("skysens")
+            dispatcher.register(ClientCommands.literal("skysens")
                     .executes(context -> {
-                        MinecraftClient client = MinecraftClient.getInstance();
+                        Minecraft client = Minecraft.getInstance();
                         // Schedule the screen opening on the main thread
-                        client.send(SkysensConfig.getConfig()::openConfigGui);
+                        client.execute(SkysensConfig.getConfig()::openConfigGui);
                         return 1;
                     }));
-            dispatcher.register(ClientCommandManager.literal("mocklocation")
-                    .then(ClientCommandManager.argument("location", StringArgumentType.string())
+            dispatcher.register(ClientCommands.literal("mocklocation")
+                    .then(ClientCommands.argument("location", StringArgumentType.string())
                             .executes(context -> {
                                 String location = StringArgumentType.getString(context, "location");
                                 if (location.equals("null")) {

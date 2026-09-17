@@ -4,9 +4,9 @@ import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.bazaar.BazaarCategory;
 import de.vantrex.skysens.client.feature.HandledScreenFeature;
 import de.vantrex.skysens.client.service.PlayerService;
-import net.minecraft.component.type.LoreComponent;
-import net.minecraft.item.ItemStack;
-import net.minecraft.text.Text;
+import net.minecraft.world.item.component.ItemLore;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.network.chat.Component;
 
 public abstract class AbstractBazaarFeature implements HandledScreenFeature {
 
@@ -14,7 +14,7 @@ public abstract class AbstractBazaarFeature implements HandledScreenFeature {
     protected final PlayerService playerService = PlayerService.getInstance();
 
     protected final OrderType getOrderType(ItemStack stack) {
-        final String name = stack.getName().getString();
+        final String name = stack.getHoverName().getString();
         final String[] parts = name.split(" ");
         if (parts.length < 1) {
             return null;
@@ -26,16 +26,16 @@ public abstract class AbstractBazaarFeature implements HandledScreenFeature {
         };
     }
 
-    protected boolean isFilled(LoreComponent lore) {
+    protected boolean isFilled(ItemLore lore) {
         if (lore.lines().size() < 4) {
             return false;
         }
-        final Text filledLine = lore.lines().get(3);
+        final Component filledLine = lore.lines().get(3);
         return filledLine.getString().endsWith("100%!");
     }
 
-    protected boolean isOwnPlayer(LoreComponent lore) {
-        for (final Text line : lore.lines()) {
+    protected boolean isOwnPlayer(ItemLore lore) {
+        for (final Component line : lore.lines()) {
             final var text = line.getString();
             if (!text.startsWith("By:")) {
                 continue;

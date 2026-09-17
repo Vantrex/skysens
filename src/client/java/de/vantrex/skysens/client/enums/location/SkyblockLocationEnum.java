@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.enums.location;
 
 import de.vantrex.skysens.client.enums.location.zone.*;
+import de.vantrex.skysens.client.enums.location.zone.FishingIslandsZoneEnum;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +23,7 @@ public enum SkyblockLocationEnum {
     CRYSTAL_HOLLOWS("Crystal Hollows", "⏣ Crystal Hollows", CrystalHollowsZoneEnum.class),
     THE_PARK("The Park", "The Park", TheParkZoneEnum.class),
     GALATEA("Galatea", "⏣ Galatea", GalateaZoneEnum.class),
+    FISHING_ISLANDS("Fishing Island", "⏣ Fishing Island", FishingIslandsZoneEnum.class),
     JERRYS_WORKSHOP("Jerry's Workshop", "⏣ Jerry's Workshop", JerrysWorkshopZoneEnum.class),
     RIFT_DIMENSION("Rift Dimension", "ф Rift Dimension", RiftZoneEnum.class),
     BLAZING_FORTRESS("Blazing Fortress", "⏣ Blazing Fortress"),

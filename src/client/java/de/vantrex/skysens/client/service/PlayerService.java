@@ -2,8 +2,8 @@ package de.vantrex.skysens.client.service;
 
 import lombok.Getter;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
 
 @Getter
 public class PlayerService {
@@ -11,14 +11,14 @@ public class PlayerService {
     @Getter
     private static final PlayerService instance = new PlayerService();
 
-    private final MinecraftClient client = MinecraftClient.getInstance();
+    private final Minecraft client = Minecraft.getInstance();
     private String currentPlayerName;
 
     private PlayerService() {
-        ClientTickEvents.END_WORLD_TICK.register(this::updatePlayerName);
+        ClientTickEvents.END_LEVEL_TICK.register(this::updatePlayerName);
     }
 
-    private void updatePlayerName(ClientWorld clientWorld) {
+    private void updatePlayerName(ClientLevel clientWorld) {
         if (client.player != null) {
             this.currentPlayerName = client.player.getName().getString();
         } else {

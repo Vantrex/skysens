@@ -1,6 +1,6 @@
 package de.vantrex.skysens.client.feature;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public interface ItemRightClickFeature extends Feature {

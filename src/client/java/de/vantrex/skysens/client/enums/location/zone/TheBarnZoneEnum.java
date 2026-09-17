@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 public enum TheBarnZoneEnum implements ZoneEnum<TheBarnZoneEnum> {
 
     WINDMILL("Windmill", "⏣ Windmill"),
+    THE_BARN("The Barn", "⏣ The Barn"),
 
     ;
 

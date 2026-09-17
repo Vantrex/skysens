@@ -11,7 +11,7 @@ import de.vantrex.skysens.client.service.LocationService;
 import de.vantrex.skysens.client.service.SensitivityService;
 import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
-import net.minecraft.sound.SoundEvents;
+import net.minecraft.sounds.SoundEvents;
 
 @SkySensFeature
 public class ZoneBasedSensitivityFeature implements MouseFeature, SkysensListener<ZoneChangeEvent> {
@@ -29,7 +29,7 @@ public class ZoneBasedSensitivityFeature implements MouseFeature, SkysensListene
         if (event.getNewZone() == null) {
             if (this.currentSensitivity != null) {
                 ClientUtil.sendTitle("§5SkySens", "Reset Sensitivity ");
-                ClientUtil.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
+                ClientUtil.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
             }
             this.currentSensitivity = null;
             return;
@@ -37,7 +37,7 @@ public class ZoneBasedSensitivityFeature implements MouseFeature, SkysensListene
         if (this.sensitivityConfiguration == null) {
             if (this.currentSensitivity != null) {
                 ClientUtil.sendTitle("§5SkySens", "Reset Sensitivity ");
-                ClientUtil.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
+                ClientUtil.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
             }
             this.currentSensitivity = null;
             return;
@@ -46,7 +46,7 @@ public class ZoneBasedSensitivityFeature implements MouseFeature, SkysensListene
         if (locationConfig == null) {
             if (this.currentSensitivity != null) {
                 ClientUtil.sendTitle("§5SkySens", "Reset Sensitivity ");
-                ClientUtil.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
+                ClientUtil.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
             }
             this.currentSensitivity = null;
             return;
@@ -55,7 +55,7 @@ public class ZoneBasedSensitivityFeature implements MouseFeature, SkysensListene
         if (zoneSensitivity == null || !zoneSensitivity.isEnabled()) {
             if (this.currentSensitivity != null) {
                 ClientUtil.sendTitle("§5SkySens", "Reset Sensitivity ");
-                ClientUtil.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
+                ClientUtil.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
             }
             this.currentSensitivity = null;
             return;
@@ -65,7 +65,7 @@ public class ZoneBasedSensitivityFeature implements MouseFeature, SkysensListene
             return;
         }
         ClientUtil.sendTitle(LocationService.getZoneName(event.getNewZone()), "Sensitivity: " + locationConfig.getSensitivity() * 100F);
-        ClientUtil.playSound(SoundEvents.BLOCK_NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
+        ClientUtil.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
         this.currentSensitivity = newSensitivity;
     }
 

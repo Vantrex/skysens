@@ -2,13 +2,13 @@ package de.vantrex.skysens.client.mixin;
 
 import de.vantrex.skysens.client.feature.HandledScreenFeature;
 import de.vantrex.skysens.client.service.FeatureService;
-import net.minecraft.client.gui.Click;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.screen.ingame.HandledScreen;
-import net.minecraft.screen.ScreenHandler;
-import net.minecraft.screen.slot.Slot;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(HandledScreen.class)
+@Mixin(AbstractContainerScreen.class)
 public abstract class HandledScreenMixin {
 
     @Unique
@@ -26,16 +26,16 @@ public abstract class HandledScreenMixin {
 
     @Final
     @Shadow
-    protected ScreenHandler handler;
+    protected AbstractContainerMenu menu;
 
     @Shadow
-    protected int x;
+    protected int leftPos;
     @Shadow
-    protected int y;
+    protected int topPos;
 
-    @Inject(method = "drawSlot", at = @At("HEAD"), cancellable = true)
-    private void skysens$drawSlot$Head(DrawContext context, Slot slot, CallbackInfo ci) {
-        Text containerTitle = ((Screen) (Object) this).getTitle();
+    @Inject(method = "extractSlot", at = @At("HEAD"), cancellable = true)
+    private void skysens$drawSlot$Head(GuiGraphicsExtractor context, Slot slot, int mouseX, int mouseY, CallbackInfo ci) {
+        Component containerTitle = ((Screen) (Object) this).getTitle();
         for (HandledScreenFeature handledScreenFeature : featureService.getFeatureRegistry().getHandledScreenFeature()) {
             if (handledScreenFeature.isActive() && handledScreenFeature.isInventory(containerTitle)) {
                 handledScreenFeature.draw$Head(context, slot, ci);
@@ -61,11 +61,11 @@ public abstract class HandledScreenMixin {
     }
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
-    private void skysens$mouseClicked$Head(Click click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
-        Text containerTitle = ((Screen) (Object) this).getTitle();
+    private void skysens$mouseClicked$Head(MouseButtonEvent click, boolean doubled, CallbackInfoReturnable<Boolean> cir) {
+        Component containerTitle = ((Screen) (Object) this).getTitle();
         for (HandledScreenFeature handledScreenFeature : featureService.getFeatureRegistry().getHandledScreenFeature()) {
             if (handledScreenFeature.isActive() && handledScreenFeature.isInventory(containerTitle)) {
-                handledScreenFeature.mouseClicked$Head(click, doubled, handler, x, y, cir);
+                handledScreenFeature.mouseClicked$Head(click, doubled, menu, leftPos, topPos, cir);
             }
         }
     }
