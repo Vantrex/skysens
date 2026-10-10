@@ -9,6 +9,6 @@ import org.jetbrains.annotations.Nullable;
 public final class LocationChangeEvent implements SkysensEvent {
 
     private final @Nullable SkyblockLocationEnum oldLocation;
-    private final@Nullable SkyblockLocationEnum newLocation;
+    private final @Nullable SkyblockLocationEnum newLocation;
 
 }
