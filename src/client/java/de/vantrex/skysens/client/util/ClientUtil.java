@@ -72,16 +72,16 @@ public class ClientUtil {
         if (CLIENT.player == null) return;
         if (CLIENT.gui == null) return;
         if (title != null)
-            CLIENT.gui.setTitle(title);
+            CLIENT.gui.hud.setTitle(title);
         if (subtitle != null)
-            CLIENT.gui.setSubtitle(subtitle);
-        CLIENT.gui.setTimes(fadeInTicks, stayTicks, fadeOutTicks);
+            CLIENT.gui.hud.setSubtitle(subtitle);
+        CLIENT.gui.hud.setTimes(fadeInTicks, stayTicks, fadeOutTicks);
     }
 
 
     public static void sendActionBar(@NotNull Component text) {
         if (CLIENT.player == null) return;
         if (CLIENT.gui == null) return;
-        CLIENT.gui.setOverlayMessage(text, false);
+        CLIENT.gui.hud.setOverlayMessage(text, false);
     }
 }

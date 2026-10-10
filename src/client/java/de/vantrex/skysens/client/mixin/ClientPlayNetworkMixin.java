@@ -42,7 +42,7 @@ public abstract class ClientPlayNetworkMixin {
             method = "setTitleText",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/Gui;setTitle(Lnet/minecraft/network/chat/Component;)V"
+                    target = "Lnet/minecraft/client/gui/Hud;setTitle(Lnet/minecraft/network/chat/Component;)V"
             )
     )
     private Component skysens$rewriteTitle(Component title) {
@@ -53,7 +53,7 @@ public abstract class ClientPlayNetworkMixin {
             method = "setSubtitleText",
             at = @At(
                     value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/Gui;setSubtitle(Lnet/minecraft/network/chat/Component;)V"
+                    target = "Lnet/minecraft/client/gui/Hud;setSubtitle(Lnet/minecraft/network/chat/Component;)V"
             )
     )
     private Component skysens$rewriteSubtitle(Component subtitle) {
