@@ -8,6 +8,7 @@ import de.vantrex.skysens.client.config.categories.bazaar.BazaarCategory;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
 import de.vantrex.skysens.client.config.categories.mining.MiningCategory;
 import de.vantrex.skysens.client.config.categories.qol.QolCategory;
+import de.vantrex.skysens.client.config.categories.visuals.VisualsCategory;
 import de.vantrex.skysens.client.config.gui.GuiOptionEditorDynamicZoneDropdown;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.annotations.Category;
@@ -39,6 +40,10 @@ public class SkysensConfig extends Config {
     @Category(name = "QOL", desc = "Quality of Life Options")
     @Expose
     public QolCategory qolCategory = new QolCategory();
+
+    @Category(name = "Visuals", desc = "Entity scaling, held item and camera options")
+    @Expose
+    public VisualsCategory visualsCategory = new VisualsCategory();
 
     @Category(name = "Mining", desc = "Mining Options")
     @Expose

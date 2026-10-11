@@ -9,7 +9,10 @@
     "HandledScreenMixin",
     "LivingEntityMixin",
     "MouseMixin",
-    "ClientPlayNetworkMixin"
+    "ClientPlayNetworkMixin",
+    "EntityRenderStateMixin",
+    "EntityRenderDispatcherMixin",
+    "EntityRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

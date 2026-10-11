@@ -1,0 +1,25 @@
+package de.vantrex.skysens.client.config.categories.visuals;
+
+import com.google.gson.annotations.Expose;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
+
+public class NpcScaleAccordion {
+
+    @ConfigOption(name = "Enabled", desc = "Enables NPC scaling. SkyBlock only, always 1x in Dungeons. NPC name holograms are separate armor stands and are not moved.")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean enabled = false;
+
+    @ConfigOption(name = "NPC scale", desc = "Scale of player-like NPCs")
+    @ConfigEditorSlider(minValue = 0.1f, maxValue = 3f, minStep = 0.05f)
+    @Expose
+    public float npcScale = 1f;
+
+    @ConfigOption(name = "Villager scale", desc = "Scale of villager NPCs")
+    @ConfigEditorSlider(minValue = 0.1f, maxValue = 3f, minStep = 0.05f)
+    @Expose
+    public float villagerScale = 1f;
+
+}
