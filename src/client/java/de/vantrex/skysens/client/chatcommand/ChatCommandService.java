@@ -38,6 +38,7 @@ public final class ChatCommandService {
 
     /** Short delay so the reply appears after the command in chat, like a human answer. */
     private static final long REPLY_DELAY_MS = 250;
+    private static final long MIN_SEND_GAP_MS = 1000;
     private static final int MAX_CHAT_LENGTH = 256;
 
     @Getter
@@ -47,6 +48,7 @@ public final class ChatCommandService {
     private final ChatCommandRegistry registry = new ChatCommandRegistry();
     private final List<ChatCommandBridge> bridges = List.of(new OdinChatCommandsBridge(), new SkyHanniPartyCommandsBridge());
     private long lastAnsweredAt;
+    private long nextSendAt;
 
     private ChatCommandService() {
         this.registry.register(new HelpCommand(this.registry));
@@ -114,7 +116,7 @@ public final class ChatCommandService {
         }
 
         final ChatCommandContext context = new ChatCommandContext(channel, sender, label,
-                List.copyOf(parts.subList(1, parts.size())), reply -> this.sendReply(channel, reply));
+                List.copyOf(parts.subList(1, parts.size())), reply -> this.send(channel, reply));
         try {
             command.get().execute(context);
         } catch (RuntimeException e) {
@@ -134,15 +136,26 @@ public final class ChatCommandService {
         return player != null && player.getName().getString().equalsIgnoreCase(sender);
     }
 
-    private void sendReply(ChatChannel channel, String reply) {
-        final String command = channel.getReplyCommand() + " " + sanitize(reply);
+    /**
+     * Sends a message to a chat channel. Messages are spaced at least {@value #MIN_SEND_GAP_MS} ms apart,
+     * so a burst (e.g. several drops at once) doesn't get us muted. Safe to call from any thread.
+     */
+    public void send(@NotNull ChatChannel channel, @NotNull String message) {
+        final String command = channel.getReplyCommand() + " " + sanitize(message);
         final String trimmed = command.length() > MAX_CHAT_LENGTH ? command.substring(0, MAX_CHAT_LENGTH) : command;
+        final long delay;
+        synchronized (this) {
+            final long now = System.currentTimeMillis();
+            final long sendAt = Math.max(now + REPLY_DELAY_MS, this.nextSendAt);
+            this.nextSendAt = sendAt + MIN_SEND_GAP_MS;
+            delay = sendAt - now;
+        }
         SkysensClient.SCHEDULER.schedule(() -> Minecraft.getInstance().execute(() -> {
             final ClientPacketListener connection = Minecraft.getInstance().getConnection();
             if (connection != null) {
                 connection.sendCommand(trimmed);
             }
-        }), REPLY_DELAY_MS, TimeUnit.MILLISECONDS);
+        }), delay, TimeUnit.MILLISECONDS);
     }
 
     /** Removes formatting and line breaks, and makes sure a reply can never trigger a command itself. */

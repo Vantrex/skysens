@@ -4,6 +4,7 @@ import de.vantrex.skysens.client.feature.FeatureRegistry;
 import de.vantrex.skysens.client.feature.bazaar.BazaarDisableClickFeature;
 import de.vantrex.skysens.client.feature.bazaar.BazaarHighlightFeature;
 import de.vantrex.skysens.client.feature.chat.ChatCommandFeature;
+import de.vantrex.skysens.client.feature.chat.LootShareFeature;
 import de.vantrex.skysens.client.feature.chat.WarpToFeature;
 import de.vantrex.skysens.client.feature.mining.notification.FiletOFortuneNotificationFeature;
 import de.vantrex.skysens.client.feature.mining.notification.PickaxeAbilityResetNotificationFeature;
@@ -47,6 +48,7 @@ public class FeatureService {
 
         this.featureRegistry.register(new ChatCommandFeature());
         this.featureRegistry.register(new WarpToFeature());
+        this.featureRegistry.register(new LootShareFeature());
 
     }
 

@@ -43,4 +43,9 @@ public class ChatCommandsCategory {
     @Expose
     public ChatCommandToggles commands = new ChatCommandToggles();
 
+    @ConfigOption(name = "Loot Share", desc = "Share your rare drops in co-op chat")
+    @Accordion
+    @Expose
+    public LootShareAccordion lootShare = new LootShareAccordion();
+
 }
