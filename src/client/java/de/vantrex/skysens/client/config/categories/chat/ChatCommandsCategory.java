@@ -31,7 +31,7 @@ public class ChatCommandsCategory {
     @ConfigOption(name = "Auto-accept warp invite", desc = "After you type !warpto <player> in co-op chat, accept that player's party invite automatically for 60 seconds")
     @ConfigEditorBoolean
     @Expose
-    public boolean autoAcceptWarpInvite = true;
+    public boolean autoAcceptWarpInvite = false;
 
     @ConfigOption(name = "Cooldown", desc = "Seconds between two answered commands, to avoid being muted for spam")
     @ConfigEditorSlider(minValue = 0.5f, maxValue = 10f, minStep = 0.5f)
