@@ -25,7 +25,7 @@ public class ChatCommandToggles {
     @ConfigOption(name = "!profit", desc = "Sends your session profit and profit per hour (current activity and overall); !profit alltime for all time")
     @ConfigEditorBoolean
     @Expose
-    public boolean profit = true;
+    public boolean profit = false;
 
     @ConfigOption(name = "!zone", desc = "Sends your island and zone")
     @ConfigEditorBoolean
