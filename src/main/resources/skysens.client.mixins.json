@@ -17,7 +17,8 @@
     "ItemInHandRendererMixin",
     "MinecraftMixin",
     "HudMixin",
-    "ServerStatsMixin"
+    "ServerStatsMixin",
+    "PlayerTabOverlayAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
