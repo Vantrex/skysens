@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.price;
 
 import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.ItemIdUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -45,6 +46,18 @@ public final class ItemPriceService {
      */
     public @NotNull OptionalDouble getPriceById(@NotNull String id) {
         return this.hypixel.priceById(id);
+    }
+
+    /** Price of an enchanted book, e.g. ("Smoldering", 1); ultimate enchants included. Uses SkySens' own price data. */
+    public @NotNull OptionalDouble getBookPrice(@NotNull String enchant, int level) {
+        final String id = ItemIdUtil.toId(enchant) + "_" + level;
+        final OptionalDouble ultimate = this.getPriceById("ENCHANTMENT_ULTIMATE_" + id);
+        return ultimate.isPresent() ? ultimate : this.getPriceById("ENCHANTMENT_" + id);
+    }
+
+    /** Price of a rune, e.g. ("Lavatears", 1) for "Lavatears Rune I". Uses SkySens' own price data. */
+    public @NotNull OptionalDouble getRunePrice(@NotNull String rune, int level) {
+        return this.getPriceById(ItemIdUtil.toId(rune) + "_RUNE;" + level);
     }
 
     /** Loads SkySens' own price data once, for {@link #getPriceById(String)}. Lookups refresh it when stale. */
