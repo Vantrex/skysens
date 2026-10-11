@@ -47,4 +47,25 @@ public class HeldItemAccordion {
     @Expose
     public float scale = 1f;
 
+    public void copyFrom(HeldItemAccordion other) {
+        this.enabled = other.enabled;
+        this.offsetX = other.offsetX;
+        this.offsetY = other.offsetY;
+        this.offsetZ = other.offsetZ;
+        this.rotationX = other.rotationX;
+        this.rotationY = other.rotationY;
+        this.rotationZ = other.rotationZ;
+        this.scale = other.scale;
+    }
+
+    public void clamp() {
+        this.offsetX = Math.clamp(this.offsetX, -1.5f, 1.5f);
+        this.offsetY = Math.clamp(this.offsetY, -1.5f, 1.5f);
+        this.offsetZ = Math.clamp(this.offsetZ, -1.5f, 1.5f);
+        this.rotationX = Math.clamp(this.rotationX, -180f, 180f);
+        this.rotationY = Math.clamp(this.rotationY, -180f, 180f);
+        this.rotationZ = Math.clamp(this.rotationZ, -180f, 180f);
+        this.scale = Math.clamp(this.scale, 0.1f, 3f);
+    }
+
 }

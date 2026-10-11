@@ -31,4 +31,20 @@ public class VisualsCategory {
     @Expose
     public MiscVisualsAccordion misc = new MiscVisualsAccordion();
 
+    public void copyFrom(VisualsCategory other) {
+        this.playerScale.copyFrom(other.playerScale);
+        this.npcScale.copyFrom(other.npcScale);
+        this.itemScale.copyFrom(other.itemScale);
+        this.heldItem.copyFrom(other.heldItem);
+        this.misc.copyFrom(other.misc);
+    }
+
+    public void clamp() {
+        this.playerScale.clamp();
+        this.npcScale.clamp();
+        this.itemScale.clamp();
+        this.heldItem.clamp();
+        this.misc.clamp();
+    }
+
 }

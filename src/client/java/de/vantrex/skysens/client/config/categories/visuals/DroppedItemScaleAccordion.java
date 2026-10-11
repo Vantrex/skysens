@@ -17,4 +17,13 @@ public class DroppedItemScaleAccordion {
     @Expose
     public float scale = 1f;
 
+    public void copyFrom(DroppedItemScaleAccordion other) {
+        this.enabled = other.enabled;
+        this.scale = other.scale;
+    }
+
+    public void clamp() {
+        this.scale = Math.clamp(this.scale, 0.1f, 3f);
+    }
+
 }

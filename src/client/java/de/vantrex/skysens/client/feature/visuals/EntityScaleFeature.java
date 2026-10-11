@@ -9,6 +9,12 @@ import de.vantrex.skysens.client.feature.SkySensFeature;
 import de.vantrex.skysens.client.util.EntityClassifier;
 import net.minecraft.world.entity.Entity;
 
+/**
+ * Scales players, NPCs, villagers and dropped items.
+ * <p>
+ * Known limitations: NPC name holograms (separate armor stands) are not moved, culling uses the vanilla
+ * bounding box (large entities may pop at screen edges), and fire overlay / leash points stay vanilla.
+ */
 @SkySensFeature
 public class EntityScaleFeature implements EntityRenderFeature {
 

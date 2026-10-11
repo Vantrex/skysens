@@ -2,6 +2,7 @@ package de.vantrex.skysens.client;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import de.vantrex.skysens.client.config.SkysensConfig;
+import de.vantrex.skysens.client.config.VisualsSettingsTransfer;
 import de.vantrex.skysens.client.handler.ChatHandler;
 import de.vantrex.skysens.client.handler.TickHandlers;
 import de.vantrex.skysens.client.handler.UseHandlers;
@@ -93,7 +94,16 @@ public class SkysensClient implements ClientModInitializer {
                         // Schedule the screen opening on the main thread
                         client.execute(SkysensConfig.getConfig()::openConfigGui);
                         return 1;
-                    }));
+                    })
+                    .then(ClientCommands.literal("scale")
+                            .then(ClientCommands.literal("export")
+                                    .executes(context -> VisualsSettingsTransfer.export()))
+                            .then(ClientCommands.literal("import")
+                                    .executes(context -> VisualsSettingsTransfer.importFrom(Minecraft.getInstance().keyboardHandler.getClipboard()))
+                                    .then(ClientCommands.argument("data", StringArgumentType.greedyString())
+                                            .executes(context -> VisualsSettingsTransfer.importFrom(StringArgumentType.getString(context, "data")))))
+                            .then(ClientCommands.literal("reset")
+                                    .executes(context -> VisualsSettingsTransfer.reset()))));
             dispatcher.register(ClientCommands.literal("mocklocation")
                     .then(ClientCommands.argument("location", StringArgumentType.string())
                             .executes(context -> {

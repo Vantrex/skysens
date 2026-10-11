@@ -22,4 +22,15 @@ public class NpcScaleAccordion {
     @Expose
     public float villagerScale = 1f;
 
+    public void copyFrom(NpcScaleAccordion other) {
+        this.enabled = other.enabled;
+        this.npcScale = other.npcScale;
+        this.villagerScale = other.villagerScale;
+    }
+
+    public void clamp() {
+        this.npcScale = Math.clamp(this.npcScale, 0.1f, 3f);
+        this.villagerScale = Math.clamp(this.villagerScale, 0.1f, 3f);
+    }
+
 }

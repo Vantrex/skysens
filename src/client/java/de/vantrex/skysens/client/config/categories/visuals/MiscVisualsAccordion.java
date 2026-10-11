@@ -21,4 +21,13 @@ public class MiscVisualsAccordion {
     @Expose
     public boolean thirdPersonCrosshair = false;
 
+    public void copyFrom(MiscVisualsAccordion other) {
+        this.hideOtherPlayers = other.hideOtherPlayers;
+        this.disableSelfieCam = other.disableSelfieCam;
+        this.thirdPersonCrosshair = other.thirdPersonCrosshair;
+    }
+
+    public void clamp() {
+    }
+
 }

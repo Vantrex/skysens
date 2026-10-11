@@ -27,4 +27,16 @@ public class PlayerScaleAccordion {
     @Expose
     public boolean scaleNameTags = false;
 
+    public void copyFrom(PlayerScaleAccordion other) {
+        this.enabled = other.enabled;
+        this.selfScale = other.selfScale;
+        this.otherPlayersScale = other.otherPlayersScale;
+        this.scaleNameTags = other.scaleNameTags;
+    }
+
+    public void clamp() {
+        this.selfScale = Math.clamp(this.selfScale, 0.1f, 3f);
+        this.otherPlayersScale = Math.clamp(this.otherPlayersScale, 0.1f, 3f);
+    }
+
 }
