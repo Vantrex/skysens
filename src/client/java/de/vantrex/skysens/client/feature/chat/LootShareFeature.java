@@ -12,6 +12,7 @@ import de.vantrex.skysens.client.feature.SkySensFeature;
 import de.vantrex.skysens.client.price.ItemPriceService;
 import de.vantrex.skysens.client.profit.ProfitService;
 import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.ItemIdUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -30,9 +31,12 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
     /** Anchored at the start, so chat messages ("Co-op > X: RARE DROP! ...") never match. */
     private static final Pattern DROP_PATTERN = Pattern.compile(
             "^((?:VERY |CRAZY )?RARE DROP!|INSANE DROP!|PRAY TO RNGESUS DROP!|PET DROP!) (.+)$");
-    private static final Pattern MAGIC_FIND_PATTERN = Pattern.compile("\\s*\\(\\+[\\d,.]+%[^)]*Magic Find\\)", Pattern.CASE_INSENSITIVE);
-    /** "2x Item", "Item x2", optionally wrapped in parentheses. */
-    private static final Pattern ITEM_PATTERN = Pattern.compile("^\\(?(?:(\\d{1,5})x )?(.+?)(?: x(\\d{1,5}))?\\)?$");
+    /** "(+323% ✯ Magic Find)", some drops leave out the "%": "(+309 ✯ Magic Find)". */
+    private static final Pattern MAGIC_FIND_PATTERN = Pattern.compile("\\s*\\(\\+[\\d,.]+%?[^)]*Magic Find\\)", Pattern.CASE_INSENSITIVE);
+    /** "2x Item", "Item x2". */
+    private static final Pattern ITEM_PATTERN = Pattern.compile("^(?:(\\d{1,5})x )?(.+?)(?: x(\\d{1,5}))?$");
+    private static final Pattern BOOK_PATTERN = Pattern.compile("^Enchanted Book \\((.+) ([IVXLC]+)\\)$");
+    private static final Pattern RUNE_PATTERN = Pattern.compile("^(.+) Rune ([IVXLC]+)$");
     private static final String PET_DROP = "PET DROP!";
 
     @Override
@@ -50,17 +54,17 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
         }
         final LootShareAccordion config = SkysensConfig.getInstance().chatCommandsCategory.lootShare;
         final String withoutMagicFind = MAGIC_FIND_PATTERN.matcher(matcher.group(2)).replaceAll("").trim();
-        final OptionalDouble value = needsPrices(config) ? this.dropValue(withoutMagicFind) : OptionalDouble.empty();
+        final String item = itemName(withoutMagicFind);
+        final OptionalDouble value = needsPrices(config) ? this.dropValue(item) : OptionalDouble.empty();
         // every drop counts for the profit tracker, the share filters below don't apply to it
         if (value.isPresent()) {
             ProfitService.getInstance().record(ProfitService.detectActivity(), value.getAsDouble());
         }
-        if (!config.enabled || !this.shouldShareTier(matcher.group(1)) || !this.isWorthEnough(value, config)) {
+        if (!config.enabled || !this.shouldShareTier(matcher.group(1)) || !this.isWorthEnough(value, config)
+                || (!config.shareRunes && RUNE_PATTERN.matcher(item).matches())) {
             return;
         }
-        String drop = config.includeMagicFind ? matcher.group(2) : withoutMagicFind;
-        // Hypixel rejects some symbols (e.g. the Magic Find star) in player messages
-        drop = drop.replaceAll("[^\\x20-\\x7E]", "").replaceAll("\\s{2,}", " ").trim();
+        String drop = asciiOnly(config.includeMagicFind ? matcher.group(2) : withoutMagicFind);
         if (config.showPrice && value.isPresent()) {
             drop += " - " + NumberUtil.formatCoins(value.getAsDouble()) + " coins";
         }
@@ -71,6 +75,8 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
     public void afterTick() {
         if (needsPrices(SkysensConfig.getInstance().chatCommandsCategory.lootShare)) {
             ItemPriceService.getInstance().prefetch();
+            // enchanted books and runes are priced by id from SkySens' own data, also while SkyHanni is installed
+            ItemPriceService.getInstance().prefetchOwn();
         }
     }
 
@@ -93,18 +99,41 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
 
     /** Total value of the drop (price times amount), empty if the price is unknown. */
     private OptionalDouble dropValue(String item) {
+        final ItemPriceService prices = ItemPriceService.getInstance();
+        final Matcher book = BOOK_PATTERN.matcher(item);
+        if (book.matches()) {
+            return logUnknown(item, prices.getBookPrice(book.group(1), ItemIdUtil.romanToInt(book.group(2))));
+        }
+        final Matcher rune = RUNE_PATTERN.matcher(item);
+        if (rune.matches()) {
+            return logUnknown(item, prices.getRunePrice(rune.group(1), ItemIdUtil.romanToInt(rune.group(2))));
+        }
         final Matcher matcher = ITEM_PATTERN.matcher(item);
         final String name = matcher.matches() ? matcher.group(2) : item;
         final int amount = !matcher.matches() ? 1
                 : matcher.group(1) != null ? Integer.parseInt(matcher.group(1))
                 : matcher.group(3) != null ? Integer.parseInt(matcher.group(3))
                 : 1;
-        final OptionalDouble price = ItemPriceService.getInstance().getPrice(name);
+        final OptionalDouble price = logUnknown(name, prices.getPrice(name));
+        return price.isEmpty() ? price : OptionalDouble.of(price.getAsDouble() * amount);
+    }
+
+    private static OptionalDouble logUnknown(String name, OptionalDouble price) {
         if (price.isEmpty()) {
             ClientUtil.sendDebug("Loot share: no price for " + name);
-            return price;
         }
-        return OptionalDouble.of(price.getAsDouble() * amount);
+        return price;
+    }
+
+    /** Hypixel rejects some symbols (e.g. the Magic Find star) in player messages, and they break price lookups. */
+    private static String asciiOnly(String text) {
+        return text.replaceAll("[^\\x20-\\x7E]", "").replaceAll("\\s{2,}", " ").trim();
+    }
+
+    /** "(◆ Lavatears Rune I)" -> "Lavatears Rune I"; "Enchanted Book (Smoldering I)" stays as it is. */
+    private static String itemName(String drop) {
+        final String name = asciiOnly(drop);
+        return name.startsWith("(") && name.endsWith(")") ? name.substring(1, name.length() - 1).trim() : name;
     }
 
     private boolean isWorthEnough(OptionalDouble value, LootShareAccordion config) {

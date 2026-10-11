@@ -10,6 +10,7 @@ import de.vantrex.skysens.client.model.Zone;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import lombok.Setter;
+import net.minecraft.ChatFormatting;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
@@ -31,6 +32,7 @@ public class LocationService {
     private Zone<?> currentZone;
     private final SkysensClient skysens;
     private int zoneCheckTicksDown = 1;
+    private String lastUnknownArea;
 
     public LocationService() {
         this.skysens = SkysensClient.getInstance();
@@ -92,15 +94,24 @@ public class LocationService {
     }
 
     private Zone<? extends ZoneEnum<?>> getZoneFromScoreboard(Scoreboard scoreboard, Objective sidebar) {
+        String areaLine = null;
         for (PlayerScoreEntry scoreboardEntry : scoreboard.listPlayerScores(sidebar)) {
             PlayerTeam team = scoreboard.getPlayersTeam(scoreboardEntry.owner());
             if (team == null) {
                 continue;
             }
-            String line = team.getPlayerPrefix().getString() + team.getPlayerSuffix().getString();
+            final String line = ChatFormatting.stripFormatting(team.getPlayerPrefix().getString() + team.getPlayerSuffix().getString());
             final Zone<? extends ZoneEnum<?>> zoneFromLine = Zone.fromScoreboardLine(line, this.currentLocation);
             if (zoneFromLine != null)
                 return zoneFromLine;
+            if (line != null && (line.trim().startsWith("⏣") || line.trim().startsWith("ф"))) {
+                areaLine = line.trim();
+            }
+        }
+        // a zone we don't know yet, report it once so it can be added to the zone enum
+        if (areaLine != null && !areaLine.equals(this.lastUnknownArea)) {
+            this.lastUnknownArea = areaLine;
+            ClientUtil.sendDebug("Unknown zone on " + getLocationName(this.currentLocation) + ": " + areaLine);
         }
         return null;
     }

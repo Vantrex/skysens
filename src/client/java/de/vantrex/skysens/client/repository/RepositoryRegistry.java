@@ -15,6 +15,7 @@ public final class RepositoryRegistry {
 
     public static SimpleKeyValueRepository KEY_VALUE_REPOSITORY;
     public static ProfitRepository PROFIT_REPOSITORY;
+    public static CoopRepository COOP_REPOSITORY;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path BASE_DIR = FabricLoader.getInstance().getConfigDir().resolve("skysens/repositories");
@@ -23,6 +24,7 @@ public final class RepositoryRegistry {
         initBaseDir();
         KEY_VALUE_REPOSITORY = loadRepository(SimpleKeyValueRepository.class);
         PROFIT_REPOSITORY = loadRepository(ProfitRepository.class);
+        COOP_REPOSITORY = loadRepository(CoopRepository.class);
     }
 
     private static <T> T loadRepository(Class<T> clazz) {
@@ -46,6 +48,7 @@ public final class RepositoryRegistry {
         initBaseDir();
         saveRepository(KEY_VALUE_REPOSITORY);
         saveRepository(PROFIT_REPOSITORY);
+        saveRepository(COOP_REPOSITORY);
     }
 
     private static void saveRepository(Object repository) {

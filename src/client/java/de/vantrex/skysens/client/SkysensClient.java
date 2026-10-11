@@ -5,6 +5,7 @@ import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.VisualsSettingsTransfer;
 import de.vantrex.skysens.client.config.ui.SkysensConfigScreen;
 import de.vantrex.skysens.client.handler.ChatHandler;
+import de.vantrex.skysens.client.handler.KeyHandlers;
 import de.vantrex.skysens.client.handler.TickHandlers;
 import de.vantrex.skysens.client.handler.UseHandlers;
 import de.vantrex.skysens.client.feature.dungeon.RewardChestFeature;
@@ -66,6 +67,7 @@ public class SkysensClient implements ClientModInitializer {
         UseHandlers.register();
         TickHandlers.register();
         ChatHandler.register();
+        KeyHandlers.register();
         ProfitService.getInstance(); // starts counting time on SkyBlock
     }
 
