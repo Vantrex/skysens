@@ -12,7 +12,9 @@
     "ClientPlayNetworkMixin",
     "EntityRenderStateMixin",
     "EntityRenderDispatcherMixin",
-    "EntityRendererMixin"
+    "EntityRendererMixin",
+    "ItemEntityRendererMixin",
+    "ItemInHandRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

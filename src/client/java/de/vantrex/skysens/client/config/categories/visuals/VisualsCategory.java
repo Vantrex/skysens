@@ -16,4 +16,14 @@ public class VisualsCategory {
     @Expose
     public NpcScaleAccordion npcScale = new NpcScaleAccordion();
 
+    @ConfigOption(name = "Dropped Item Scale", desc = "Scale items lying on the ground")
+    @Accordion
+    @Expose
+    public DroppedItemScaleAccordion itemScale = new DroppedItemScaleAccordion();
+
+    @ConfigOption(name = "Held Item", desc = "Offset, rotate and scale the first person held item")
+    @Accordion
+    @Expose
+    public HeldItemAccordion heldItem = new HeldItemAccordion();
+
 }

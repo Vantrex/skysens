@@ -8,6 +8,7 @@ import de.vantrex.skysens.client.feature.mining.notification.PickaxeAbilityReset
 import de.vantrex.skysens.client.feature.mining.notification.PowderPumpkinBuffNotificationFeature;
 import de.vantrex.skysens.client.feature.qol.SwingAnimationFeature;
 import de.vantrex.skysens.client.feature.visuals.EntityScaleFeature;
+import de.vantrex.skysens.client.feature.visuals.HeldItemTransformFeature;
 import de.vantrex.skysens.client.feature.qol.sensitivity.LocationBasedSensitivityFeature;
 import de.vantrex.skysens.client.feature.qol.sensitivity.ZoneBasedSensitivityFeature;
 import lombok.Getter;
@@ -29,6 +30,7 @@ public class FeatureService {
         this.featureRegistry.register(new BazaarDisableClickFeature());
         this.featureRegistry.register(new SwingAnimationFeature());
         this.featureRegistry.register(new EntityScaleFeature());
+        this.featureRegistry.register(new HeldItemTransformFeature());
         this.featureRegistry.register(new LocationBasedSensitivityFeature());
         this.featureRegistry.register(new ZoneBasedSensitivityFeature());
 

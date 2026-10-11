@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.feature.visuals;
 
 import de.vantrex.skysens.client.config.SkysensConfig;
+import de.vantrex.skysens.client.config.categories.visuals.DroppedItemScaleAccordion;
 import de.vantrex.skysens.client.config.categories.visuals.NpcScaleAccordion;
 import de.vantrex.skysens.client.config.categories.visuals.PlayerScaleAccordion;
 import de.vantrex.skysens.client.feature.EntityRenderFeature;
@@ -13,6 +14,7 @@ public class EntityScaleFeature implements EntityRenderFeature {
 
     private final PlayerScaleAccordion playerScale = SkysensConfig.getInstance().visualsCategory.playerScale;
     private final NpcScaleAccordion npcScale = SkysensConfig.getInstance().visualsCategory.npcScale;
+    private final DroppedItemScaleAccordion itemScale = SkysensConfig.getInstance().visualsCategory.itemScale;
 
     @Override
     public float getModelScale(Entity entity, EntityClassifier.Kind kind) {
@@ -22,6 +24,7 @@ public class EntityScaleFeature implements EntityRenderFeature {
             case NPC -> this.npcScale.enabled && EntityClassifier.npcScalingAllowed() ? this.npcScale.npcScale : 1f;
             case VILLAGER ->
                     this.npcScale.enabled && EntityClassifier.npcScalingAllowed() ? this.npcScale.villagerScale : 1f;
+            case ITEM -> this.itemScale.enabled ? this.itemScale.scale : 1f;
             default -> 1f;
         };
     }
@@ -33,6 +36,6 @@ public class EntityScaleFeature implements EntityRenderFeature {
 
     @Override
     public boolean isActive() {
-        return this.playerScale.enabled || this.npcScale.enabled;
+        return this.playerScale.enabled || this.npcScale.enabled || this.itemScale.enabled;
     }
 }
