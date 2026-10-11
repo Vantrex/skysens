@@ -17,7 +17,7 @@ public interface ServerStatsProvider {
 
     @NotNull OptionalDouble tps();
 
-    /** Round trip time in milliseconds. May complete later if a measurement is needed. */
+    /** Round trip time in milliseconds. May complete later if a measurement is needed, but always on the client thread. */
     @NotNull CompletableFuture<OptionalInt> ping();
 
 }

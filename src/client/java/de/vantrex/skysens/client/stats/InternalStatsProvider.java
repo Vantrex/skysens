@@ -95,7 +95,8 @@ public final class InternalStatsProvider implements ServerStatsProvider {
             waiting = new ArrayList<>(this.pendingPings);
             this.pendingPings.clear();
         }
-        waiting.forEach(future -> future.complete(OptionalInt.of(ping)));
+        // complete on the client thread, so callers can safely touch the game (e.g. send chat)
+        Minecraft.getInstance().execute(() -> waiting.forEach(future -> future.complete(OptionalInt.of(ping))));
     }
 
     @Override
@@ -132,7 +133,7 @@ public final class InternalStatsProvider implements ServerStatsProvider {
             synchronized (this.pendingPings) {
                 this.pendingPings.remove(future);
             }
-            future.complete(OptionalInt.empty());
+            client.execute(() -> future.complete(OptionalInt.empty()));
         }, PING_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         return future;
     }
