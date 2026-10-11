@@ -17,4 +17,31 @@ public class SwingAnimationSubCategory {
     @Expose
     public int swingSpeed = 5;
 
+    @ConfigOption(name = "Apply to all entities", desc = "Apply to all entities. Off means only your own player.")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean applyToAllEntities = false;
+
+    @ConfigOption(name = "Ignore mining effects", desc = "Ignore Haste / Mining Fatigue when the custom speed is enabled.")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean ignoreMiningEffects = true;
+
+    @ConfigOption(name = "Disable swing animation", desc = "Completely disables the swing animation")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean disableSwingAnimation = false;
+
+    public void copyFrom(SwingAnimationSubCategory other) {
+        this.enabled = other.enabled;
+        this.swingSpeed = other.swingSpeed;
+        this.applyToAllEntities = other.applyToAllEntities;
+        this.ignoreMiningEffects = other.ignoreMiningEffects;
+        this.disableSwingAnimation = other.disableSwingAnimation;
+    }
+
+    public void clamp() {
+        this.swingSpeed = Math.clamp(this.swingSpeed, -10, 10);
+    }
+
 }
