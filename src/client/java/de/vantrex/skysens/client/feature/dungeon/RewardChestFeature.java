@@ -80,6 +80,14 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
     private record Reward(String name, double value) {
     }
 
+    /** A rewards message still receiving reward lines. */
+    private record PendingChest(String chest, List<Reward> rewards, long startedAt) {
+    }
+
+    /** All lines arrive at once; if the closing separator never comes, finish after this. */
+    private static final long PENDING_TIMEOUT_MS = 1000;
+    private @Nullable PendingChest pending;
+
     @Override
     public boolean isActive() {
         final DungeonCategory config = SkysensConfig.getInstance().dungeonCategory;
@@ -90,6 +98,9 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
 
     @Override
     public void afterTick() {
+        if (this.pending != null && System.currentTimeMillis() - this.pending.startedAt() > PENDING_TIMEOUT_MS) {
+            this.finishPending();
+        }
         final Screen screen = Minecraft.getInstance().gui.screen();
         final Matcher title = screen == null ? null : CHEST_SCREEN.matcher(screen.getTitle().getString().trim());
         final boolean chestOpen = title != null && title.matches();
@@ -150,32 +161,44 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
             return;
         }
         final String text = ChatFormatting.stripFormatting(message.getString());
-        if (text == null || !text.contains("CHEST REWARDS")) {
+        if (text == null || (this.pending == null && !text.contains("CHEST REWARDS"))) {
             return;
         }
-        final String[] lines = text.split("\n");
-        String chest = null;
-        final List<Reward> rewards = new ArrayList<>();
-        for (final String rawLine : lines) {
-            final String line = rawLine.trim();
-            if (chest == null) {
-                final Matcher header = REWARDS_HEADER.matcher(rawLine);
-                if (header.matches()) {
-                    chest = header.group(1).toUpperCase(Locale.ROOT);
-                }
-            } else if (!line.isEmpty() && !line.startsWith("---") && !line.matches("^\\(\\d+\\)$")) {
-                // drop "RARE REWARD!", dungeon stars ("Terror Leggings ✪✪") and chat-mod repeat counters (" (2)")
-                final String name = RARE_REWARD.matcher(line).replaceFirst("")
-                        .replaceAll("[^\\x20-\\x7E]", "")
-                        .replaceAll(" \\(\\d+\\)$", "")
-                        .trim();
-                rewards.add(new Reward(name, value(name)));
-            }
+        // Hypixel sends the header and every reward as separate messages, closed by a separator line
+        for (final String rawLine : text.split("\n")) {
+            this.handleLine(rawLine);
         }
-        if (chest == null) {
+    }
+
+    private void handleLine(String rawLine) {
+        final Matcher header = REWARDS_HEADER.matcher(rawLine);
+        if (header.matches()) {
+            this.finishPending();
+            this.pending = new PendingChest(header.group(1).toUpperCase(Locale.ROOT), new ArrayList<>(), System.currentTimeMillis());
             return;
         }
-        this.onChestOpened(chest, rewards);
+        if (this.pending == null) {
+            return;
+        }
+        // drop "RARE REWARD!", the separator, dungeon stars ("Terror Leggings ✪✪") and chat-mod repeat counters (" (2)")
+        final String name = RARE_REWARD.matcher(rawLine.trim()).replaceFirst("")
+                .replaceAll("[^\\x20-\\x7E]", "")
+                .replaceAll("(?:^| )\\(\\d+\\)$", "")
+                .trim();
+        // rewards are indented; the separator or any other message ends the list
+        if (name.isEmpty() || name.startsWith("---") || !rawLine.startsWith("  ")) {
+            this.finishPending();
+            return;
+        }
+        this.pending.rewards().add(new Reward(name, value(name)));
+    }
+
+    private void finishPending() {
+        final PendingChest chest = this.pending;
+        this.pending = null;
+        if (chest != null) {
+            this.onChestOpened(chest.chest(), chest.rewards());
+        }
     }
 
     private void onChestOpened(String chest, List<Reward> rewards) {
