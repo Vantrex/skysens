@@ -14,7 +14,9 @@
     "EntityRenderDispatcherMixin",
     "EntityRendererMixin",
     "ItemEntityRendererMixin",
-    "ItemInHandRendererMixin"
+    "ItemInHandRendererMixin",
+    "MinecraftMixin",
+    "HudMixin"
   ],
   "injectors": {
     "defaultRequire": 1

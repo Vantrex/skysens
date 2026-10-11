@@ -26,4 +26,9 @@ public class VisualsCategory {
     @Expose
     public HeldItemAccordion heldItem = new HeldItemAccordion();
 
+    @ConfigOption(name = "Misc", desc = "Player visibility, camera and crosshair options")
+    @Accordion
+    @Expose
+    public MiscVisualsAccordion misc = new MiscVisualsAccordion();
+
 }
