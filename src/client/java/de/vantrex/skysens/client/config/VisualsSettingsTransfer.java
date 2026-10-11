@@ -78,7 +78,7 @@ public class VisualsSettingsTransfer {
             final SkysensConfig config = SkysensConfig.getInstance();
             config.visualsCategory.copyFrom(visuals);
             config.qolCategory.swingAnimation.copyFrom(swing);
-            SkysensConfig.getConfig().saveToFile();
+            SkysensConfig.getInstance().saveNow();
             ClientUtil.sendMessage("§aImported visuals and swing settings");
             return 1;
         } catch (Exception e) {
@@ -91,7 +91,7 @@ public class VisualsSettingsTransfer {
         final SkysensConfig config = SkysensConfig.getInstance();
         config.visualsCategory.copyFrom(new VisualsCategory());
         config.qolCategory.swingAnimation.copyFrom(new SwingAnimationSubCategory());
-        SkysensConfig.getConfig().saveToFile();
+        SkysensConfig.getInstance().saveNow();
         ClientUtil.sendMessage("§aReset visuals and swing settings");
         return 1;
     }

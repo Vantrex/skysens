@@ -107,3 +107,79 @@ tasks.processResources {
         expand(props)
     }
 }
+
+// ---------------------------------------------------------------------------------------------------------
+// Generated GUI font definitions.
+// Keep in sync with de.vantrex.skysens.client.config.ui.render.FontFamily (the MINECRAFT family has no JSON).
+// One JSON per family x weight x oversample level (1..8): skysens:<prefix>_regular_N, <prefix>_semibold_N and
+// <prefix>_semibold_display_N, each = a ttf provider + minecraft:default as the last (fallback) provider.
+// ---------------------------------------------------------------------------------------------------------
+data class GuiFont(val prefix: String, val size: Double = 9.0, val displaySize: Double = 14.0, val shiftY: Double = 0.0)
+
+val guiFonts = listOf(
+    GuiFont("inter"),
+    GuiFont("geist"),
+    GuiFont("ibm_plex_sans"),
+    GuiFont("dm_sans"),
+    GuiFont("manrope"),
+    GuiFont("roboto"),
+    GuiFont("nunito"),
+    GuiFont("outfit"),
+    GuiFont("poppins", size = 8.5, displaySize = 13.0),
+    GuiFont("geist_mono", size = 8.5, displaySize = 13.0),
+    GuiFont("jetbrains_mono", size = 8.5, displaySize = 13.0),
+)
+val guiFontMaxLevel = 8
+val fontDefsDir = layout.buildDirectory.dir("generated/fontDefs")
+
+val generateFontDefs = tasks.register("generateFontDefs") {
+    group = "build"
+    description = "Generates the GUI font definition JSONs (family x weight x oversample level)."
+    val outDir = fontDefsDir
+    val fonts = guiFonts
+    val maxLevel = guiFontMaxLevel
+    inputs.property("fonts", fonts.toString())
+    inputs.property("maxLevel", maxLevel)
+    outputs.dir(outDir)
+    doLast {
+        val dir = outDir.get().asFile.resolve("assets/skysens/font")
+        dir.deleteRecursively()
+        dir.mkdirs()
+        fun fmt(d: Double) = d.toString()
+        for (f in fonts) {
+            val variants = listOf(
+                Triple("regular", "regular", f.size),
+                Triple("semibold", "semibold", f.size),
+                Triple("semibold_display", "semibold", f.displaySize),
+            )
+            for ((name, ttf, size) in variants) {
+                for (level in 1..maxLevel) {
+                    dir.resolve("${f.prefix}_${name}_$level.json").writeText(
+                        """
+                        |{
+                        |  "providers": [
+                        |    {
+                        |      "type": "ttf",
+                        |      "file": "skysens:${f.prefix}_$ttf.ttf",
+                        |      "size": ${fmt(size)},
+                        |      "oversample": ${fmt(level.toDouble())},
+                        |      "shift": [0.0, ${fmt(f.shiftY)}],
+                        |      "skip": ""
+                        |    },
+                        |    {
+                        |      "type": "reference",
+                        |      "id": "minecraft:default"
+                        |    }
+                        |  ]
+                        |}
+                        |""".trimMargin()
+                    )
+                }
+            }
+        }
+    }
+}
+
+sourceSets.named("client") {
+    resources.srcDir(files(fontDefsDir).builtBy(generateFontDefs))
+}

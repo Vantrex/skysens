@@ -1,7 +1,6 @@
 package de.vantrex.skysens.client.util;
 
 import de.vantrex.skysens.client.SkysensClient;
-import de.vantrex.skysens.client.dungeon.DungeonStateManager;
 import de.vantrex.skysens.client.enums.location.SkyblockLocationEnum;
 import de.vantrex.skysens.client.service.LocationService;
 import lombok.experimental.UtilityClass;
@@ -62,8 +61,7 @@ public class EntityClassifier {
         if (!SkysensClient.getInstance().isOnSkyBlock()) {
             return false;
         }
-        return LocationService.getInstance().getCurrentLocation() != SkyblockLocationEnum.CATACOMBS
-                && !DungeonStateManager.getInstance().isInDungeon();
+        return LocationService.getInstance().getCurrentLocation() != SkyblockLocationEnum.CATACOMBS;
     }
 
 }
