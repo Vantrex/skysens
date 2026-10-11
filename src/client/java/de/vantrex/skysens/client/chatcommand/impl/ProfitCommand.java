@@ -9,7 +9,7 @@ import de.vantrex.skysens.client.util.NumberUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * {@code !profit [alltime]} sends the profit of the current activity (from SkyHanni's tracker when installed)
+ * {@code !profit [alltime|day]} sends the profit of the current activity (from SkyHanni's tracker when installed)
  * and the overall profit, each with profit per hour, e.g.
  * "Session Slayer (Inferno Demonlord IV): 73.2M (62.1M/h active) | Overall: 73.2M (54.9M/h on SkyBlock)".
  * The rate is labeled with the time it is based on: "active" (time actually farming) or "on SkyBlock".
@@ -28,7 +28,7 @@ public class ProfitCommand implements ChatCommand {
 
     @Override
     public @NotNull String usage() {
-        return "[alltime]";
+        return "[alltime|day]";
     }
 
     @Override
@@ -41,6 +41,10 @@ public class ProfitCommand implements ChatCommand {
     public void execute(@NotNull ChatCommandContext context) {
         final boolean allTime = context.hasArgs() && context.arg(0).equalsIgnoreCase("alltime");
         final ProfitService service = ProfitService.getInstance();
+        if (context.hasArgs() && (context.arg(0).equalsIgnoreCase("day") || context.arg(0).equalsIgnoreCase("today"))) {
+            context.reply("Today: " + format(service.getDay().stats(), "on SkyBlock"));
+            return;
+        }
         final StringBuilder reply = new StringBuilder(allTime ? "All-time " : "Session ");
         final ProfitService.ActivityProfit activity = service.getCurrentActivity(allTime);
         if (activity != null) {

@@ -22,7 +22,7 @@ public class ChatCommandToggles {
     @Expose
     public boolean tps = true;
 
-    @ConfigOption(name = "!profit", desc = "Sends your session profit and profit per hour (current activity and overall); !profit alltime for all time")
+    @ConfigOption(name = "!profit", desc = "Sends your session profit and profit per hour (current activity and overall); !profit alltime for all time, !profit day for today")
     @ConfigEditorBoolean
     @Expose
     public boolean profit = false;

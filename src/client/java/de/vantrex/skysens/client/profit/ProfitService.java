@@ -9,10 +9,12 @@ import de.vantrex.skysens.client.util.ScoreboardUtil;
 import de.vantrex.skysens.client.repository.ProfitRepository;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
 import lombok.Getter;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -45,6 +47,10 @@ public final class ProfitService {
     private final ProfitStats sessionOverall = new ProfitStats();
     private final Map<String, ProfitStats> sessionActivities = new HashMap<>();
     private long lastTickMs;
+    /** The session overall when the current day started (empty at launch), today's part is everything after it. */
+    private ProfitStats dayBaseline = new ProfitStats();
+    private LocalDate currentDay = LocalDate.now();
+    private long lastDayCheckMs;
 
     /** Profit of one tracker, for a session or all time. */
     public record ActivityProfit(@NotNull String name, @NotNull ProfitStats stats, @NotNull String source) {
@@ -58,7 +64,12 @@ public final class ProfitService {
     }
 
     private ProfitService() {
-        ClientTickEvents.END_CLIENT_TICK.register(client -> this.countUptime());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            this.countUptime();
+            this.checkDayChange();
+        });
+        // runs before the shutdown hook that saves the repositories
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> this.foldDay());
     }
 
     private void countUptime() {
@@ -70,6 +81,64 @@ public final class ProfitService {
         }
         this.sessionOverall.uptimeMs += gap;
         repository().overall.uptimeMs += gap;
+    }
+
+    /** At local midnight, stores what was made on the old day and starts counting the new one. */
+    private void checkDayChange() {
+        final long now = System.currentTimeMillis();
+        if (now - this.lastDayCheckMs < 1000) {
+            return;
+        }
+        this.lastDayCheckMs = now;
+        final LocalDate today = LocalDate.now();
+        if (today.equals(this.currentDay)) {
+            return;
+        }
+        this.foldDay();
+        this.currentDay = today;
+        repository().day = today.toString();
+        repository().dayStats = new ProfitStats();
+    }
+
+    /**
+     * Adds today's part of the session overall to the repository (replacing it if it holds an older day) and
+     * restarts the baseline, so nothing is counted twice.
+     */
+    private synchronized void foldDay() {
+        final ProfitStats current = copyOf(this.getOverall(false).stats());
+        final ProfitStats part = diff(current, this.dayBaseline);
+        final String day = this.currentDay.toString();
+        if (!day.equals(repository().day) || repository().dayStats == null) {
+            repository().day = day;
+            repository().dayStats = new ProfitStats();
+        }
+        addTo(repository().dayStats, part);
+        this.dayBaseline = current;
+    }
+
+    /** Overall profit made today, across game sessions. Its uptime is the time on SkyBlock. */
+    public @NotNull OverallProfit getDay() {
+        final ProfitStats day = new ProfitStats();
+        if (LocalDate.now().toString().equals(repository().day)) {
+            addTo(day, repository().dayStats);
+        }
+        addTo(day, diff(this.getOverall(false).stats(), this.dayBaseline));
+        return new OverallProfit(day, true);
+    }
+
+    private static ProfitStats copyOf(ProfitStats stats) {
+        final ProfitStats copy = new ProfitStats();
+        addTo(copy, stats);
+        return copy;
+    }
+
+    private static ProfitStats diff(ProfitStats current, ProfitStats baseline) {
+        final ProfitStats diff = new ProfitStats();
+        diff.profit = current.profit - baseline.profit;
+        diff.events = current.events - baseline.events;
+        // a session reset by the user (SkyHanni's trackers) can make this negative: no negative time, profit as-is
+        diff.uptimeMs = Math.max(0, current.uptimeMs - baseline.uptimeMs);
+        return diff;
     }
 
     /** Records a gain (or a loss, if negative) for an activity and the overall tracker. */
@@ -165,13 +234,18 @@ public final class ProfitService {
 
     /** Removes the session reward chest activities, so they match the reset chest profit. */
     public void resetSessionChests() {
+        // the chests are part of the session overall, keep what they made in today's profit
+        this.foldDay();
         this.sessionActivities.remove(DUNGEONS);
         this.sessionActivities.remove(KUUDRA);
+        this.dayBaseline = copyOf(this.getOverall(false).stats());
     }
 
     public void resetSession() {
+        this.foldDay();
         this.sessionOverall.reset();
         this.sessionActivities.clear();
+        this.dayBaseline = copyOf(this.getOverall(false).stats());
     }
 
     /** What the player is doing right now, for drops: "Slayer" during a slayer quest, else the island. */
