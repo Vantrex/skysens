@@ -63,7 +63,57 @@ public class ChatFilterCategory {
         @Expose
         public boolean otherAbilityDamage = false;
 
-        @ConfigOption(name = "Ability ready", desc = "Hide \"Guided Sheep is now available!\" and \"Thunderstorm is ready to use! Press DROP to activate it!\" style messages")
+        @ConfigOption(name = "Guided Sheep available", desc = "Hide \"Guided Sheep is now available!\"")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean sheepAvailable = false;
+
+        @ConfigOption(name = "Thunderstorm ready", desc = "Hide \"Thunderstorm is ready to use! Press DROP to activate it!\"")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean thunderstormReady = false;
+
+        @ConfigOption(name = "Ragnarok ready", desc = "Hide \"Ragnarok is ready to use! Press DROP to activate it!\"")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean ragnarokReady = false;
+
+        @ConfigOption(name = "Castle of Stone ready", desc = "Hide \"Castle of Stone is ready to use! Press DROP to activate it!\"")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean castleOfStoneReady = false;
+
+        @ConfigOption(name = "Rapid Fire ready", desc = "Hide \"Rapid Fire is ready to use! Press DROP to activate it!\"")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean rapidFireReady = false;
+
+        @ConfigOption(name = "Wish ready", desc = "Hide \"Wish is ready to use! Press DROP to activate it!\"")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean wishReady = false;
+
+        @ConfigOption(name = "Healing Circle available", desc = "Hide \"Healing Circle is now available!\"")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean healingCircleAvailable = false;
+
+        @ConfigOption(name = "Maniac Miner available", desc = "Hide \"Maniac Miner is now available!\"")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean maniacMinerAvailable = false;
+
+        @ConfigOption(name = "Throwing Axe available", desc = "Hide \"Throwing Axe is now available!\"")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean throwingAxeAvailable = false;
+
+        @ConfigOption(name = "Ultimate available", desc = "Hide \"Your <Class> ULTIMATE <ability> is now available!\"")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean ultimateAvailable = false;
+
+        @ConfigOption(name = "Other ability ready messages", desc = "Hide all other \"<ability> is now available!\" and \"<ability> is ready to use! Press DROP to activate it!\" messages")
         @ConfigEditorBoolean
         @Expose
         public boolean abilityReady = false;
@@ -97,10 +147,15 @@ public class ChatFilterCategory {
         @Expose
         public boolean killComboExpired = false;
 
-        @ConfigOption(name = "Blessings", desc = "Hide \"Granted you +...\" and \"Also granted you +...\" lines")
+        @ConfigOption(name = "Blessing: Granted you", desc = "Hide \"Granted you +...\" lines")
         @ConfigEditorBoolean
         @Expose
-        public boolean blessings = false;
+        public boolean blessingGranted = false;
+
+        @ConfigOption(name = "Blessing: Also granted you", desc = "Hide \"Also granted you +...\" lines")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean blessingAlsoGranted = false;
 
         @ConfigOption(name = "Weak radio", desc = "Hide \"Your radio is weak. Find another enjoyer to boost it.\"")
         @ConfigEditorBoolean
@@ -131,10 +186,15 @@ public class ChatFilterCategory {
         @Expose
         public boolean stashClick = false;
 
-        @ConfigOption(name = "SkyHanni stash reminder", desc = "Hide SkyHanni's \"You have N items in stash...\" and \"You have N materials in stash...\" messages")
+        @ConfigOption(name = "SkyHanni stash items", desc = "Hide SkyHanni's \"You have N items in stash...\" message")
         @ConfigEditorBoolean
         @Expose
-        public boolean stashSkyHanni = false;
+        public boolean stashSkyHanniItems = false;
+
+        @ConfigOption(name = "SkyHanni stash materials", desc = "Hide SkyHanni's \"You have N materials in stash, totalling N types...\" message")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean stashSkyHanniMaterials = false;
 
         @ConfigOption(name = "Inventory full", desc = "Hide \"Your inventory is full!\"")
         @ConfigEditorBoolean
@@ -160,10 +220,15 @@ public class ChatFilterCategory {
         @Expose
         public boolean otherDamageTaken = false;
 
-        @ConfigOption(name = "Odin dragon messages", desc = "Hide Odin's \"<colour> dragon spawned\" and \"<colour> dragon counts.\" messages")
+        @ConfigOption(name = "Odin dragon spawned", desc = "Hide Odin's \"<colour> dragon spawned\" message")
         @ConfigEditorBoolean
         @Expose
-        public boolean odinDragons = false;
+        public boolean odinDragonSpawned = false;
+
+        @ConfigOption(name = "Odin dragon counts", desc = "Hide Odin's \"<colour> dragon counts.\" message")
+        @ConfigEditorBoolean
+        @Expose
+        public boolean odinDragonCounts = false;
 
     }
 
