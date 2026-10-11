@@ -12,7 +12,8 @@ import java.util.regex.Pattern;
 @Getter
 public enum ChatChannel {
 
-    COOP("Co-op", "cc");
+    COOP("Co-op", "cc"),
+    PARTY("Party", "pc");
 
     /** The text before " > " in a channel message, e.g. "Co-op". */
     private final String prefix;

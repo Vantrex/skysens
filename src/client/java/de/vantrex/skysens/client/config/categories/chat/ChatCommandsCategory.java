@@ -13,15 +13,25 @@ public class ChatCommandsCategory {
     @Expose
     public boolean coopEnabled = true;
 
+    @ConfigOption(name = "Party Commands", desc = "Answer !commands sent in party chat")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean partyEnabled = true;
+
     @ConfigOption(name = "Only my messages", desc = "Only answer commands you sent yourself, not those of your co-op members")
     @ConfigEditorBoolean
     @Expose
     public boolean onlyOwnMessages = false;
 
-    @ConfigOption(name = "Let Odin answer", desc = "Stay quiet for commands that Odin's Chat Commands module already answers, to avoid double replies")
+    @ConfigOption(name = "Let other mods answer", desc = "Stay quiet for commands that Odin or SkyHanni already answer, to avoid double replies")
     @ConfigEditorBoolean
     @Expose
-    public boolean deferToOdin = true;
+    public boolean deferToOtherMods = true;
+
+    @ConfigOption(name = "Auto-accept warp invite", desc = "After you type !warpto <player> in co-op chat, accept that player's party invite automatically for 60 seconds")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean autoAcceptWarpInvite = true;
 
     @ConfigOption(name = "Cooldown", desc = "Seconds between two answered commands, to avoid being muted for spam")
     @ConfigEditorSlider(minValue = 0.5f, maxValue = 10f, minStep = 0.5f)

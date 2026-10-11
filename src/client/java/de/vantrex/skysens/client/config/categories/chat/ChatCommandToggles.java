@@ -21,4 +21,44 @@ public class ChatCommandToggles {
     @Expose
     public boolean tps = true;
 
+    @ConfigOption(name = "!zone", desc = "Sends your island and zone")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean zone = true;
+
+    @ConfigOption(name = "!server", desc = "Sends the Hypixel server you are on")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean server = true;
+
+    @ConfigOption(name = "!buffs", desc = "Sends the remaining time of tracked consumable buffs (needs their mining notifications enabled)")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean buffs = true;
+
+    @ConfigOption(name = "!warpto", desc = "When a co-op member types !warpto <your name> and you are not in a party, invite them, warp them to you and disband the party")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean warpTo = true;
+
+    @ConfigOption(name = "!coords", desc = "Sends your coordinates")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean coords = true;
+
+    @ConfigOption(name = "!fps", desc = "Sends your FPS")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean fps = true;
+
+    @ConfigOption(name = "!cf", desc = "Flips a coin")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean coinFlip = true;
+
+    @ConfigOption(name = "!dice", desc = "Rolls a die, optionally with a number of sides: !dice 20")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean dice = true;
+
 }

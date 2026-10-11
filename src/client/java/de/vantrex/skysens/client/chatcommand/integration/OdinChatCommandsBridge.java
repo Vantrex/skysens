@@ -9,10 +9,10 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 /**
- * Odin's "Chat Commands" module answers many of the same !commands in co-op chat. This tells whether Odin
- * will answer a label, so we can stay quiet instead of sending a second reply.
+ * Odin's "Chat Commands" module answers many of the same !commands in co-op and party chat. This tells
+ * whether Odin will answer a label, so we can stay quiet instead of sending a second reply.
  */
-public final class OdinChatCommandsBridge {
+public final class OdinChatCommandsBridge implements ChatCommandBridge {
 
     /** Odin command labels mapped to the name of the setting that toggles them (see Odin's ChatCommands). */
     private static final Map<String, String> SETTING_BY_LABEL = Map.ofEntries(
@@ -33,14 +33,21 @@ public final class OdinChatCommandsBridge {
             Map.entry("holding", "Holding")
     );
     private static final Map<ChatChannel, String> CHANNEL_SETTING = Map.of(
-            ChatChannel.COOP, "Co-op Commands"
+            ChatChannel.COOP, "Co-op Commands",
+            ChatChannel.PARTY, "Party Commands"
     );
 
     private final boolean loaded = FabricLoader.getInstance().isModLoaded("odin");
     private final KotlinObjectAccessor chatCommands = new KotlinObjectAccessor("com.odtheking.odin.features.impl.skyblock.ChatCommands");
     private Method settingValueGetter;
 
-    public boolean handles(@NotNull ChatChannel channel, @NotNull String label) {
+    @Override
+    public @NotNull String name() {
+        return "Odin";
+    }
+
+    @Override
+    public boolean handles(@NotNull ChatChannel channel, @NotNull String label, @NotNull String sender) {
         if (!this.loaded || !Boolean.TRUE.equals(this.chatCommands.call("getEnabled"))) {
             return false;
         }

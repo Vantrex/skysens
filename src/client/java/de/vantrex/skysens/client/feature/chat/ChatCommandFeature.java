@@ -7,7 +7,7 @@ import de.vantrex.skysens.client.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.feature.SkySensFeature;
 import net.minecraft.network.chat.Component;
 
-/** Answers !commands sent in co-op chat, see {@link ChatCommandService}. */
+/** Answers !commands sent in co-op and party chat, see {@link ChatCommandService}. */
 @SkySensFeature
 public class ChatCommandFeature implements GameMessageListeningFeature {
 
@@ -21,7 +21,8 @@ public class ChatCommandFeature implements GameMessageListeningFeature {
 
     @Override
     public boolean isActive() {
-        return SkysensConfig.getInstance().chatCommandsCategory.coopEnabled;
+        final var config = SkysensConfig.getInstance().chatCommandsCategory;
+        return config.coopEnabled || config.partyEnabled;
     }
 
 }

@@ -61,7 +61,7 @@ public class SkysensConfig extends Config {
     @Expose
     public MiningCategory miningCategory = new MiningCategory();
 
-    @Category(name = "Chat Commands", desc = "Commands your co-op members can use in co-op chat, like !ping and !tps")
+    @Category(name = "Chat Commands", desc = "Commands others can use in co-op and party chat, like !ping and !tps")
     @Expose
     public ChatCommandsCategory chatCommandsCategory = new ChatCommandsCategory();
 

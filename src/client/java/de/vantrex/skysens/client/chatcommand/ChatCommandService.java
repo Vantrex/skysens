@@ -1,10 +1,20 @@
 package de.vantrex.skysens.client.chatcommand;
 
 import de.vantrex.skysens.client.SkysensClient;
+import de.vantrex.skysens.client.chatcommand.impl.BuffsCommand;
+import de.vantrex.skysens.client.chatcommand.impl.CoinFlipCommand;
+import de.vantrex.skysens.client.chatcommand.impl.CoordsCommand;
+import de.vantrex.skysens.client.chatcommand.impl.DiceCommand;
+import de.vantrex.skysens.client.chatcommand.impl.FpsCommand;
 import de.vantrex.skysens.client.chatcommand.impl.HelpCommand;
 import de.vantrex.skysens.client.chatcommand.impl.PingCommand;
+import de.vantrex.skysens.client.chatcommand.impl.ServerCommand;
 import de.vantrex.skysens.client.chatcommand.impl.TpsCommand;
+import de.vantrex.skysens.client.chatcommand.impl.WarpToCommand;
+import de.vantrex.skysens.client.chatcommand.impl.ZoneCommand;
+import de.vantrex.skysens.client.chatcommand.integration.ChatCommandBridge;
 import de.vantrex.skysens.client.chatcommand.integration.OdinChatCommandsBridge;
+import de.vantrex.skysens.client.chatcommand.integration.SkyHanniPartyCommandsBridge;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.chat.ChatCommandsCategory;
 import de.vantrex.skysens.client.util.ClientUtil;
@@ -35,13 +45,21 @@ public final class ChatCommandService {
 
     @Getter
     private final ChatCommandRegistry registry = new ChatCommandRegistry();
-    private final OdinChatCommandsBridge odin = new OdinChatCommandsBridge();
+    private final List<ChatCommandBridge> bridges = List.of(new OdinChatCommandsBridge(), new SkyHanniPartyCommandsBridge());
     private long lastAnsweredAt;
 
     private ChatCommandService() {
         this.registry.register(new HelpCommand(this.registry));
         this.registry.register(new PingCommand());
         this.registry.register(new TpsCommand());
+        this.registry.register(new ZoneCommand());
+        this.registry.register(new ServerCommand());
+        this.registry.register(new BuffsCommand());
+        this.registry.register(new WarpToCommand());
+        this.registry.register(new CoordsCommand());
+        this.registry.register(new FpsCommand());
+        this.registry.register(new CoinFlipCommand());
+        this.registry.register(new DiceCommand());
     }
 
     /** Handles a received chat message. Called on the client thread. */
@@ -72,20 +90,28 @@ public final class ChatCommandService {
         if (label.isEmpty()) {
             return;
         }
-        final Optional<ChatCommand> command = this.registry.find(label).filter(ChatCommand::isEnabled);
+        final Optional<ChatCommand> command = this.registry.find(label)
+                .filter(ChatCommand::isEnabled)
+                .filter(found -> found.channels().contains(channel));
         if (command.isEmpty()) {
             return;
         }
-        if (config.deferToOdin && this.odin.handles(channel, label)) {
-            ClientUtil.sendDebug("Odin answers !" + label + " in " + channel.getPrefix() + " chat, skipping");
-            return;
+        if (config.deferToOtherMods) {
+            for (final ChatCommandBridge bridge : this.bridges) {
+                if (bridge.handles(channel, label, sender)) {
+                    ClientUtil.sendDebug(bridge.name() + " answers !" + label + " in " + channel.getPrefix() + " chat, skipping");
+                    return;
+                }
+            }
         }
-        final long now = System.currentTimeMillis();
-        if (now - this.lastAnsweredAt < (long) (config.cooldownSeconds * 1000)) {
-            ClientUtil.sendDebug("Chat command !" + label + " from " + sender + " is on cooldown");
-            return;
+        if (command.get().usesCooldown()) {
+            final long now = System.currentTimeMillis();
+            if (now - this.lastAnsweredAt < (long) (config.cooldownSeconds * 1000)) {
+                ClientUtil.sendDebug("Chat command !" + label + " from " + sender + " is on cooldown");
+                return;
+            }
+            this.lastAnsweredAt = now;
         }
-        this.lastAnsweredAt = now;
 
         final ChatCommandContext context = new ChatCommandContext(channel, sender, label,
                 List.copyOf(parts.subList(1, parts.size())), reply -> this.sendReply(channel, reply));
@@ -99,6 +125,7 @@ public final class ChatCommandService {
     private boolean isChannelEnabled(ChatChannel channel) {
         return switch (channel) {
             case COOP -> SkysensConfig.getInstance().chatCommandsCategory.coopEnabled;
+            case PARTY -> SkysensConfig.getInstance().chatCommandsCategory.partyEnabled;
         };
     }
 

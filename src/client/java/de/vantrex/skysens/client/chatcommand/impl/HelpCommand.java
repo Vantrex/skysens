@@ -53,17 +53,21 @@ public class HelpCommand implements ChatCommand {
             }
             final String finalLabel = label;
             this.registry.find(label)
-                    .filter(ChatCommand::isEnabled)
+                    .filter(command -> isAvailable(command, context))
                     .ifPresentOrElse(
                             command -> context.reply(describe(command)),
                             () -> context.reply("Unknown command: " + finalLabel));
             return;
         }
         final String commands = this.registry.getCommands().stream()
-                .filter(ChatCommand::isEnabled)
+                .filter(command -> isAvailable(command, context))
                 .map(command -> ChatCommandService.PREFIX + command.name())
                 .collect(Collectors.joining(", "));
         context.reply("Commands: " + commands + " (" + ChatCommandService.PREFIX + "help <command> for details)");
+    }
+
+    private static boolean isAvailable(ChatCommand command, ChatCommandContext context) {
+        return command.isEnabled() && command.channels().contains(context.channel());
     }
 
     private static String describe(ChatCommand command) {

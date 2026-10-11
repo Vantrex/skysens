@@ -41,6 +41,8 @@ public class SkysensClient implements ClientModInitializer {
     });
 
     private boolean isOnSkyBlock = false;
+    /** Name of the Hypixel server we are on, e.g. "mini123AB", from the Mod API location packet. */
+    private String serverName;
     private LocationService locationService;
 
     public SkysensClient() {
@@ -76,6 +78,7 @@ public class SkysensClient implements ClientModInitializer {
         final var api = HypixelModAPI.getInstance();
         api.subscribeToEventPacket(ClientboundLocationPacket.class);
         api.createHandler(ClientboundLocationPacket.class, packet -> {
+            this.serverName = packet.getServerName();
             var serverType = (GameType) packet.getServerType()
                     .filter(serverType1 -> serverType1 instanceof GameType)
                     .orElse(null);
@@ -84,11 +87,10 @@ public class SkysensClient implements ClientModInitializer {
                 return;
             }
             this.isOnSkyBlock = true;
-            var serverName = packet.getServerName();
             var lobbyName = packet.getLobbyName().orElse(null);
             var mode = packet.getMode().orElse(null);
             var map = packet.getMap().orElse(null);
-            ClientUtil.sendDebug("Server: " + serverName + " | Lobby: " + lobbyName + " | Map: " + map + " | Mode: " + mode);
+            ClientUtil.sendDebug("Server: " + this.serverName + " | Lobby: " + lobbyName + " | Map: " + map + " | Mode: " + mode);
             this.locationService.handleLocationUpdate(map);
         });
     }

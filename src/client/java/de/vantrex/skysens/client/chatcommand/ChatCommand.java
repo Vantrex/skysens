@@ -2,7 +2,9 @@ package de.vantrex.skysens.client.chatcommand;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * A command that other players can trigger by typing {@code !<name> [args...]} in a supported chat channel.
@@ -28,6 +30,19 @@ public interface ChatCommand {
 
     /** Whether the command is enabled in the config. */
     default boolean isEnabled() {
+        return true;
+    }
+
+    /** The channels this command can be used in. */
+    default @NotNull Set<ChatChannel> channels() {
+        return EnumSet.allOf(ChatChannel.class);
+    }
+
+    /**
+     * Whether answering this command starts the global reply cooldown. Commands that mostly don't
+     * send a reply (or manage their own rate limit) return false.
+     */
+    default boolean usesCooldown() {
         return true;
     }
 
