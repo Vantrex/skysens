@@ -14,6 +14,14 @@ public class ProfitRepository {
     @Expose
     public ProfitStats overall = new ProfitStats();
 
+    /** The local date (ISO) that {@link #dayStats} belongs to, null before the first profit. */
+    @Expose
+    public String day;
+
+    /** Overall profit and uptime made on {@link #day} in earlier game sessions. */
+    @Expose
+    public ProfitStats dayStats = new ProfitStats();
+
     /** Activity name ("Dungeons", "Slayer", "Crimson Isle", ...) to its profit. */
     @Expose
     public Map<String, ProfitStats> activities = new HashMap<>();
