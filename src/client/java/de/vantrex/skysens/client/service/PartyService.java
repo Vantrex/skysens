@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.service;
 
 import de.vantrex.skysens.client.SkysensClient;
+import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.packet.impl.clientbound.ClientboundPartyInfoPacket;
@@ -25,7 +26,13 @@ public class PartyService {
     private final List<CompletableFuture<Optional<Boolean>>> pending = new ArrayList<>();
 
     private PartyService() {
-        HypixelModAPI.getInstance().createHandler(ClientboundPartyInfoPacket.class, packet -> this.complete(Optional.of(packet.isInParty())));
+        HypixelModAPI.getInstance()
+                .createHandler(ClientboundPartyInfoPacket.class, packet -> this.complete(Optional.of(packet.isInParty())))
+                .onError(reason -> {
+                    // e.g. RATE_LIMITED: Hypixel limits how often mods may ask, and other mods ask too
+                    ClientUtil.sendDebug("Party info request failed: " + reason);
+                    this.complete(Optional.empty());
+                });
     }
 
     /**

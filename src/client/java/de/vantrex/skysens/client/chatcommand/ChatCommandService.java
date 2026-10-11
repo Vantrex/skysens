@@ -92,10 +92,16 @@ public final class ChatCommandService {
         if (label.isEmpty()) {
             return;
         }
-        final Optional<ChatCommand> command = this.registry.find(label)
-                .filter(ChatCommand::isEnabled)
-                .filter(found -> found.channels().contains(channel));
+        final Optional<ChatCommand> command = this.registry.find(label);
         if (command.isEmpty()) {
+            return;
+        }
+        if (!command.get().isEnabled()) {
+            ClientUtil.sendDebug("Ignoring !" + label + " from " + sender + ", the command is disabled in the config");
+            return;
+        }
+        if (!command.get().channels().contains(channel)) {
+            ClientUtil.sendDebug("Ignoring !" + label + " from " + sender + ", it can't be used in " + channel.getPrefix() + " chat");
             return;
         }
         if (config.deferToOtherMods) {
