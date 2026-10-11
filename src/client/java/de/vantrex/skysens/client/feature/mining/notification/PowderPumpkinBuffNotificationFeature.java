@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 @SkySensFeature
 public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeature, AfterTickFeature {
 
-    private static final String KEY = "mining_pumpkin_notification";
+    public static final String KEY = "mining_pumpkin_notification";
     private static final String ITEM_ID = "MINING_PUMPKIN";
     private static final long _1HOUR = 3600000L;
     private static final long _2MINUTES = 120000L;
@@ -65,13 +65,14 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
             return;
         }
         final long expiresAt = unparsedExpiresAt.longValue();
-        if (!warningReceived && System.currentTimeMillis() - _2MINUTES <= expiresAt) {
-            this.sendWarning();
-            return;
-        }
-        if (System.currentTimeMillis() <= expiresAt) {
+        final long now = System.currentTimeMillis();
+        if (now >= expiresAt) {
             this.sendExpired();
             store.remove(KEY);
+            return;
+        }
+        if (!warningReceived && now >= expiresAt - _2MINUTES) {
+            this.sendWarning();
         }
     }
 
@@ -86,7 +87,7 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
                 .sendNotification(
                         Notification.builder()
                                 .text(this.buildTitle())
-                                .subtitle(Component.literal("Your Filet O' Fortune buff is about to expire!").withStyle(
+                                .subtitle(Component.literal("Your Powder Pumpkin buff is about to expire!").withStyle(
                                         Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.YELLOW))
                                 ))
                                 .build()
