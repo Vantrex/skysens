@@ -11,6 +11,7 @@ import de.vantrex.skysens.client.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.feature.SkySensFeature;
 import de.vantrex.skysens.client.price.ItemPriceService;
 import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.NumberUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
@@ -45,20 +46,28 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
         }
         final LootShareAccordion config = SkysensConfig.getInstance().chatCommandsCategory.lootShare;
         final String withoutMagicFind = MAGIC_FIND_PATTERN.matcher(matcher.group(2)).replaceAll("").trim();
-        if (!this.isWorthEnough(withoutMagicFind, config)) {
+        final OptionalDouble value = needsPrices(config) ? this.dropValue(withoutMagicFind) : OptionalDouble.empty();
+        if (!this.isWorthEnough(value, config)) {
             return;
         }
         String drop = config.includeMagicFind ? matcher.group(2) : withoutMagicFind;
         // Hypixel rejects some symbols (e.g. the Magic Find star) in player messages
         drop = drop.replaceAll("[^\\x20-\\x7E]", "").replaceAll("\\s{2,}", " ").trim();
+        if (config.showPrice && value.isPresent()) {
+            drop += " - " + NumberUtil.formatCoins(value.getAsDouble()) + " coins";
+        }
         ChatCommandService.getInstance().send(ChatChannel.COOP, matcher.group(1) + " " + drop);
     }
 
     @Override
     public void afterTick() {
-        if (SkysensConfig.getInstance().chatCommandsCategory.lootShare.minimumPriceMillions > 0) {
+        if (needsPrices(SkysensConfig.getInstance().chatCommandsCategory.lootShare)) {
             ItemPriceService.getInstance().prefetch();
         }
+    }
+
+    private static boolean needsPrices(LootShareAccordion config) {
+        return config.showPrice || config.minimumPriceMillions > 0;
     }
 
     private boolean shouldShareTier(String prefix) {
@@ -70,10 +79,8 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
         return tier != null && tier.ordinal() >= config.minimumTier.ordinal();
     }
 
-    private boolean isWorthEnough(String item, LootShareAccordion config) {
-        if (config.minimumPriceMillions <= 0) {
-            return true;
-        }
+    /** Total value of the drop (price times amount), empty if the price is unknown. */
+    private OptionalDouble dropValue(String item) {
         final Matcher matcher = ITEM_PATTERN.matcher(item);
         final String name = matcher.matches() ? matcher.group(2) : item;
         final int amount = !matcher.matches() ? 1
@@ -83,9 +90,19 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
         final OptionalDouble price = ItemPriceService.getInstance().getPrice(name);
         if (price.isEmpty()) {
             ClientUtil.sendDebug("Loot share: no price for " + name);
+            return price;
+        }
+        return OptionalDouble.of(price.getAsDouble() * amount);
+    }
+
+    private boolean isWorthEnough(OptionalDouble value, LootShareAccordion config) {
+        if (config.minimumPriceMillions <= 0) {
+            return true;
+        }
+        if (value.isEmpty()) {
             return config.shareUnknownPrice;
         }
-        return price.getAsDouble() * amount >= config.minimumPriceMillions * 1_000_000.0;
+        return value.getAsDouble() >= config.minimumPriceMillions * 1_000_000.0;
     }
 
     @Override

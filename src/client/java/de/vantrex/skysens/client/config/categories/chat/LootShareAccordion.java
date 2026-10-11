@@ -24,6 +24,11 @@ public class LootShareAccordion {
     @Expose
     public float minimumPriceMillions = 0f;
 
+    @ConfigOption(name = "Show price", desc = "Add the drop's current value to the message, e.g. \"- 160M coins\" (left out when unknown)")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean showPrice = true;
+
     @ConfigOption(name = "Share unknown prices", desc = "Share drops whose price can't be determined when a minimum price is set")
     @ConfigEditorBoolean
     @Expose
