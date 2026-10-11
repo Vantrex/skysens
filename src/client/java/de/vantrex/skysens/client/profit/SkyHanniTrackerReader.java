@@ -10,14 +10,17 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Reads SkyHanni's item profit trackers (Slayer, Fishing, Diana, ...) via reflection, so {@code !profit} can
  * report SkyHanni's numbers for the current activity. Profit is computed like SkyHanni's display: every
- * non-hidden item times SkyHanni's own price for it (coins are an item priced at 1). Extras such as the
- * slayer spawn cost are not included.
+ * non-hidden item times SkyHanni's own price for it (coins are an item priced at 1), minus the
+ * slayer spawn costs.
  * <p>
  * SkyHanni's NeuInternalName, SimpleTimeMark and kotlin Duration are value classes, so on the JVM they are
  * String/long and methods using them have mangled names ({@code getPricePer-abc123}); those are found by prefix.
@@ -64,10 +67,15 @@ final class SkyHanniTrackerReader {
         if (!this.isAvailable() || !this.resolve()) {
             return result;
         }
+        // a tracker may be reachable twice (e.g. a "current" field and a map), it must only be summed once
+        final Set<Object> seen = Collections.newSetFromMap(new IdentityHashMap<>());
         for (final Map.Entry<String, String> holder : TRACKER_HOLDERS.entrySet()) {
             try {
                 final Object instance = Class.forName(PACKAGE + holder.getKey()).getField("INSTANCE").get(null);
                 for (final Map.Entry<String, Object> tracker : this.findTrackers(instance, holder.getValue()).entrySet()) {
+                    if (!seen.add(tracker.getValue())) {
+                        continue;
+                    }
                     final TrackerProfit profit = this.readTracker(tracker.getKey(), tracker.getValue());
                     if (profit != null) {
                         result.add(profit);
@@ -182,6 +190,10 @@ final class SkyHanniTrackerReader {
                 stats.profit += perItem * count;
             }
             stats.events += count;
+        }
+        // the slayer tracker keeps its spawn costs outside the items (stored negative, abs() to be safe)
+        if (invokeGetter(data, "getSlayerSpawnCost") instanceof Long spawnCost) {
+            stats.profit -= Math.abs(spawnCost);
         }
         final Method uptime = findMethod(data.getClass(), "getTotalUptime", 0);
         if (uptime != null && uptime.invoke(data) instanceof Long rawDuration) {

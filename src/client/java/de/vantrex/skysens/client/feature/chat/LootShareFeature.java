@@ -55,10 +55,11 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
         final LootShareAccordion config = SkysensConfig.getInstance().chatCommandsCategory.lootShare;
         final String withoutMagicFind = MAGIC_FIND_PATTERN.matcher(matcher.group(2)).replaceAll("").trim();
         final String item = itemName(withoutMagicFind);
-        final OptionalDouble value = needsPrices(config) ? this.dropValue(item) : OptionalDouble.empty();
+        final OptionalDouble value = needsPrices(config) ? dropValue(item) : OptionalDouble.empty();
         // every drop counts for the profit tracker, the share filters below don't apply to it
         if (value.isPresent()) {
             ProfitService.getInstance().record(ProfitService.detectActivity(), value.getAsDouble());
+            this.rememberDrop(item);
         }
         if (!config.enabled || !this.shouldShareTier(matcher.group(1)) || !this.isWorthEnough(value, config)
                 || (!config.shareRunes && RUNE_PATTERN.matcher(item).matches())) {
@@ -97,8 +98,22 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
         return tier != null && tier.ordinal() >= config.minimumTier.ordinal();
     }
 
-    /** Total value of the drop (price times amount), empty if the price is unknown. */
-    private OptionalDouble dropValue(String item) {
+    /** Tells the sack tracking about this drop, so the "[Sacks]" message about the same item isn't counted again. */
+    private void rememberDrop(String item) {
+        final Matcher matcher = ITEM_PATTERN.matcher(item);
+        if (!matcher.matches() || BOOK_PATTERN.matcher(item).matches()) {
+            SackProfitFeature.rememberDrop(item, 1);
+            return;
+        }
+        final String amount = matcher.group(1) != null ? matcher.group(1) : matcher.group(3);
+        SackProfitFeature.rememberDrop(matcher.group(2), amount != null ? Integer.parseInt(amount) : 1);
+    }
+
+    /**
+     * Total value of the drop (price times amount), empty if the price is unknown. Also accepts "27x Item", so the
+     * sack tracking can price its entries the same way.
+     */
+    static OptionalDouble dropValue(String item) {
         final ItemPriceService prices = ItemPriceService.getInstance();
         final Matcher book = BOOK_PATTERN.matcher(item);
         if (book.matches()) {
