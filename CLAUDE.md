@@ -20,8 +20,3 @@ and creates a tagged GitHub release. That's why `master` only gets merges from `
 - For a minor/major release, set `mod_version` in `gradle.properties` (e.g. `1.1.0`) in the change
   that goes to `master`; a version higher than the latest tag is released as-is.
 - Modrinth dependencies are declared in the `modrinth { dependencies { } }` block in `build.gradle.kts`.
-
-## Tooling
-
-- The GitHub CLI is installed at `C:\Program Files\GitHub CLI\gh.exe` but isn't on the Git Bash `PATH`;
-  call it by its full path.
