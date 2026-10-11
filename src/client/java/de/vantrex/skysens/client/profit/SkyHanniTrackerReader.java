@@ -19,8 +19,8 @@ import java.util.Set;
 /**
  * Reads SkyHanni's item profit trackers (Slayer, Fishing, Diana, ...) via reflection, so {@code !profit} can
  * report SkyHanni's numbers for the current activity. Profit is computed like SkyHanni's display: every
- * non-hidden item times SkyHanni's own price for it (coins are an item priced at 1). Extras such as the
- * slayer spawn cost are not included.
+ * non-hidden item times SkyHanni's own price for it (coins are an item priced at 1), minus the
+ * slayer spawn costs.
  * <p>
  * SkyHanni's NeuInternalName, SimpleTimeMark and kotlin Duration are value classes, so on the JVM they are
  * String/long and methods using them have mangled names ({@code getPricePer-abc123}); those are found by prefix.
@@ -190,6 +190,10 @@ final class SkyHanniTrackerReader {
                 stats.profit += perItem * count;
             }
             stats.events += count;
+        }
+        // the slayer tracker keeps its spawn costs outside the items (stored negative, abs() to be safe)
+        if (invokeGetter(data, "getSlayerSpawnCost") instanceof Long spawnCost) {
+            stats.profit -= Math.abs(spawnCost);
         }
         final Method uptime = findMethod(data.getClass(), "getTotalUptime", 0);
         if (uptime != null && uptime.invoke(data) instanceof Long rawDuration) {
