@@ -1,7 +1,7 @@
 package de.vantrex.skysens.client.feature.qol;
 
 import de.vantrex.skysens.client.config.SkysensConfig;
-import de.vantrex.skysens.client.config.categories.qol.sub.SwingAnimationSubCategory;
+import de.vantrex.skysens.client.config.categories.visuals.SwingAnimationAccordion;
 import de.vantrex.skysens.client.feature.LivingEntityFeature;
 import de.vantrex.skysens.client.feature.SkySensFeature;
 import net.minecraft.client.Minecraft;
@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @SkySensFeature
 public class SwingAnimationFeature implements LivingEntityFeature {
 
-    private final SwingAnimationSubCategory swingConfig = SkysensConfig.getInstance().qolCategory.swingAnimation;
+    private final SwingAnimationAccordion swingConfig = SkysensConfig.getInstance().visualsCategory.swingAnimation;
     private final static int BASE_SPEED = 10;
 
     @Override

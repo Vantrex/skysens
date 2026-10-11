@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import de.vantrex.skysens.client.config.categories.qol.sub.SwingAnimationSubCategory;
+import de.vantrex.skysens.client.config.categories.visuals.SwingAnimationAccordion;
 import de.vantrex.skysens.client.config.categories.visuals.VisualsCategory;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.experimental.UtilityClass;
@@ -39,7 +39,6 @@ public class VisualsSettingsTransfer {
         final JsonObject root = new JsonObject();
         root.addProperty("v", VERSION);
         root.add("visuals", GSON.toJsonTree(config.visualsCategory));
-        root.add("swing", GSON.toJsonTree(config.qolCategory.swingAnimation));
 
         final String code;
         try {
@@ -70,14 +69,16 @@ public class VisualsSettingsTransfer {
                 throw new IllegalArgumentException("Unsupported version");
             }
             final VisualsCategory visuals = GSON.fromJson(requireElement(root, "visuals"), VisualsCategory.class);
-            final SwingAnimationSubCategory swing = GSON.fromJson(requireElement(root, "swing"), SwingAnimationSubCategory.class);
+            // Older strings carry the swing settings under a separate "swing" key.
+            final JsonElement legacySwing = root.get("swing");
+            if (legacySwing != null && legacySwing.isJsonObject()) {
+                visuals.swingAnimation = GSON.fromJson(legacySwing, SwingAnimationAccordion.class);
+            }
             visuals.clamp();
-            swing.clamp();
 
             // Copy into the existing objects: features hold references to them.
             final SkysensConfig config = SkysensConfig.getInstance();
             config.visualsCategory.copyFrom(visuals);
-            config.qolCategory.swingAnimation.copyFrom(swing);
             SkysensConfig.getInstance().saveNow();
             ClientUtil.sendMessage("§aImported visuals and swing settings");
             return 1;
@@ -90,7 +91,6 @@ public class VisualsSettingsTransfer {
     public int reset() {
         final SkysensConfig config = SkysensConfig.getInstance();
         config.visualsCategory.copyFrom(new VisualsCategory());
-        config.qolCategory.swingAnimation.copyFrom(new SwingAnimationSubCategory());
         SkysensConfig.getInstance().saveNow();
         ClientUtil.sendMessage("§aReset visuals and swing settings");
         return 1;

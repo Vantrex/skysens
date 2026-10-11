@@ -1,11 +1,11 @@
-package de.vantrex.skysens.client.config.categories.qol.sub;
+package de.vantrex.skysens.client.config.categories.visuals;
 
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
-public class SwingAnimationSubCategory {
+public class SwingAnimationAccordion {
 
     @ConfigOption(name = "Enable custom swing animation speed", desc = "Enables custom swing animation speed")
     @ConfigEditorBoolean
@@ -32,7 +32,7 @@ public class SwingAnimationSubCategory {
     @Expose
     public boolean disableSwingAnimation = false;
 
-    public void copyFrom(SwingAnimationSubCategory other) {
+    public void copyFrom(SwingAnimationAccordion other) {
         this.enabled = other.enabled;
         this.swingSpeed = other.swingSpeed;
         this.applyToAllEntities = other.applyToAllEntities;

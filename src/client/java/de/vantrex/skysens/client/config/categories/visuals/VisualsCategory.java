@@ -31,12 +31,18 @@ public class VisualsCategory {
     @Expose
     public MiscVisualsAccordion misc = new MiscVisualsAccordion();
 
+    @ConfigOption(name = "Swing Animation", desc = "Swing animation speed and visibility")
+    @Accordion
+    @Expose
+    public SwingAnimationAccordion swingAnimation = new SwingAnimationAccordion();
+
     public void copyFrom(VisualsCategory other) {
         this.playerScale.copyFrom(other.playerScale);
         this.npcScale.copyFrom(other.npcScale);
         this.itemScale.copyFrom(other.itemScale);
         this.heldItem.copyFrom(other.heldItem);
         this.misc.copyFrom(other.misc);
+        this.swingAnimation.copyFrom(other.swingAnimation);
     }
 
     public void clamp() {
@@ -45,6 +51,7 @@ public class VisualsCategory {
         this.itemScale.clamp();
         this.heldItem.clamp();
         this.misc.clamp();
+        this.swingAnimation.clamp();
     }
 
 }
