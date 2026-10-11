@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.service;
 import de.vantrex.skysens.client.feature.FeatureRegistry;
 import de.vantrex.skysens.client.feature.bazaar.BazaarDisableClickFeature;
 import de.vantrex.skysens.client.feature.bazaar.BazaarHighlightFeature;
+import de.vantrex.skysens.client.feature.chat.ChatCommandFeature;
 import de.vantrex.skysens.client.feature.mining.notification.FiletOFortuneNotificationFeature;
 import de.vantrex.skysens.client.feature.mining.notification.PickaxeAbilityResetNotificationFeature;
 import de.vantrex.skysens.client.feature.mining.notification.PowderPumpkinBuffNotificationFeature;
@@ -42,6 +43,8 @@ public class FeatureService {
         this.featureRegistry.register(new PowderPumpkinBuffNotificationFeature());
 
         this.featureRegistry.register(new PickaxeAbilityResetNotificationFeature());
+
+        this.featureRegistry.register(new ChatCommandFeature());
 
     }
 

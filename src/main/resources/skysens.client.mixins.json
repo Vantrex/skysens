@@ -16,7 +16,8 @@
     "ItemEntityRendererMixin",
     "ItemInHandRendererMixin",
     "MinecraftMixin",
-    "HudMixin"
+    "HudMixin",
+    "ServerStatsMixin"
   ],
   "injectors": {
     "defaultRequire": 1
