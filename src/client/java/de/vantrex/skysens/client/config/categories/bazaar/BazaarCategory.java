@@ -13,11 +13,11 @@ public class BazaarCategory {
     public boolean disableClicksOnNonSelfOwned = true;
 
     @Accordion
-    @ConfigOption(name = "Highlight own Buy Orders", desc = "Highlight your own buy orders in the Bazaar GUI")
+    @ConfigOption(name = "Highlight own Sell Orders", desc = "Highlight your own sell orders in the Bazaar GUI")
     @Expose
     public HighlightOwnSellOrder highlightOwnSellOrders = new HighlightOwnSellOrder();
 
-    @ConfigOption(name = "Highlight own Sell Orders", desc = "Highlight your own sell orders in the Bazaar GUI")
+    @ConfigOption(name = "Highlight own Buy Orders", desc = "Highlight your own buy orders in the Bazaar GUI")
     @Accordion
     @Expose
     public HighlightOwnBuyOrder highlightOwnBuyOrders = new HighlightOwnBuyOrder();

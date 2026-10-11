@@ -7,6 +7,7 @@ import de.vantrex.skysens.client.model.Notification;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import lombok.Synchronized;
+import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -106,7 +107,11 @@ public class NotificationService {
     }
 
     private void init() {
-        SkysensClient.SCHEDULER.scheduleAtFixedRate(this::handleNotifications, 500, 500, TimeUnit.MILLISECONDS);
+        // The scheduler only provides the timing; the work runs on the client thread, because it
+        // touches the player, the HUD and the notification state, none of which are thread-safe.
+        SkysensClient.SCHEDULER.scheduleAtFixedRate(
+                () -> Minecraft.getInstance().execute(this::handleNotifications),
+                500, 500, TimeUnit.MILLISECONDS);
     }
 
     public record CurrentNotification(Notification notification, long displayUntil) {
