@@ -9,10 +9,12 @@ import de.vantrex.skysens.client.util.ScoreboardUtil;
 import de.vantrex.skysens.client.repository.ProfitRepository;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
 import lombok.Getter;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +24,8 @@ import java.util.Map;
  * <ul>
  *     <li>Overall: with SkyHanni installed and selected as the tracker, the sum of SkyHanni's trackers and SkySens' reward chest trackers,
  *     otherwise SkySens' own tracker of everything it values (rare drops and reward chests). Its uptime is
- *     the time spent on SkyBlock.</li>
+ *     the time spent on SkyBlock, except for the all-time sum of SkyHanni's trackers, which uses the
+ *     trackers' summed active time (see {@link OverallProfit}).</li>
  *     <li>Activities: the tracker that gained most recently. SkyHanni's trackers (Slayer, Fishing, ...) when
  *     SkyHanni is installed, SkySens' own per-activity trackers otherwise. Reward chests are always tracked
  *     by SkySens, SkyHanni has no tracker for them.</li>
@@ -37,6 +40,9 @@ public final class ProfitService {
     /** A tick gap longer than this is a lag spike or a paused game, not time played. */
     private static final long MAX_TICK_GAP_MS = 1000;
 
+    /** Stands in for SkyHanni's profile when SkySens' own tracker is used. */
+    private static final Object OWN_PROFILE = new Object();
+
     @Getter
     private static final ProfitService instance = new ProfitService();
 
@@ -44,13 +50,33 @@ public final class ProfitService {
     private final ProfitStats sessionOverall = new ProfitStats();
     private final Map<String, ProfitStats> sessionActivities = new HashMap<>();
     private long lastTickMs;
+    /** The session overall when the current day started (empty at launch), today's part is everything after it. */
+    private ProfitStats dayBaseline = new ProfitStats();
+    private LocalDate currentDay = LocalDate.now();
+    private long lastDayCheckMs;
+    private long lastSampleMs;
+    /** The last session overall that was read while on SkyBlock, its profile is {@link #snapshotProfile}. */
+    private ProfitStats lastSnapshot = new ProfitStats();
+    private Object snapshotProfile;
 
     /** Profit of one tracker, for a session or all time. */
     public record ActivityProfit(@NotNull String name, @NotNull ProfitStats stats, @NotNull String source) {
     }
 
+    /**
+     * Overall profit. {@code timeOnSkyBlock} tells what its uptime is: the time spent on SkyBlock, or (all-time
+     * SkyHanni totals) the trackers' summed active time.
+     */
+    public record OverallProfit(@NotNull ProfitStats stats, boolean timeOnSkyBlock) {
+    }
+
     private ProfitService() {
-        ClientTickEvents.END_CLIENT_TICK.register(client -> this.countUptime());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            this.countUptime();
+            this.checkDayChange();
+        });
+        // runs before the shutdown hook that saves the repositories
+        ClientLifecycleEvents.CLIENT_STOPPING.register(client -> this.foldDay());
     }
 
     private void countUptime() {
@@ -62,6 +88,100 @@ public final class ProfitService {
         }
         this.sessionOverall.uptimeMs += gap;
         repository().overall.uptimeMs += gap;
+    }
+
+    /** At local midnight, stores what was made on the old day and starts counting the new one. */
+    private void checkDayChange() {
+        final long now = System.currentTimeMillis();
+        if (now - this.lastDayCheckMs < 1000) {
+            return;
+        }
+        this.lastDayCheckMs = now;
+        // reading SkyHanni is heavy, so only sample once a minute
+        if (now - this.lastSampleMs >= 60_000) {
+            this.lastSampleMs = now;
+            this.sampleDay();
+        }
+        final LocalDate today = LocalDate.now();
+        if (today.equals(this.currentDay)) {
+            return;
+        }
+        this.foldDay();
+        this.currentDay = today;
+        repository().day = today.toString();
+        repository().dayStats = new ProfitStats();
+    }
+
+    /**
+     * Takes a snapshot of the session overall, but only where it is comparable to the baseline: on SkyBlock, and
+     * with SkyHanni on a known profile. SkyHanni's sessions are per profile, so on a profile change what the old
+     * profile made is stored and the baseline starts over.
+     */
+    private synchronized void sampleDay() {
+        if (!isEnabled() || !SkysensClient.getInstance().isOnSkyBlock()) {
+            return;
+        }
+        final boolean useSkyHanni = this.useSkyHanni();
+        final Object profile = useSkyHanni ? this.skyHanni.currentProfile() : OWN_PROFILE;
+        if (profile == null) {
+            return;
+        }
+        final ProfitStats current = copyOf(this.getOverall(false).stats());
+        if (this.snapshotProfile != null && profile != this.snapshotProfile) {
+            this.storeDayPart();
+            this.dayBaseline = current;
+        }
+        this.lastSnapshot = current;
+        this.snapshotProfile = profile;
+    }
+
+    /** Adds today's part (last snapshot minus baseline) to the repository, replacing it if it holds an older day. */
+    private void storeDayPart() {
+        final String day = this.currentDay.toString();
+        if (!day.equals(repository().day) || repository().dayStats == null) {
+            repository().day = day;
+            repository().dayStats = new ProfitStats();
+        }
+        addTo(repository().dayStats, diff(this.lastSnapshot, this.dayBaseline));
+        this.dayBaseline = this.lastSnapshot;
+    }
+
+    /** Stores today's part and restarts the baseline, so nothing is counted twice. */
+    private synchronized void foldDay() {
+        this.sampleDay();
+        this.storeDayPart();
+    }
+
+    /** Overall profit made today, across game sessions. Its uptime is the time on SkyBlock. */
+    public @NotNull OverallProfit getDay() {
+        this.sampleDay();
+        final ProfitStats day = new ProfitStats();
+        if (LocalDate.now().toString().equals(repository().day)) {
+            addTo(day, repository().dayStats);
+        }
+        addTo(day, diff(this.lastSnapshot, this.dayBaseline));
+        return new OverallProfit(day, true);
+    }
+
+    /** After a session reset: the baseline is the current overall, or the last snapshot while it can't be read. */
+    private void rebaseDay() {
+        this.sampleDay();
+        this.dayBaseline = this.lastSnapshot;
+    }
+
+    private static ProfitStats copyOf(ProfitStats stats) {
+        final ProfitStats copy = new ProfitStats();
+        addTo(copy, stats);
+        return copy;
+    }
+
+    private static ProfitStats diff(ProfitStats current, ProfitStats baseline) {
+        final ProfitStats diff = new ProfitStats();
+        diff.profit = current.profit - baseline.profit;
+        diff.events = current.events - baseline.events;
+        // a session reset by the user (SkyHanni's trackers) can make this negative: no negative time, profit as-is
+        diff.uptimeMs = Math.max(0, current.uptimeMs - baseline.uptimeMs);
+        return diff;
     }
 
     /** Records a gain (or a loss, if negative) for an activity and the overall tracker. */
@@ -78,14 +198,14 @@ public final class ProfitService {
         repository().activities.computeIfAbsent(activity, name -> new ProfitStats()).add(amount, now, afkTimeout);
     }
 
-    public @NotNull ProfitStats getOverall(boolean allTime) {
+    public @NotNull OverallProfit getOverall(boolean allTime) {
         final ProfitStats own = allTime ? repository().overall : this.sessionOverall;
         if (!this.useSkyHanni()) {
-            return own;
+            return new OverallProfit(own, true);
         }
         final List<SkyHanniTrackerReader.TrackerProfit> trackers = this.skyHanni.read();
         if (!this.skyHanni.isAvailable()) {
-            return own;
+            return new OverallProfit(own, true);
         }
         // SkyHanni's trackers see every drop (sacks included), SkySens' rare drop messages only some of them,
         // so add up SkyHanni's trackers and the reward chests SkyHanni doesn't track
@@ -100,7 +220,7 @@ public final class ProfitService {
         if (!allTime) {
             overall.uptimeMs = own.uptimeMs;
         }
-        return overall;
+        return new OverallProfit(overall, !allTime);
     }
 
     private static void addTo(ProfitStats target, @Nullable ProfitStats stats) {
@@ -149,9 +269,26 @@ public final class ProfitService {
         return current;
     }
 
+    /** Removes the all-time reward chest activities, so they match the reset chest profit. */
+    public void resetAllTimeChests() {
+        repository().activities.remove(DUNGEONS);
+        repository().activities.remove(KUUDRA);
+    }
+
+    /** Removes the session reward chest activities, so they match the reset chest profit. */
+    public void resetSessionChests() {
+        // the chests are part of the session overall, keep what they made in today's profit
+        this.foldDay();
+        this.sessionActivities.remove(DUNGEONS);
+        this.sessionActivities.remove(KUUDRA);
+        this.rebaseDay();
+    }
+
     public void resetSession() {
+        this.foldDay();
         this.sessionOverall.reset();
         this.sessionActivities.clear();
+        this.rebaseDay();
     }
 
     /** What the player is doing right now, for drops: "Slayer" during a slayer quest, else the island. */
