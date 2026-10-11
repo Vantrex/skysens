@@ -104,7 +104,7 @@ public final class ProfitService {
                 final ProfitStats stats = allTime
                         ? repository().activities.getOrDefault(activity.getKey(), session)
                         : session;
-                current = new ActivityProfit(activity.getKey(), stats, "SkySens");
+                current = new ActivityProfit(activity.getKey(), stats.withLiveUptime(System.currentTimeMillis(), afkTimeoutMs()), "SkySens");
             }
         }
         return current;

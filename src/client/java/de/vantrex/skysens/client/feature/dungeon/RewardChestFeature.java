@@ -6,6 +6,7 @@ import de.vantrex.skysens.client.chatcommand.ChatCommandService;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.dungeon.ChestLootShareAccordion;
 import de.vantrex.skysens.client.config.categories.dungeon.DungeonCategory;
+import de.vantrex.skysens.client.enums.location.SkyblockLocationEnum;
 import de.vantrex.skysens.client.feature.AfterTickFeature;
 import de.vantrex.skysens.client.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.feature.SkySensFeature;
@@ -13,6 +14,7 @@ import de.vantrex.skysens.client.price.ItemPriceService;
 import de.vantrex.skysens.client.profit.ProfitService;
 import de.vantrex.skysens.client.repository.ProfitRepository;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
+import de.vantrex.skysens.client.service.LocationService;
 import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
 import net.minecraft.ChatFormatting;
@@ -71,7 +73,8 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
     private final Map<String, SeenCost> costByChest = new HashMap<>();
     private final ProfitRepository.DungeonChestStats session = new ProfitRepository.DungeonChestStats();
 
-    private record SeenCost(double cost, long seenAt) {
+    /** Cost parts seen on the open button: coins, and keys that are priced once the chest is opened. */
+    private record SeenCost(double coins, List<String> keys, long seenAt) {
     }
 
     private record Reward(String name, double value) {
@@ -87,46 +90,56 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
 
     @Override
     public void afterTick() {
-        ItemPriceService.getInstance().prefetch();
-        ItemPriceService.getInstance().prefetchOwn();
         final Screen screen = Minecraft.getInstance().gui.screen();
-        if (!(screen instanceof AbstractContainerScreen<?> container)) {
-            return;
+        final Matcher title = screen == null ? null : CHEST_SCREEN.matcher(screen.getTitle().getString().trim());
+        final boolean chestOpen = title != null && title.matches();
+        if (chestOpen || isNearRewardChests()) {
+            // load prices before the first chest is opened; only here, not everywhere on SkyBlock
+            ItemPriceService.getInstance().prefetch();
+            ItemPriceService.getInstance().prefetchOwn();
         }
-        final Matcher title = CHEST_SCREEN.matcher(screen.getTitle().getString().trim());
-        if (!title.matches() || container.getMenu().slots.size() <= OPEN_BUTTON_SLOT) {
+        if (!chestOpen || !(screen instanceof AbstractContainerScreen<?> container)
+                || container.getMenu().slots.size() <= OPEN_BUTTON_SLOT) {
             return;
         }
         final Slot button = container.getMenu().slots.get(OPEN_BUTTON_SLOT);
-        final Double cost = readCost(button.getItem());
+        final SeenCost cost = readCost(button.getItem());
         if (cost != null) {
-            this.costByChest.put(title.group(1).toUpperCase(Locale.ROOT), new SeenCost(cost, System.currentTimeMillis()));
+            this.costByChest.put(title.group(1).toUpperCase(Locale.ROOT), cost);
         }
     }
 
-    /** Cost from the lore of the open button, or null if the lore has no cost (yet). */
-    private static @Nullable Double readCost(ItemStack button) {
+    private static boolean isNearRewardChests() {
+        final SkyblockLocationEnum location = LocationService.getInstance().getCurrentLocation();
+        // Kuudra is entered from the Crimson Isle
+        return location == SkyblockLocationEnum.DUNGEON_HUB || location == SkyblockLocationEnum.CATACOMBS
+                || location == SkyblockLocationEnum.CRIMSON_ISLE;
+    }
+
+    /** Cost parts from the lore of the open button, or null if the lore has no cost (yet). Runs every tick, so no pricing here. */
+    static @Nullable SeenCost readCost(ItemStack button) {
         final ItemLore lore = button.get(DataComponents.LORE);
-        if (lore == null) {
-            return null;
-        }
+        return lore == null ? null : readCost(lore.lines().stream().map(line -> strip(line.getString())).toList());
+    }
+
+    static @Nullable SeenCost readCost(List<String> lore) {
         boolean found = false;
-        double cost = 0;
-        for (final Component line : lore.lines()) {
-            final String text = strip(line.getString());
-            final Matcher coins = COINS.matcher(text);
-            if (coins.matches()) {
-                cost += parseNumber(coins.group(1));
+        double coins = 0;
+        final List<String> keys = new ArrayList<>();
+        for (final String text : lore) {
+            final Matcher coinsLine = COINS.matcher(text);
+            if (coinsLine.matches()) {
+                coins += parseNumber(coinsLine.group(1));
                 found = true;
             } else if (text.equals("FREE")) {
                 found = true;
             } else if (text.endsWith(" Key") && !text.startsWith("Requires")) {
                 // Dungeon Chest Key, Kuudra keys
-                cost += ItemPriceService.getInstance().getPrice(text).orElse(0);
+                keys.add(text);
                 found = true;
             }
         }
-        return found ? cost : null;
+        return found ? new SeenCost(coins, keys, System.currentTimeMillis()) : null;
     }
 
     // --- the rewards message ---
@@ -168,7 +181,9 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
     private void onChestOpened(String chest, List<Reward> rewards) {
         final SeenCost seen = this.costByChest.remove(chest);
         final boolean costKnown = seen != null && System.currentTimeMillis() - seen.seenAt() <= COST_MAX_AGE_MS;
-        final double cost = costKnown ? seen.cost() : 0;
+        final double cost = costKnown
+                ? seen.coins() + seen.keys().stream().mapToDouble(key -> ItemPriceService.getInstance().getPrice(key).orElse(0)).sum()
+                : 0;
         final double revenue = rewards.stream().mapToDouble(Reward::value).sum();
         final double profit = revenue - cost;
         final String chestName = displayName(chest);
