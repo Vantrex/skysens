@@ -11,7 +11,8 @@ import org.jetbrains.annotations.NotNull;
 /**
  * {@code !profit [alltime]} sends the profit of the current activity (from SkyHanni's tracker when installed)
  * and the overall profit, each with profit per hour, e.g.
- * "Slayer: 45M (12.3M/h) | Overall: 80M (20M/h)".
+ * "Session Slayer (Inferno Demonlord IV): 73.2M (62.1M/h active) | Overall: 73.2M (54.9M/h on SkyBlock)".
+ * The rate is labeled with the time it is based on: "active" (time actually farming) or "on SkyBlock".
  */
 public class ProfitCommand implements ChatCommand {
 
@@ -43,19 +44,20 @@ public class ProfitCommand implements ChatCommand {
         final StringBuilder reply = new StringBuilder(allTime ? "All-time " : "Session ");
         final ProfitService.ActivityProfit activity = service.getCurrentActivity(allTime);
         if (activity != null) {
-            reply.append(activity.name()).append(": ").append(format(activity.stats())).append(" | ");
+            reply.append(activity.name()).append(": ").append(format(activity.stats(), "active")).append(" | ");
         }
-        reply.append("Overall: ").append(format(service.getOverall(allTime)));
+        final ProfitService.OverallProfit overall = service.getOverall(allTime);
+        reply.append("Overall: ").append(format(overall.stats(), overall.timeOnSkyBlock() ? "on SkyBlock" : "active"));
         context.reply(reply.toString());
     }
 
-    private static String format(ProfitStats stats) {
+    private static String format(ProfitStats stats, String rateBasis) {
         final String profit = (stats.profit < 0 ? "-" : "") + NumberUtil.formatCoins(Math.abs(stats.profit));
         final double perHour = stats.perHour();
         if (Double.isNaN(perHour)) {
             return profit;
         }
-        return profit + " (" + (perHour < 0 ? "-" : "") + NumberUtil.formatCoins(Math.abs(perHour)) + "/h)";
+        return profit + " (" + (perHour < 0 ? "-" : "") + NumberUtil.formatCoins(Math.abs(perHour)) + "/h " + rateBasis + ")";
     }
 
 }

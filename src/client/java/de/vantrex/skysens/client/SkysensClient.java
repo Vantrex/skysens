@@ -135,12 +135,14 @@ public class SkysensClient implements ClientModInitializer {
                                     .then(ClientCommands.literal("reset")
                                             .executes(context -> {
                                                 FeatureService.getInstance().getRewardChestFeature().getSession().reset();
+                                                ProfitService.getInstance().resetSessionChests();
                                                 ClientUtil.sendMessage("§5[SkySens] §7Session chest profit reset.");
                                                 return 1;
                                             })
                                             .then(ClientCommands.literal("alltime")
                                                     .executes(context -> {
                                                         RepositoryRegistry.PROFIT_REPOSITORY.dungeonChests.reset();
+                                                        ProfitService.getInstance().resetAllTimeChests();
                                                         ClientUtil.sendMessage("§5[SkySens] §7All-time chest profit reset.");
                                                         return 1;
                                                     }))))));

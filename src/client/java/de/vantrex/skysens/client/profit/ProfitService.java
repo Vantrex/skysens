@@ -22,7 +22,8 @@ import java.util.Map;
  * <ul>
  *     <li>Overall: with SkyHanni installed and selected as the tracker, the sum of SkyHanni's trackers and SkySens' reward chest trackers,
  *     otherwise SkySens' own tracker of everything it values (rare drops and reward chests). Its uptime is
- *     the time spent on SkyBlock.</li>
+ *     the time spent on SkyBlock, except for the all-time sum of SkyHanni's trackers, which uses the
+ *     trackers' summed active time (see {@link OverallProfit}).</li>
  *     <li>Activities: the tracker that gained most recently. SkyHanni's trackers (Slayer, Fishing, ...) when
  *     SkyHanni is installed, SkySens' own per-activity trackers otherwise. Reward chests are always tracked
  *     by SkySens, SkyHanni has no tracker for them.</li>
@@ -47,6 +48,13 @@ public final class ProfitService {
 
     /** Profit of one tracker, for a session or all time. */
     public record ActivityProfit(@NotNull String name, @NotNull ProfitStats stats, @NotNull String source) {
+    }
+
+    /**
+     * Overall profit. {@code timeOnSkyBlock} tells what its uptime is: the time spent on SkyBlock, or (all-time
+     * SkyHanni totals) the trackers' summed active time.
+     */
+    public record OverallProfit(@NotNull ProfitStats stats, boolean timeOnSkyBlock) {
     }
 
     private ProfitService() {
@@ -78,14 +86,14 @@ public final class ProfitService {
         repository().activities.computeIfAbsent(activity, name -> new ProfitStats()).add(amount, now, afkTimeout);
     }
 
-    public @NotNull ProfitStats getOverall(boolean allTime) {
+    public @NotNull OverallProfit getOverall(boolean allTime) {
         final ProfitStats own = allTime ? repository().overall : this.sessionOverall;
         if (!this.useSkyHanni()) {
-            return own;
+            return new OverallProfit(own, true);
         }
         final List<SkyHanniTrackerReader.TrackerProfit> trackers = this.skyHanni.read();
         if (!this.skyHanni.isAvailable()) {
-            return own;
+            return new OverallProfit(own, true);
         }
         // SkyHanni's trackers see every drop (sacks included), SkySens' rare drop messages only some of them,
         // so add up SkyHanni's trackers and the reward chests SkyHanni doesn't track
@@ -100,7 +108,7 @@ public final class ProfitService {
         if (!allTime) {
             overall.uptimeMs = own.uptimeMs;
         }
-        return overall;
+        return new OverallProfit(overall, !allTime);
     }
 
     private static void addTo(ProfitStats target, @Nullable ProfitStats stats) {
@@ -147,6 +155,18 @@ public final class ProfitService {
             }
         }
         return current;
+    }
+
+    /** Removes the all-time reward chest activities, so they match the reset chest profit. */
+    public void resetAllTimeChests() {
+        repository().activities.remove(DUNGEONS);
+        repository().activities.remove(KUUDRA);
+    }
+
+    /** Removes the session reward chest activities, so they match the reset chest profit. */
+    public void resetSessionChests() {
+        this.sessionActivities.remove(DUNGEONS);
+        this.sessionActivities.remove(KUUDRA);
     }
 
     public void resetSession() {

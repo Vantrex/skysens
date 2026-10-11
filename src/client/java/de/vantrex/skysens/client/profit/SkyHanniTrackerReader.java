@@ -42,7 +42,14 @@ final class SkyHanniTrackerReader {
             Map.entry("features.mining.fossilexcavator.ExcavatorProfitTracker", "Fossil Excavator"),
             Map.entry("features.minion.InfernoMinionProfitTracker", "Inferno Minion"),
             Map.entry("features.garden.tracker.PestProfitTracker", "Pests"),
-            Map.entry("features.misc.DraconicSacrificeTracker", "Draconic Sacrifice")
+            Map.entry("features.misc.DraconicSacrificeTracker", "Draconic Sacrifice"),
+            Map.entry("features.event.yearofthepig.ShinyOrbTracker", "Shiny Orbs"),
+            Map.entry("features.rift.area.mountaintop.TimiteTracker", "Timite"),
+            Map.entry("features.combat.end.DragonProfitTracker", "Dragons"),
+            Map.entry("features.mining.glacitemineshaft.corpse.CorpseTracker", "Corpses"),
+            Map.entry("features.foraging.ForagingTracker", "Foraging"),
+            Map.entry("features.garden.tracker.CropFeverTracker", "Crop Fever"),
+            Map.entry("features.mining.DarkMonolithFeatures", "Dark Monolith")
     );
 
     /** A SkyHanni tracker with its session and total profit. */
@@ -61,7 +68,11 @@ final class SkyHanniTrackerReader {
         return this.loaded && !this.broken;
     }
 
-    /** All SkyHanni trackers that were updated at least once this game session. */
+    /**
+     * All SkyHanni trackers with their all-time total, including slayer types not fought this game launch (they
+     * only exist in SkyHanni's storage). The session of a tracker that wasn't updated this game launch is empty
+     * and its {@code lastUpdateMs} is 0.
+     */
     synchronized @NotNull List<TrackerProfit> read() {
         final List<TrackerProfit> result = new ArrayList<>();
         if (!this.isAvailable() || !this.resolve()) {
@@ -69,6 +80,9 @@ final class SkyHanniTrackerReader {
         }
         // a tracker may be reachable twice (e.g. a "current" field and a map), it must only be summed once
         final Set<Object> seen = Collections.newSetFromMap(new IdentityHashMap<>());
+        // the total data of every tracker read, so storage entries backing a live tracker aren't summed twice
+        final Set<Object> seenData = Collections.newSetFromMap(new IdentityHashMap<>());
+        Object pricingTracker = null;
         for (final Map.Entry<String, String> holder : TRACKER_HOLDERS.entrySet()) {
             try {
                 final Object instance = Class.forName(PACKAGE + holder.getKey()).getField("INSTANCE").get(null);
@@ -76,7 +90,10 @@ final class SkyHanniTrackerReader {
                     if (!seen.add(tracker.getValue())) {
                         continue;
                     }
-                    final TrackerProfit profit = this.readTracker(tracker.getKey(), tracker.getValue());
+                    if (pricingTracker == null || holder.getKey().endsWith("SlayerProfitTracker")) {
+                        pricingTracker = tracker.getValue();
+                    }
+                    final TrackerProfit profit = this.readTracker(tracker.getKey(), tracker.getValue(), seenData);
                     if (profit != null) {
                         result.add(profit);
                     }
@@ -87,7 +104,37 @@ final class SkyHanniTrackerReader {
                 LOGGER.debug("Could not read SkyHanni tracker {}", holder.getKey(), e);
             }
         }
+        this.readStoredSlayers(result, seenData, pricingTracker);
         return result;
+    }
+
+    /** Slayer types not fought this game launch have no tracker, only data in SkyHanni's profile storage. */
+    private void readStoredSlayers(List<TrackerProfit> result, Set<Object> seenData, @Nullable Object pricingTracker) {
+        if (pricingTracker == null) {
+            return;
+        }
+        try {
+            final Object storage = Class.forName(PACKAGE + "data.ProfileStorageData").getField("INSTANCE").get(null);
+            final Object profileSpecific = storage.getClass().getMethod("getProfileSpecific").invoke(storage);
+            if (profileSpecific == null) {
+                return;
+            }
+            final Object stored = profileSpecific.getClass().getMethod("getSlayerProfitData").invoke(profileSpecific);
+            if (!(stored instanceof Map<?, ?> map)) {
+                return;
+            }
+            for (final Map.Entry<?, ?> entry : map.entrySet()) {
+                if (entry.getValue() == null || !seenData.add(entry.getValue())) {
+                    continue;
+                }
+                final ProfitStats total = this.readData(pricingTracker, entry.getValue());
+                if (total != null) {
+                    result.add(new TrackerProfit("Slayer (" + entry.getKey() + ")", new ProfitStats(), total));
+                }
+            }
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
+            LOGGER.debug("Could not read SkyHanni's stored slayer profits", e);
+        }
     }
 
     private boolean resolve() {
@@ -139,11 +186,10 @@ final class SkyHanniTrackerReader {
         return trackers;
     }
 
-    private @Nullable TrackerProfit readTracker(String name, Object tracker) throws ReflectiveOperationException {
+    private @Nullable TrackerProfit readTracker(String name, Object tracker, Set<Object> seenData) throws ReflectiveOperationException {
+        // lastUpdate stays far in the past until the tracker gains something this game launch
         final long lastUpdate = this.lastUpdateField.getLong(tracker);
-        if (lastUpdate <= 0 || lastUpdate == Long.MIN_VALUE) {
-            return null;
-        }
+        final boolean updated = lastUpdate > 0 && lastUpdate != Long.MIN_VALUE;
         final Object shared = this.sharedTrackerGetter.invoke(tracker);
         if (shared == null) {
             return null;
@@ -152,13 +198,18 @@ final class SkyHanniTrackerReader {
         if (get == null) {
             return null;
         }
-        final ProfitStats session = this.readData(tracker, get.invoke(shared, this.sessionMode));
-        final ProfitStats total = this.readData(tracker, get.invoke(shared, this.totalMode));
+        final Object totalData = get.invoke(shared, this.totalMode);
+        if (totalData == null || !seenData.add(totalData)) {
+            return null;
+        }
+        final ProfitStats total = this.readData(tracker, totalData);
+        final ProfitStats session = updated ? this.readData(tracker, get.invoke(shared, this.sessionMode)) : new ProfitStats();
         if (session == null || total == null) {
             return null;
         }
-        session.lastUpdateMs = lastUpdate;
-        total.lastUpdateMs = lastUpdate;
+        // lastUpdateMs 0 keeps a stale tracker from being picked as the current activity
+        session.lastUpdateMs = updated ? lastUpdate : 0;
+        total.lastUpdateMs = updated ? lastUpdate : 0;
         return new TrackerProfit(name, session, total);
     }
 
@@ -203,7 +254,11 @@ final class SkyHanniTrackerReader {
     }
 
     private static @Nullable Map<?, ?> items(Object data) throws ReflectiveOperationException {
-        // bucketed trackers (pests) keep items per bucket
+        // bucketed trackers (pests) keep items per bucket, use all of them, not only the one selected in the display
+        final Method flatten = findMethod(data.getClass(), "flattenBucketsItems", 0);
+        if (flatten != null && flatten.invoke(data) instanceof Map<?, ?> all) {
+            return all;
+        }
         final Object bucketed = invokeGetter(data, "getSelectedBucketItems");
         if (bucketed instanceof Map<?, ?> map) {
             return map;
