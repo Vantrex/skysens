@@ -35,6 +35,34 @@ public enum ThemePreset {
             ),
             new Style(true, false, true, 6, 5, 10, 10, 6, 26, 14, 4, 8, false, true, false)),
 
+    /** Pure black surfaces for OLED screens; cards are separated by borders instead of lighter fills. */
+    OLED("OLED",
+            new Palette(
+                    0xCC000000, // backdrop
+                    0xFF000000, // panel
+                    0xFF000000, // sidebar
+                    0xFF1C1C1F, // border
+                    0xFF141416, // divider
+                    0xFF000000, // card
+                    0xFF0C0C0E, // cardHover
+                    0xFF000000, // cardNested
+                    0xFFF2F2F5, // text
+                    0xFF8A8A94, // textMuted
+                    0xFF55555E, // textFaint
+                    0xFFA855F7, // accent
+                    0xFFC084FC, // accentHover
+                    0x33A855F7, // accentSoft
+                    0xFF26262B, // track
+                    0xFFFFFFFF, // knob
+                    0x40000000, // knobRing
+                    0xFF000000, // input
+                    0xFFF87171, // danger
+                    0x0FFFFFFF, // hoverOverlay
+                    0xFF000000, // popover
+                    0xFF2A2A30  // popoverBorder
+            ),
+            new Style(true, true, true, 6, 5, 10, 10, 6, 26, 14, 4, 8, false, false, false)),
+
     FLAT("Flat",
             new Palette(
                     0x88000000,
