@@ -102,8 +102,8 @@ public class SkysensClient implements ClientModInitializer {
     }
 
     private int showChestProfit() {
-        ClientUtil.sendMessage(RewardChestFeature.summary("session", FeatureService.getInstance().getRewardChestFeature().getSession()));
-        ClientUtil.sendMessage(RewardChestFeature.summary("all time", RepositoryRegistry.PROFIT_REPOSITORY.dungeonChests));
+        ClientUtil.sendPrefixed(RewardChestFeature.summary("session", FeatureService.getInstance().getRewardChestFeature().getSession()));
+        ClientUtil.sendPrefixed(RewardChestFeature.summary("all time", RepositoryRegistry.PROFIT_REPOSITORY.dungeonChests));
         return 1;
     }
 
@@ -136,14 +136,14 @@ public class SkysensClient implements ClientModInitializer {
                                             .executes(context -> {
                                                 FeatureService.getInstance().getRewardChestFeature().getSession().reset();
                                                 ProfitService.getInstance().resetSessionChests();
-                                                ClientUtil.sendMessage("§5[SkySens] §7Session chest profit reset.");
+                                                ClientUtil.sendPrefixed("§7Session chest profit reset.");
                                                 return 1;
                                             })
                                             .then(ClientCommands.literal("alltime")
                                                     .executes(context -> {
                                                         RepositoryRegistry.PROFIT_REPOSITORY.dungeonChests.reset();
                                                         ProfitService.getInstance().resetAllTimeChests();
-                                                        ClientUtil.sendMessage("§5[SkySens] §7All-time chest profit reset.");
+                                                        ClientUtil.sendPrefixed("§7All-time chest profit reset.");
                                                         return 1;
                                                     }))))));
             dispatcher.register(ClientCommands.literal("mocklocation")

@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.config.ui.render;
 
 import de.vantrex.skysens.client.config.SkysensConfig;
+import de.vantrex.skysens.client.util.Brand;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -290,6 +291,28 @@ public final class UiText {
             return;
         }
         g.text(font(), entry(text, weight).component(), x, y, argb, false);
+    }
+
+    /** Draws text in the SkySens brand gradient (see {@link Brand}). Uncached; only for a handful of strings per frame. */
+    public static void drawBrand(GuiGraphicsExtractor g, String text, int x, int y, Weight weight) {
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        Component c = Brand.gradient(text, style(weight));
+        if (weight == Weight.DISPLAY) {
+            if (!family.vanilla()) {
+                g.text(font(), c, x, y + DISPLAY_Y_OFFSET, 0xFFFFFFFF, false);
+            } else {
+                var pose = g.pose();
+                pose.pushMatrix();
+                pose.translate(x, y);
+                pose.scale(DISPLAY_SCALE, DISPLAY_SCALE);
+                g.text(font(), c, 0, 0, 0xFFFFFFFF, false);
+                pose.popMatrix();
+            }
+            return;
+        }
+        g.text(font(), c, x, y, 0xFFFFFFFF, false);
     }
 
     public static void drawRight(GuiGraphicsExtractor g, String text, int rightX, int y, int argb) {

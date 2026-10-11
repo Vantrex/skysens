@@ -373,9 +373,7 @@ public class SkysensConfigScreen extends Screen {
         // brand
         int bx = sx + 12;
         int by = winY + 11;
-        UiText.draw(g, "Sky", bx, by, Theme.TEXT, UiText.Weight.DISPLAY);
-        int skyW = UiText.width("Sky", UiText.Weight.DISPLAY);
-        UiText.draw(g, "Sens", bx + skyW, by, Theme.ACCENT, UiText.Weight.DISPLAY);
+        UiText.drawBrand(g, "SkySens", bx, by, UiText.Weight.DISPLAY);
         UiText.draw(g, "v" + version, bx, by + 17, Theme.TEXT_FAINT);
 
         // nav
@@ -455,7 +453,11 @@ public class SkysensConfigScreen extends Screen {
             desc = "";
         }
         String shownTitle = UiText.ellipsize(title, maxTextW, UiText.Weight.DISPLAY);
-        UiText.draw(g, shownTitle, hx, winY + 8, Theme.TEXT, UiText.Weight.DISPLAY);
+        if (!searching() && active == null) {
+            UiText.drawBrand(g, shownTitle, hx, winY + 8, UiText.Weight.DISPLAY);
+        } else {
+            UiText.draw(g, shownTitle, hx, winY + 8, Theme.TEXT, UiText.Weight.DISPLAY);
+        }
         if (!desc.isEmpty()) {
             UiText.draw(g, UiText.ellipsize(desc, maxTextW), hx, winY + 8 + 14 + 4, Theme.TEXT_MUTED);
         }
