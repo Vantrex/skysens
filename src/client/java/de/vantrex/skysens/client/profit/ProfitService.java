@@ -13,13 +13,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Profit tracking for {@code !profit}.
  * <ul>
- *     <li>Overall: SkySens' own tracker of everything it values (rare drops and reward chests). Its uptime
- *     is the time spent on SkyBlock.</li>
+ *     <li>Overall: with SkyHanni installed, the sum of SkyHanni's trackers and SkySens' reward chest trackers,
+ *     otherwise SkySens' own tracker of everything it values (rare drops and reward chests). Its uptime is
+ *     the time spent on SkyBlock.</li>
  *     <li>Activities: the tracker that gained most recently. SkyHanni's trackers (Slayer, Fishing, ...) when
  *     SkyHanni is installed, SkySens' own per-activity trackers otherwise. Reward chests are always tracked
  *     by SkySens, SkyHanni has no tracker for them.</li>
@@ -76,7 +78,34 @@ public final class ProfitService {
     }
 
     public @NotNull ProfitStats getOverall(boolean allTime) {
-        return allTime ? repository().overall : this.sessionOverall;
+        final ProfitStats own = allTime ? repository().overall : this.sessionOverall;
+        if (!this.skyHanni.isAvailable()) {
+            return own;
+        }
+        final List<SkyHanniTrackerReader.TrackerProfit> trackers = this.skyHanni.read();
+        if (!this.skyHanni.isAvailable()) {
+            return own;
+        }
+        // SkyHanni's trackers see every drop (sacks included), SkySens' rare drop messages only some of them,
+        // so add up SkyHanni's trackers and the reward chests SkyHanni doesn't track
+        final ProfitStats overall = new ProfitStats();
+        overall.uptimeMs = own.uptimeMs;
+        for (final SkyHanniTrackerReader.TrackerProfit tracker : trackers) {
+            addTo(overall, allTime ? tracker.total() : tracker.session());
+        }
+        for (final String chest : List.of(DUNGEONS, KUUDRA)) {
+            addTo(overall, (allTime ? repository().activities : this.sessionActivities).get(chest));
+        }
+        return overall;
+    }
+
+    private static void addTo(ProfitStats target, @Nullable ProfitStats stats) {
+        if (stats == null) {
+            return;
+        }
+        target.profit += stats.profit;
+        target.events += stats.events;
+        target.lastUpdateMs = Math.max(target.lastUpdateMs, stats.lastUpdateMs);
     }
 
     /** The activity that gained most recently, or null if nothing was tracked yet. */

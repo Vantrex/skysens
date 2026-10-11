@@ -10,8 +10,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Reads SkyHanni's item profit trackers (Slayer, Fishing, Diana, ...) via reflection, so {@code !profit} can
@@ -64,10 +67,15 @@ final class SkyHanniTrackerReader {
         if (!this.isAvailable() || !this.resolve()) {
             return result;
         }
+        // a tracker may be reachable twice (e.g. a "current" field and a map), it must only be summed once
+        final Set<Object> seen = Collections.newSetFromMap(new IdentityHashMap<>());
         for (final Map.Entry<String, String> holder : TRACKER_HOLDERS.entrySet()) {
             try {
                 final Object instance = Class.forName(PACKAGE + holder.getKey()).getField("INSTANCE").get(null);
                 for (final Map.Entry<String, Object> tracker : this.findTrackers(instance, holder.getValue()).entrySet()) {
+                    if (!seen.add(tracker.getValue())) {
+                        continue;
+                    }
                     final TrackerProfit profit = this.readTracker(tracker.getKey(), tracker.getValue());
                     if (profit != null) {
                         result.add(profit);
