@@ -190,7 +190,8 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
             this.finishPending();
             return;
         }
-        this.pending.rewards().add(new Reward(name, value(name)));
+        final PendingChest chest = this.pending;
+        chest.rewards().add(new Reward(name, value(name)));
     }
 
     private void finishPending() {
