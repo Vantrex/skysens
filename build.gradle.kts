@@ -3,6 +3,7 @@ plugins {
     id("maven-publish")
     id("io.freefair.lombok") version "9.1.0"
     id("com.gradleup.shadow") version "9.3.0"
+    id("com.modrinth.minotaur") version "2.8.7"
 }
 
 repositories {
@@ -84,6 +85,22 @@ tasks.shadowJar {
     archiveClassifier.set("")
 }
 
+
+modrinth {
+    token.set(System.getenv("MODRINTH_TOKEN"))
+    projectId.set(System.getenv("MODRINTH_PROJECT_ID") ?: "skysens")
+    versionNumber.set(project.version.toString())
+    versionName.set("SkySens ${project.version}")
+    versionType.set(System.getenv("MODRINTH_VERSION_TYPE") ?: "release")
+    uploadFile.set(tasks.shadowJar)
+    gameVersions.add(minecraft_version)
+    loaders.add("fabric")
+    changelog.set(System.getenv("CHANGELOG") ?: "")
+    dependencies {
+        required.project("fabric-api")
+        required.project("fabric-language-kotlin")
+    }
+}
 
 tasks.jar {
     manifest {

@@ -1,0 +1,79 @@
+name: Release
+
+# Every merge/push to master bumps the mod version, tags it and publishes the jar to Modrinth.
+# - If mod_version in gradle.properties has not been released yet (no v<version> tag), it is released as-is.
+#   Use this to do minor/major bumps: set e.g. mod_version=1.1.0 in your PR.
+# - Otherwise the patch number is bumped (1.0.3 -> 1.0.4).
+# The bump is committed back to master with [skip ci].
+
+on:
+  push:
+    branches: [master]
+    paths-ignore: ["**.md", ".idea/**"]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    if: "github.ref == 'refs/heads/master' && !contains(github.event.head_commit.message, '[skip ci]')"
+    runs-on: ubuntu-latest
+    environment: modrinth
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 25
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Determine version
+        run: |
+          CURRENT=$(grep '^mod_version=' gradle.properties | cut -d= -f2 | tr -d '[:space:]')
+          if git rev-parse -q --verify "refs/tags/v$CURRENT" >/dev/null; then
+            IFS=. read -r MAJOR MINOR PATCH <<< "$CURRENT"
+            VERSION="$MAJOR.$MINOR.$((PATCH + 1))"
+          else
+            VERSION="$CURRENT"
+          fi
+          echo "Releasing $VERSION"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: |
+          chmod +x gradlew
+          ./gradlew build -Pmod_version="$VERSION"
+
+      - name: Commit version and tag
+        run: |
+          sed -i "s/^mod_version=.*/mod_version=$VERSION/" gradle.properties
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add gradle.properties
+          git diff --cached --quiet || git commit -m "Release v$VERSION [skip ci]"
+          git tag "v$VERSION"
+          git push origin HEAD:master "v$VERSION"
+
+      - name: Publish to Modrinth
+        run: ./gradlew modrinth -Pmod_version="$VERSION"
+        env:
+          MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
+          MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+          CHANGELOG: ${{ github.event.head_commit.message }}
+
+      - name: GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ env.VERSION }}
+          name: SkySens ${{ env.VERSION }}
+          body: ${{ github.event.head_commit.message }}
+          files: build/libs/skysens-${{ env.VERSION }}.jar
