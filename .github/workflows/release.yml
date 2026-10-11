@@ -21,8 +21,9 @@ permissions:
 
 jobs:
   release:
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
+    if: "github.ref == 'refs/heads/master' && !contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
+    environment: modrinth
     steps:
       - uses: actions/checkout@v4
         with:
