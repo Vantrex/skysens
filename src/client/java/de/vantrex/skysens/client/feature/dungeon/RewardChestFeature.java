@@ -220,7 +220,7 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
             RepositoryRegistry.PROFIT_REPOSITORY.dungeonChests.add(revenue, cost);
             ProfitService.getInstance().record(isKuudra(chest) ? ProfitService.KUUDRA : ProfitService.DUNGEONS, profit);
             if (config.chestProfit.chatSummary) {
-                ClientUtil.sendMessage("§5[SkySens] §7" + chestName + ": " + coins(profit)
+                ClientUtil.sendPrefixed("§7" + chestName + ": " + coins(profit)
                         + " §8(" + NumberUtil.formatCoins(revenue) + " - " + (costKnown ? NumberUtil.formatCoins(cost) : "? cost") + ")"
                         + " §7| Session: " + coins(this.session.profit()) + " §7over §f" + this.session.chests + " §7chests");
             }
@@ -295,7 +295,7 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
     }
 
     public static @NotNull String summary(String label, ProfitRepository.DungeonChestStats stats) {
-        return "§5[SkySens] §7Chest profit (" + label + "): " + coins(stats.profit())
+        return "§7Chest profit (" + label + "): " + coins(stats.profit())
                 + " §7over §f" + stats.chests + " §7chests §8(revenue " + NumberUtil.formatCoins(stats.revenue)
                 + ", cost " + NumberUtil.formatCoins(stats.cost) + ")";
     }

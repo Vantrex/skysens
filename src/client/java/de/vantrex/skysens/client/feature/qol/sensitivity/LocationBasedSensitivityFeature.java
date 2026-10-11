@@ -9,9 +9,11 @@ import de.vantrex.skysens.client.feature.MouseFeature;
 import de.vantrex.skysens.client.feature.SkySensFeature;
 import de.vantrex.skysens.client.service.LocationService;
 import de.vantrex.skysens.client.service.SensitivityService;
+import de.vantrex.skysens.client.util.Brand;
 import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
 import lombok.extern.slf4j.Slf4j;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 
 @SkySensFeature
@@ -31,7 +33,7 @@ public class LocationBasedSensitivityFeature implements MouseFeature, SkysensLis
         if (this.sensitivityConfiguration == null) {
             log.warn("No sensitivity configuration found, disabling sensitivity feature");
             if (this.currentSensitivity != null) {
-                ClientUtil.sendTitle("§5SkySens", "Reset Sensitivity ");
+                ClientUtil.sendTitle(Brand.name(), Component.literal("Reset Sensitivity "), 0, 60, 0);
                 ClientUtil.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
             }
             this.currentSensitivity = null;
@@ -40,7 +42,7 @@ public class LocationBasedSensitivityFeature implements MouseFeature, SkysensLis
         final var locationConfig = this.sensitivityConfiguration.getLocationSensitivities().get(event.getNewLocation());
         if (locationConfig == null || !locationConfig.isEnabled()) {
             if (this.currentSensitivity != null) {
-                ClientUtil.sendTitle("§5SkySens", "Reset Sensitivity ");
+                ClientUtil.sendTitle(Brand.name(), Component.literal("Reset Sensitivity "), 0, 60, 0);
                 ClientUtil.playSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 1.0F);
             }
             log.info("No sensitivity config found for location {} or it is disabled, disabling sensitivity feature", event.getNewLocation());

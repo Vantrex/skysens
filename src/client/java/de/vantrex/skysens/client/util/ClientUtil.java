@@ -20,6 +20,11 @@ public class ClientUtil {
         sendMessage(Component.literal(message));
     }
 
+    /** Sends a message behind the "[SkySens]" gradient prefix. */
+    public void sendPrefixed(@NotNull final String message) {
+        sendMessage(Brand.prefix().append(Component.literal(message)));
+    }
+
     public void sendMessage(final @NotNull Component text) {
         sendMessage(text, false);
     }

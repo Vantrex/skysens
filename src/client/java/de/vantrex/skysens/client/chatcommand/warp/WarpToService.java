@@ -77,10 +77,10 @@ public final class WarpToService {
         }
         this.acceptInviteFrom = inviter;
         this.acceptInviteUntil = System.currentTimeMillis() + INVITE_TIMEOUT_MS;
-        ClientUtil.sendMessage("§5[SkySens] §7Accepting the party invite from §f" + inviter + " §7for the next 60 seconds.");
+        ClientUtil.sendPrefixed("§7Accepting the party invite from §f" + inviter + " §7for the next 60 seconds.");
         PartyService.getInstance().isInParty().thenAccept(inParty -> {
             if (inParty.orElse(false)) {
-                ClientUtil.sendMessage("§5[SkySens] §cYou are in a party, leave it so you can accept the warp invite.");
+                ClientUtil.sendPrefixed("§cYou are in a party, leave it so you can accept the warp invite.");
             }
         });
     }
