@@ -8,6 +8,7 @@ import de.vantrex.skysens.client.chatcommand.impl.DiceCommand;
 import de.vantrex.skysens.client.chatcommand.impl.FpsCommand;
 import de.vantrex.skysens.client.chatcommand.impl.HelpCommand;
 import de.vantrex.skysens.client.chatcommand.impl.PingCommand;
+import de.vantrex.skysens.client.chatcommand.impl.ProfitCommand;
 import de.vantrex.skysens.client.chatcommand.impl.ServerCommand;
 import de.vantrex.skysens.client.chatcommand.impl.TpsCommand;
 import de.vantrex.skysens.client.chatcommand.impl.WarpToCommand;
@@ -54,6 +55,7 @@ public final class ChatCommandService {
         this.registry.register(new HelpCommand(this.registry));
         this.registry.register(new PingCommand());
         this.registry.register(new TpsCommand());
+        this.registry.register(new ProfitCommand());
         this.registry.register(new ZoneCommand());
         this.registry.register(new ServerCommand());
         this.registry.register(new BuffsCommand());

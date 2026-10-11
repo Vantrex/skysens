@@ -59,6 +59,13 @@ final class HypixelPriceProvider implements ItemPriceProvider {
         return true;
     }
 
+    /** Loads the data once, so the first lookup already has prices. Later refreshes happen on lookup. */
+    void prefetch() {
+        if (this.nextRefreshAt == 0) {
+            this.refresh();
+        }
+    }
+
     @Override
     public void refresh() {
         if (System.currentTimeMillis() < this.nextRefreshAt || !this.refreshing.compareAndSet(false, true)) {
@@ -89,6 +96,17 @@ final class HypixelPriceProvider implements ItemPriceProvider {
         if (id == null) {
             return OptionalDouble.empty();
         }
+        final Double bazaar = this.bazaarPrices.get(id);
+        if (bazaar != null && bazaar > 0) {
+            return OptionalDouble.of(bazaar);
+        }
+        final Double bin = this.lowestBins.get(id);
+        return bin != null && bin > 0 ? OptionalDouble.of(bin) : OptionalDouble.empty();
+    }
+
+    /** Price by item id: bazaar ids ("ENCHANTMENT_ULTIMATE_WISDOM_2", "ESSENCE_WITHER") or NEU lowest BIN ids. */
+    @NotNull OptionalDouble priceById(@NotNull String id) {
+        this.refresh();
         final Double bazaar = this.bazaarPrices.get(id);
         if (bazaar != null && bazaar > 0) {
             return OptionalDouble.of(bazaar);

@@ -15,9 +15,10 @@ public final class ItemPriceService {
     @Getter
     private static final ItemPriceService instance = new ItemPriceService();
 
+    private final HypixelPriceProvider hypixel = new HypixelPriceProvider();
     private final List<ItemPriceProvider> providers = List.of(
             new SkyHanniPriceProvider(),
-            new HypixelPriceProvider()
+            this.hypixel
     );
 
     private ItemPriceService() {
@@ -39,16 +40,29 @@ public final class ItemPriceService {
     }
 
     /**
-     * Loads price data ahead of time, so the first lookup already has prices. Only the providers
-     * that would be asked are refreshed: nothing is downloaded while SkyHanni is installed and working.
+     * Price by item id, from SkySens' own price data (Hypixel bazaar ids, NEU lowest BIN ids). Used for
+     * items that have no unique display name, like enchanted books and essence. Loads the data if needed.
+     */
+    public @NotNull OptionalDouble getPriceById(@NotNull String id) {
+        return this.hypixel.priceById(id);
+    }
+
+    /** Loads SkySens' own price data once, for {@link #getPriceById(String)}. Lookups refresh it when stale. */
+    public void prefetchOwn() {
+        this.hypixel.prefetch();
+    }
+
+    /**
+     * Loads price data once ahead of time, so the first lookup already has prices; lookups refresh it when
+     * stale. Nothing is downloaded while SkyHanni is installed and working.
      */
     public void prefetch() {
         for (final ItemPriceProvider provider : this.providers) {
             if (provider.isAvailable()) {
-                provider.refresh();
-                if (!(provider instanceof HypixelPriceProvider)) {
-                    return;
+                if (provider == this.hypixel) {
+                    this.hypixel.prefetch();
                 }
+                return;
             }
         }
     }

@@ -1,0 +1,238 @@
+package de.vantrex.skysens.client.profit;
+
+import net.fabricmc.loader.api.FabricLoader;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * Reads SkyHanni's item profit trackers (Slayer, Fishing, Diana, ...) via reflection, so {@code !profit} can
+ * report SkyHanni's numbers for the current activity. Profit is computed like SkyHanni's display: every
+ * non-hidden item times SkyHanni's own price for it (coins are an item priced at 1). Extras such as the
+ * slayer spawn cost are not included.
+ * <p>
+ * SkyHanni's NeuInternalName, SimpleTimeMark and kotlin Duration are value classes, so on the JVM they are
+ * String/long and methods using them have mangled names ({@code getPricePer-abc123}); those are found by prefix.
+ */
+final class SkyHanniTrackerReader {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger("skysens");
+    private static final String PACKAGE = "at.hannibal2.skyhanni.";
+    /** SkyHanni objects holding item profit trackers, with the activity name we show. */
+    private static final Map<String, String> TRACKER_HOLDERS = Map.ofEntries(
+            Map.entry("features.slayer.SlayerProfitTracker", "Slayer"),
+            Map.entry("features.fishing.tracker.FishingProfitTracker", "Fishing"),
+            Map.entry("features.event.diana.DianaProfitTracker", "Diana"),
+            Map.entry("features.combat.ghosttracker.GhostTracker", "Ghosts"),
+            Map.entry("features.gifting.GiftProfitTracker", "Gifts"),
+            Map.entry("features.hunting.HuntingProfitTracker", "Hunting"),
+            Map.entry("features.inventory.experimentationtable.ExperimentsProfitTracker", "Experiments"),
+            Map.entry("features.mining.crystalhollows.CrystalNucleusTracker", "Crystal Nucleus"),
+            Map.entry("features.mining.fossilexcavator.ExcavatorProfitTracker", "Fossil Excavator"),
+            Map.entry("features.minion.InfernoMinionProfitTracker", "Inferno Minion"),
+            Map.entry("features.garden.tracker.PestProfitTracker", "Pests"),
+            Map.entry("features.misc.DraconicSacrificeTracker", "Draconic Sacrifice")
+    );
+
+    /** A SkyHanni tracker with its session and total profit. */
+    record TrackerProfit(String name, ProfitStats session, ProfitStats total) {
+    }
+
+    private final boolean loaded = FabricLoader.getInstance().isModLoaded("skyhanni");
+    private boolean broken;
+    private Class<?> trackerClass;
+    private Field lastUpdateField;
+    private Method sharedTrackerGetter;
+    private Object sessionMode;
+    private Object totalMode;
+
+    boolean isAvailable() {
+        return this.loaded && !this.broken;
+    }
+
+    /** All SkyHanni trackers that were updated at least once this game session. */
+    synchronized @NotNull List<TrackerProfit> read() {
+        final List<TrackerProfit> result = new ArrayList<>();
+        if (!this.isAvailable() || !this.resolve()) {
+            return result;
+        }
+        for (final Map.Entry<String, String> holder : TRACKER_HOLDERS.entrySet()) {
+            try {
+                final Object instance = Class.forName(PACKAGE + holder.getKey()).getField("INSTANCE").get(null);
+                for (final Map.Entry<String, Object> tracker : this.findTrackers(instance, holder.getValue()).entrySet()) {
+                    final TrackerProfit profit = this.readTracker(tracker.getKey(), tracker.getValue());
+                    if (profit != null) {
+                        result.add(profit);
+                    }
+                }
+            } catch (ClassNotFoundException | NoSuchFieldException e) {
+                // this tracker doesn't exist in the installed SkyHanni version
+            } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
+                LOGGER.debug("Could not read SkyHanni tracker {}", holder.getKey(), e);
+            }
+        }
+        return result;
+    }
+
+    private boolean resolve() {
+        if (this.trackerClass != null) {
+            return true;
+        }
+        try {
+            this.trackerClass = Class.forName(PACKAGE + "utils.tracker.SkyHanniTracker");
+            this.lastUpdateField = this.trackerClass.getDeclaredField("lastUpdate");
+            this.lastUpdateField.setAccessible(true);
+            this.sharedTrackerGetter = this.trackerClass.getDeclaredMethod("getSharedTracker");
+            this.sharedTrackerGetter.setAccessible(true);
+            final Class<?> displayMode = Class.forName(PACKAGE + "utils.tracker.SkyHanniTracker$DisplayMode");
+            this.sessionMode = displayMode.getField("SESSION").get(null);
+            this.totalMode = displayMode.getField("TOTAL").get(null);
+            return true;
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
+            this.broken = true;
+            this.trackerClass = null;
+            LOGGER.warn("Could not read SkyHanni's profit trackers, using SkySens' own tracker", e);
+            return false;
+        }
+    }
+
+    /** The trackers held by a SkyHanni object: itself, tracker fields, or maps of trackers (e.g. per slayer type). */
+    private Map<String, Object> findTrackers(Object holder, String name) throws IllegalAccessException {
+        final Map<String, Object> trackers = new java.util.LinkedHashMap<>();
+        if (this.trackerClass.isInstance(holder)) {
+            trackers.put(name, holder);
+            return trackers;
+        }
+        for (final Field field : holder.getClass().getDeclaredFields()) {
+            if (Modifier.isStatic(field.getModifiers()) && field.getType() == holder.getClass()) {
+                continue;
+            }
+            field.setAccessible(true);
+            final Object value = field.get(holder);
+            if (this.trackerClass.isInstance(value)) {
+                trackers.put(name, value);
+            } else if (value instanceof Map<?, ?> map) {
+                for (final Map.Entry<?, ?> entry : map.entrySet()) {
+                    if (this.trackerClass.isInstance(entry.getValue())) {
+                        // e.g. slayer: one tracker per slayer type
+                        trackers.put(name + " (" + entry.getKey() + ")", entry.getValue());
+                    }
+                }
+            }
+        }
+        return trackers;
+    }
+
+    private @Nullable TrackerProfit readTracker(String name, Object tracker) throws ReflectiveOperationException {
+        final long lastUpdate = this.lastUpdateField.getLong(tracker);
+        if (lastUpdate <= 0 || lastUpdate == Long.MIN_VALUE) {
+            return null;
+        }
+        final Object shared = this.sharedTrackerGetter.invoke(tracker);
+        if (shared == null) {
+            return null;
+        }
+        final Method get = findMethod(shared.getClass(), "get", 1);
+        if (get == null) {
+            return null;
+        }
+        final ProfitStats session = this.readData(tracker, get.invoke(shared, this.sessionMode));
+        final ProfitStats total = this.readData(tracker, get.invoke(shared, this.totalMode));
+        if (session == null || total == null) {
+            return null;
+        }
+        session.lastUpdateMs = lastUpdate;
+        total.lastUpdateMs = lastUpdate;
+        return new TrackerProfit(name, session, total);
+    }
+
+    private @Nullable ProfitStats readData(Object tracker, Object data) throws ReflectiveOperationException {
+        if (data == null) {
+            return null;
+        }
+        final Map<?, ?> items = items(data);
+        if (items == null) {
+            return null;
+        }
+        final Method customPrice = findMethod(data.getClass(), "getCustomPricePer", 2);
+        final Method pricePer = findMethod(tracker.getClass(), "getPricePer", 1);
+        final ProfitStats stats = new ProfitStats();
+        for (final Map.Entry<?, ?> entry : items.entrySet()) {
+            final Object item = entry.getValue();
+            if (Boolean.TRUE.equals(invokeGetter(item, "getHidden"))) {
+                continue;
+            }
+            final Object amount = invokeGetter(item, "getTotalAmount");
+            if (!(amount instanceof Long count) || count == 0) {
+                continue;
+            }
+            final String internalName = unbox(entry.getKey());
+            final Object price = customPrice != null
+                    ? customPrice.invoke(data, internalName, tracker)
+                    : pricePer != null ? pricePer.invoke(tracker, internalName) : null;
+            if (price instanceof Double perItem) {
+                stats.profit += perItem * count;
+            }
+            stats.events += count;
+        }
+        final Method uptime = findMethod(data.getClass(), "getTotalUptime", 0);
+        if (uptime != null && uptime.invoke(data) instanceof Long rawDuration) {
+            stats.uptimeMs = durationToMillis(rawDuration);
+        }
+        return stats;
+    }
+
+    private static @Nullable Map<?, ?> items(Object data) throws ReflectiveOperationException {
+        // bucketed trackers (pests) keep items per bucket
+        final Object bucketed = invokeGetter(data, "getSelectedBucketItems");
+        if (bucketed instanceof Map<?, ?> map) {
+            return map;
+        }
+        return invokeGetter(data, "getItems") instanceof Map<?, ?> map ? map : null;
+    }
+
+    /** Unboxes a NeuInternalName value class to its String. */
+    private static String unbox(Object internalName) throws ReflectiveOperationException {
+        if (internalName instanceof String string) {
+            return string;
+        }
+        return (String) internalName.getClass().getMethod("unbox-impl").invoke(internalName);
+    }
+
+    /** Decodes kotlin.time.Duration's raw long: nanoseconds or milliseconds, marked by the lowest bit. */
+    private static long durationToMillis(long raw) {
+        final long value = raw >> 1;
+        return (raw & 1) == 0 ? value / 1_000_000 : value;
+    }
+
+    private static @Nullable Object invokeGetter(Object target, String name) throws ReflectiveOperationException {
+        try {
+            final Method method = target.getClass().getMethod(name);
+            return method.invoke(target);
+        } catch (NoSuchMethodException e) {
+            return null;
+        }
+    }
+
+    private static @Nullable Method findMethod(Class<?> owner, String prefix, int parameterCount) {
+        for (Class<?> type = owner; type != null; type = type.getSuperclass()) {
+            for (final Method method : type.getDeclaredMethods()) {
+                if ((method.getName().equals(prefix) || method.getName().startsWith(prefix + "-"))
+                        && method.getParameterCount() == parameterCount) {
+                    method.setAccessible(true);
+                    return method;
+                }
+            }
+        }
+        return null;
+    }
+
+}

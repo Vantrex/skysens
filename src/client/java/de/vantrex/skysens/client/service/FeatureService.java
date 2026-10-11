@@ -6,6 +6,7 @@ import de.vantrex.skysens.client.feature.bazaar.BazaarHighlightFeature;
 import de.vantrex.skysens.client.feature.chat.ChatCommandFeature;
 import de.vantrex.skysens.client.feature.chat.LootShareFeature;
 import de.vantrex.skysens.client.feature.chat.WarpToFeature;
+import de.vantrex.skysens.client.feature.dungeon.RewardChestFeature;
 import de.vantrex.skysens.client.feature.mining.notification.FiletOFortuneNotificationFeature;
 import de.vantrex.skysens.client.feature.mining.notification.PickaxeAbilityResetNotificationFeature;
 import de.vantrex.skysens.client.feature.mining.notification.PowderPumpkinBuffNotificationFeature;
@@ -25,6 +26,7 @@ public class FeatureService {
     private static final FeatureService instance = new FeatureService();
 
     private final FeatureRegistry featureRegistry = new FeatureRegistry();
+    private final RewardChestFeature rewardChestFeature = new RewardChestFeature();
 
     private FeatureService() {
         this.register();
@@ -49,6 +51,7 @@ public class FeatureService {
         this.featureRegistry.register(new ChatCommandFeature());
         this.featureRegistry.register(new WarpToFeature());
         this.featureRegistry.register(new LootShareFeature());
+        this.featureRegistry.register(this.rewardChestFeature);
 
     }
 

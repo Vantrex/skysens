@@ -10,6 +10,7 @@ import de.vantrex.skysens.client.feature.AfterTickFeature;
 import de.vantrex.skysens.client.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.feature.SkySensFeature;
 import de.vantrex.skysens.client.price.ItemPriceService;
+import de.vantrex.skysens.client.profit.ProfitService;
 import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
 import net.minecraft.ChatFormatting;
@@ -19,7 +20,10 @@ import java.util.OptionalDouble;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** Posts our rare drops to co-op chat, e.g. "RARE DROP! Judgement Core (+250% Magic Find)". */
+/**
+ * Posts our rare drops to co-op chat, e.g. "RARE DROP! Judgement Core (+250% Magic Find)", and records their
+ * value for the profit tracker.
+ */
 @SkySensFeature
 public class LootShareFeature implements GameMessageListeningFeature, AfterTickFeature {
 
@@ -41,13 +45,17 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
             return;
         }
         final Matcher matcher = DROP_PATTERN.matcher(text.trim());
-        if (!matcher.matches() || !this.shouldShareTier(matcher.group(1))) {
+        if (!matcher.matches()) {
             return;
         }
         final LootShareAccordion config = SkysensConfig.getInstance().chatCommandsCategory.lootShare;
         final String withoutMagicFind = MAGIC_FIND_PATTERN.matcher(matcher.group(2)).replaceAll("").trim();
         final OptionalDouble value = needsPrices(config) ? this.dropValue(withoutMagicFind) : OptionalDouble.empty();
-        if (!this.isWorthEnough(value, config)) {
+        // every drop counts for the profit tracker, the share filters below don't apply to it
+        if (value.isPresent()) {
+            ProfitService.getInstance().record(ProfitService.detectActivity(), value.getAsDouble());
+        }
+        if (!config.enabled || !this.shouldShareTier(matcher.group(1)) || !this.isWorthEnough(value, config)) {
             return;
         }
         String drop = config.includeMagicFind ? matcher.group(2) : withoutMagicFind;
@@ -67,7 +75,11 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
     }
 
     private static boolean needsPrices(LootShareAccordion config) {
-        return config.showPrice || config.minimumPriceMillions > 0;
+        return isTrackingProfit() || (config.enabled && (config.showPrice || config.minimumPriceMillions > 0));
+    }
+
+    private static boolean isTrackingProfit() {
+        return SkysensConfig.getInstance().generalCategory.profitTracker.enabled;
     }
 
     private boolean shouldShareTier(String prefix) {
@@ -107,7 +119,8 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
 
     @Override
     public boolean isActive() {
-        return SkysensConfig.getInstance().chatCommandsCategory.lootShare.enabled;
+        // also runs without sharing, to feed the profit tracker
+        return SkysensConfig.getInstance().chatCommandsCategory.lootShare.enabled || isTrackingProfit();
     }
 
 }

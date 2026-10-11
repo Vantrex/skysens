@@ -2,6 +2,7 @@ package de.vantrex.skysens.client.config.categories.general;
 
 import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.enums.NotificationDisplayTypeEnum;
+import io.github.notenoughupdates.moulconfig.annotations.Accordion;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
@@ -17,5 +18,10 @@ public class GeneralCategory {
     @ConfigEditorBoolean
     @Expose
     public boolean playSound;
+
+    @ConfigOption(name = "Profit Tracker", desc = "Session and all-time profit of drops and reward chests, shown by !profit")
+    @Accordion
+    @Expose
+    public ProfitTrackerAccordion profitTracker = new ProfitTrackerAccordion();
 
 }

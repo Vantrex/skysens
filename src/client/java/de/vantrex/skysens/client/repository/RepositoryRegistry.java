@@ -14,6 +14,7 @@ import java.nio.file.Path;
 public final class RepositoryRegistry {
 
     public static SimpleKeyValueRepository KEY_VALUE_REPOSITORY;
+    public static ProfitRepository PROFIT_REPOSITORY;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path BASE_DIR = FabricLoader.getInstance().getConfigDir().resolve("skysens/repositories");
@@ -21,6 +22,7 @@ public final class RepositoryRegistry {
     public static void loadRepositories() {
         initBaseDir();
         KEY_VALUE_REPOSITORY = loadRepository(SimpleKeyValueRepository.class);
+        PROFIT_REPOSITORY = loadRepository(ProfitRepository.class);
     }
 
     private static <T> T loadRepository(Class<T> clazz) {
@@ -43,6 +45,7 @@ public final class RepositoryRegistry {
     public static void saveRepositories() {
         initBaseDir();
         saveRepository(KEY_VALUE_REPOSITORY);
+        saveRepository(PROFIT_REPOSITORY);
     }
 
     private static void saveRepository(Object repository) {
