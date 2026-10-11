@@ -9,7 +9,9 @@ import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.config.categories.visuals.SwingAnimationAccordion;
 import de.vantrex.skysens.client.config.annotation.ConfigEditorDynamicZoneDropdown;
 import de.vantrex.skysens.client.config.categories.dev.DevCategory;
+import de.vantrex.skysens.client.config.categories.dungeon.DungeonCategory;
 import de.vantrex.skysens.client.config.categories.bazaar.BazaarCategory;
+import de.vantrex.skysens.client.config.categories.chat.ChatCommandsCategory;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
 import de.vantrex.skysens.client.config.categories.mining.MiningCategory;
 import de.vantrex.skysens.client.config.categories.qol.QolCategory;
@@ -59,6 +61,14 @@ public class SkysensConfig extends Config {
     @Category(name = "Mining", desc = "Mining Options")
     @Expose
     public MiningCategory miningCategory = new MiningCategory();
+
+    @Category(name = "Dungeon", desc = "Dungeon and Kuudra reward chests")
+    @Expose
+    public DungeonCategory dungeonCategory = new DungeonCategory();
+
+    @Category(name = "Chat Commands", desc = "Commands others can use in co-op and party chat, like !ping and !tps")
+    @Expose
+    public ChatCommandsCategory chatCommandsCategory = new ChatCommandsCategory();
 
     @Category(name = "Dev", desc = "Dev Options")
     @Expose

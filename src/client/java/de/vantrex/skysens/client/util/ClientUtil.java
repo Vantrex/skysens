@@ -14,6 +14,7 @@ import java.util.Optional;
 public class ClientUtil {
 
     private final Minecraft CLIENT = Minecraft.getInstance();
+    private boolean sendingOwnMessage;
 
     public void sendMessage(@NotNull final String message) {
         sendMessage(Component.literal(message));
@@ -26,11 +27,22 @@ public class ClientUtil {
     public void sendMessage(final @NotNull Component text, final boolean overlay) {
         if (CLIENT.player == null)
             return;
-        if (overlay) {
-            CLIENT.player.sendOverlayMessage(text);
-        } else {
-            CLIENT.player.sendSystemMessage(text);
+        // these fire the game message event, our listeners must not handle our own messages
+        sendingOwnMessage = true;
+        try {
+            if (overlay) {
+                CLIENT.player.sendOverlayMessage(text);
+            } else {
+                CLIENT.player.sendSystemMessage(text);
+            }
+        } finally {
+            sendingOwnMessage = false;
         }
+    }
+
+    /** True while SkySens itself is showing a message. */
+    public boolean isSendingOwnMessage() {
+        return sendingOwnMessage;
     }
 
     public void sendDebug(final @NotNull String message) {

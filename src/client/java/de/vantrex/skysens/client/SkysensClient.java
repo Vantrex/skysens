@@ -7,6 +7,9 @@ import de.vantrex.skysens.client.config.ui.SkysensConfigScreen;
 import de.vantrex.skysens.client.handler.ChatHandler;
 import de.vantrex.skysens.client.handler.TickHandlers;
 import de.vantrex.skysens.client.handler.UseHandlers;
+import de.vantrex.skysens.client.feature.dungeon.RewardChestFeature;
+import de.vantrex.skysens.client.profit.ProfitService;
+import de.vantrex.skysens.client.service.FeatureService;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
 import de.vantrex.skysens.client.service.LocationService;
 import de.vantrex.skysens.client.service.SensitivityService;
@@ -41,6 +44,8 @@ public class SkysensClient implements ClientModInitializer {
     });
 
     private boolean isOnSkyBlock = false;
+    /** Name of the Hypixel server we are on, e.g. "mini123AB", from the Mod API location packet. */
+    private String serverName;
     private LocationService locationService;
 
     public SkysensClient() {
@@ -61,6 +66,7 @@ public class SkysensClient implements ClientModInitializer {
         UseHandlers.register();
         TickHandlers.register();
         ChatHandler.register();
+        ProfitService.getInstance(); // starts counting time on SkyBlock
     }
 
     private void createConfigDirectory() {
@@ -76,6 +82,7 @@ public class SkysensClient implements ClientModInitializer {
         final var api = HypixelModAPI.getInstance();
         api.subscribeToEventPacket(ClientboundLocationPacket.class);
         api.createHandler(ClientboundLocationPacket.class, packet -> {
+            this.serverName = packet.getServerName();
             var serverType = (GameType) packet.getServerType()
                     .filter(serverType1 -> serverType1 instanceof GameType)
                     .orElse(null);
@@ -84,13 +91,18 @@ public class SkysensClient implements ClientModInitializer {
                 return;
             }
             this.isOnSkyBlock = true;
-            var serverName = packet.getServerName();
             var lobbyName = packet.getLobbyName().orElse(null);
             var mode = packet.getMode().orElse(null);
             var map = packet.getMap().orElse(null);
-            ClientUtil.sendDebug("Server: " + serverName + " | Lobby: " + lobbyName + " | Map: " + map + " | Mode: " + mode);
+            ClientUtil.sendDebug("Server: " + this.serverName + " | Lobby: " + lobbyName + " | Map: " + map + " | Mode: " + mode);
             this.locationService.handleLocationUpdate(map);
         });
+    }
+
+    private int showChestProfit() {
+        ClientUtil.sendMessage(RewardChestFeature.summary("session", FeatureService.getInstance().getRewardChestFeature().getSession()));
+        ClientUtil.sendMessage(RewardChestFeature.summary("all time", RepositoryRegistry.PROFIT_REPOSITORY.dungeonChests));
+        return 1;
     }
 
     private void registerCommands() {
@@ -114,7 +126,22 @@ public class SkysensClient implements ClientModInitializer {
                                     .then(ClientCommands.argument("data", StringArgumentType.greedyString())
                                             .executes(context -> VisualsSettingsTransfer.importFrom(StringArgumentType.getString(context, "data")))))
                             .then(ClientCommands.literal("reset")
-                                    .executes(context -> VisualsSettingsTransfer.reset()))));
+                                    .executes(context -> VisualsSettingsTransfer.reset())))
+                    .then(ClientCommands.literal("dungeon")
+                            .then(ClientCommands.literal("profit")
+                                    .executes(context -> this.showChestProfit())
+                                    .then(ClientCommands.literal("reset")
+                                            .executes(context -> {
+                                                FeatureService.getInstance().getRewardChestFeature().getSession().reset();
+                                                ClientUtil.sendMessage("§5[SkySens] §7Session chest profit reset.");
+                                                return 1;
+                                            })
+                                            .then(ClientCommands.literal("alltime")
+                                                    .executes(context -> {
+                                                        RepositoryRegistry.PROFIT_REPOSITORY.dungeonChests.reset();
+                                                        ClientUtil.sendMessage("§5[SkySens] §7All-time chest profit reset.");
+                                                        return 1;
+                                                    }))))));
             dispatcher.register(ClientCommands.literal("mocklocation")
                     .then(ClientCommands.argument("location", StringArgumentType.string())
                             .executes(context -> {

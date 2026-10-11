@@ -30,7 +30,7 @@ import java.util.Optional;
 @SkySensFeature
 public class FiletOFortuneNotificationFeature implements ItemRightClickFeature, AfterTickFeature {
 
-    private static final String KEY = "filet_of_fortune_notification";
+    public static final String KEY = "filet_of_fortune_notification";
     private static final String ITEM_ID = "FILET_O_FORTUNE";
     private static final long _1HOUR = 3600000L;
     private static final long _2MINUTES = 120000L;
@@ -67,13 +67,14 @@ public class FiletOFortuneNotificationFeature implements ItemRightClickFeature, 
             return;
         }
         final long expiresAt = unparsedExpiresAt.longValue();
-        if (!warningReceived && System.currentTimeMillis() - _2MINUTES <= expiresAt) {
-            this.sendWarning();
-            return;
-        }
-        if (System.currentTimeMillis() <= expiresAt) {
+        final long now = System.currentTimeMillis();
+        if (now >= expiresAt) {
             this.sendExpired();
             store.remove(KEY);
+            return;
+        }
+        if (!warningReceived && now >= expiresAt - _2MINUTES) {
+            this.sendWarning();
         }
     }
 
