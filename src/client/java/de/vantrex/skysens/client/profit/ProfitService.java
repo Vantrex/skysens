@@ -2,6 +2,7 @@ package de.vantrex.skysens.client.profit;
 
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.config.SkysensConfig;
+import de.vantrex.skysens.client.enums.ProfitSourceEnum;
 import de.vantrex.skysens.client.enums.location.SkyblockLocationEnum;
 import de.vantrex.skysens.client.service.LocationService;
 import de.vantrex.skysens.client.util.ScoreboardUtil;
@@ -13,13 +14,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * Profit tracking for {@code !profit}.
  * <ul>
- *     <li>Overall: SkySens' own tracker of everything it values (rare drops and reward chests). Its uptime
- *     is the time spent on SkyBlock.</li>
+ *     <li>Overall: with SkyHanni installed and selected as the tracker, the sum of SkyHanni's trackers and SkySens' reward chest trackers,
+ *     otherwise SkySens' own tracker of everything it values (rare drops and reward chests). Its uptime is
+ *     the time spent on SkyBlock.</li>
  *     <li>Activities: the tracker that gained most recently. SkyHanni's trackers (Slayer, Fishing, ...) when
  *     SkyHanni is installed, SkySens' own per-activity trackers otherwise. Reward chests are always tracked
  *     by SkySens, SkyHanni has no tracker for them.</li>
@@ -76,14 +79,50 @@ public final class ProfitService {
     }
 
     public @NotNull ProfitStats getOverall(boolean allTime) {
-        return allTime ? repository().overall : this.sessionOverall;
+        final ProfitStats own = allTime ? repository().overall : this.sessionOverall;
+        if (!this.useSkyHanni()) {
+            return own;
+        }
+        final List<SkyHanniTrackerReader.TrackerProfit> trackers = this.skyHanni.read();
+        if (!this.skyHanni.isAvailable()) {
+            return own;
+        }
+        // SkyHanni's trackers see every drop (sacks included), SkySens' rare drop messages only some of them,
+        // so add up SkyHanni's trackers and the reward chests SkyHanni doesn't track
+        final ProfitStats overall = new ProfitStats();
+        for (final SkyHanniTrackerReader.TrackerProfit tracker : trackers) {
+            addTo(overall, allTime ? tracker.total() : tracker.session());
+        }
+        for (final String chest : List.of(DUNGEONS, KUUDRA)) {
+            addTo(overall, (allTime ? repository().activities : this.sessionActivities).get(chest));
+        }
+        // all-time SkyHanni totals predate SkySens' time on SkyBlock, so use the trackers' own uptimes there
+        if (!allTime) {
+            overall.uptimeMs = own.uptimeMs;
+        }
+        return overall;
+    }
+
+    private static void addTo(ProfitStats target, @Nullable ProfitStats stats) {
+        if (stats == null) {
+            return;
+        }
+        target.profit += stats.profit;
+        target.events += stats.events;
+        target.uptimeMs += stats.uptimeMs;
+        target.lastUpdateMs = Math.max(target.lastUpdateMs, stats.lastUpdateMs);
+    }
+
+    private boolean useSkyHanni() {
+        return SkysensConfig.getInstance().generalCategory.profitTracker.source == ProfitSourceEnum.SKYHANNI
+                && this.skyHanni.isAvailable();
     }
 
     /** The activity that gained most recently, or null if nothing was tracked yet. */
     public @Nullable ActivityProfit getCurrentActivity(boolean allTime) {
         ActivityProfit current = null;
         long currentUpdate = 0;
-        final boolean useSkyHanni = this.skyHanni.isAvailable();
+        final boolean useSkyHanni = this.useSkyHanni();
         if (useSkyHanni) {
             for (final SkyHanniTrackerReader.TrackerProfit tracker : this.skyHanni.read()) {
                 final ProfitStats stats = allTime ? tracker.total() : tracker.session();
