@@ -40,6 +40,9 @@ public final class ProfitService {
     /** A tick gap longer than this is a lag spike or a paused game, not time played. */
     private static final long MAX_TICK_GAP_MS = 1000;
 
+    /** Stands in for SkyHanni's profile when SkySens' own tracker is used. */
+    private static final Object OWN_PROFILE = new Object();
+
     @Getter
     private static final ProfitService instance = new ProfitService();
 
@@ -51,6 +54,10 @@ public final class ProfitService {
     private ProfitStats dayBaseline = new ProfitStats();
     private LocalDate currentDay = LocalDate.now();
     private long lastDayCheckMs;
+    private long lastSampleMs;
+    /** The last session overall that was read while on SkyBlock, its profile is {@link #snapshotProfile}. */
+    private ProfitStats lastSnapshot = new ProfitStats();
+    private Object snapshotProfile;
 
     /** Profit of one tracker, for a session or all time. */
     public record ActivityProfit(@NotNull String name, @NotNull ProfitStats stats, @NotNull String source) {
@@ -90,6 +97,11 @@ public final class ProfitService {
             return;
         }
         this.lastDayCheckMs = now;
+        // reading SkyHanni is heavy, so only sample once a minute
+        if (now - this.lastSampleMs >= 60_000) {
+            this.lastSampleMs = now;
+            this.sampleDay();
+        }
         final LocalDate today = LocalDate.now();
         if (today.equals(this.currentDay)) {
             return;
@@ -101,29 +113,60 @@ public final class ProfitService {
     }
 
     /**
-     * Adds today's part of the session overall to the repository (replacing it if it holds an older day) and
-     * restarts the baseline, so nothing is counted twice.
+     * Takes a snapshot of the session overall, but only where it is comparable to the baseline: on SkyBlock, and
+     * with SkyHanni on a known profile. SkyHanni's sessions are per profile, so on a profile change what the old
+     * profile made is stored and the baseline starts over.
      */
-    private synchronized void foldDay() {
+    private synchronized void sampleDay() {
+        if (!isEnabled() || !SkysensClient.getInstance().isOnSkyBlock()) {
+            return;
+        }
+        final boolean useSkyHanni = this.useSkyHanni();
+        final Object profile = useSkyHanni ? this.skyHanni.currentProfile() : OWN_PROFILE;
+        if (profile == null) {
+            return;
+        }
         final ProfitStats current = copyOf(this.getOverall(false).stats());
-        final ProfitStats part = diff(current, this.dayBaseline);
+        if (this.snapshotProfile != null && profile != this.snapshotProfile) {
+            this.storeDayPart();
+            this.dayBaseline = current;
+        }
+        this.lastSnapshot = current;
+        this.snapshotProfile = profile;
+    }
+
+    /** Adds today's part (last snapshot minus baseline) to the repository, replacing it if it holds an older day. */
+    private void storeDayPart() {
         final String day = this.currentDay.toString();
         if (!day.equals(repository().day) || repository().dayStats == null) {
             repository().day = day;
             repository().dayStats = new ProfitStats();
         }
-        addTo(repository().dayStats, part);
-        this.dayBaseline = current;
+        addTo(repository().dayStats, diff(this.lastSnapshot, this.dayBaseline));
+        this.dayBaseline = this.lastSnapshot;
+    }
+
+    /** Stores today's part and restarts the baseline, so nothing is counted twice. */
+    private synchronized void foldDay() {
+        this.sampleDay();
+        this.storeDayPart();
     }
 
     /** Overall profit made today, across game sessions. Its uptime is the time on SkyBlock. */
     public @NotNull OverallProfit getDay() {
+        this.sampleDay();
         final ProfitStats day = new ProfitStats();
         if (LocalDate.now().toString().equals(repository().day)) {
             addTo(day, repository().dayStats);
         }
-        addTo(day, diff(this.getOverall(false).stats(), this.dayBaseline));
+        addTo(day, diff(this.lastSnapshot, this.dayBaseline));
         return new OverallProfit(day, true);
+    }
+
+    /** After a session reset: the baseline is the current overall, or the last snapshot while it can't be read. */
+    private void rebaseDay() {
+        this.sampleDay();
+        this.dayBaseline = this.lastSnapshot;
     }
 
     private static ProfitStats copyOf(ProfitStats stats) {
@@ -238,14 +281,14 @@ public final class ProfitService {
         this.foldDay();
         this.sessionActivities.remove(DUNGEONS);
         this.sessionActivities.remove(KUUDRA);
-        this.dayBaseline = copyOf(this.getOverall(false).stats());
+        this.rebaseDay();
     }
 
     public void resetSession() {
         this.foldDay();
         this.sessionOverall.reset();
         this.sessionActivities.clear();
-        this.dayBaseline = copyOf(this.getOverall(false).stats());
+        this.rebaseDay();
     }
 
     /** What the player is doing right now, for drops: "Slayer" during a slayer quest, else the island. */

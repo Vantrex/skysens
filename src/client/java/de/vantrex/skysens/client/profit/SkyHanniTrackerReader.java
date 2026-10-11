@@ -108,6 +108,16 @@ final class SkyHanniTrackerReader {
         return result;
     }
 
+    /** SkyHanni's storage of the current profile, only useful for telling profiles apart by identity. */
+    @Nullable Object currentProfile() {
+        try {
+            final Object storage = Class.forName(PACKAGE + "data.ProfileStorageData").getField("INSTANCE").get(null);
+            return storage.getClass().getMethod("getProfileSpecific").invoke(storage);
+        } catch (ReflectiveOperationException | LinkageError | RuntimeException e) {
+            return null;
+        }
+    }
+
     /** Slayer types not fought this game launch have no tracker, only data in SkyHanni's profile storage. */
     private void readStoredSlayers(List<TrackerProfit> result, Set<Object> seenData, @Nullable Object pricingTracker) {
         if (pricingTracker == null) {
