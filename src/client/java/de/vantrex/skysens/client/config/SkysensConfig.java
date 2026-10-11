@@ -15,6 +15,7 @@ import de.vantrex.skysens.client.config.categories.chat.ChatCommandsCategory;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
 import de.vantrex.skysens.client.config.categories.mining.MiningCategory;
 import de.vantrex.skysens.client.config.categories.qol.QolCategory;
+import de.vantrex.skysens.client.config.categories.slayer.SlayerCategory;
 import de.vantrex.skysens.client.config.categories.visuals.VisualsCategory;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.annotations.Category;
@@ -69,6 +70,10 @@ public class SkysensConfig extends Config {
     @Category(name = "Chat Commands", desc = "Commands others can use in co-op and party chat, like !ping and !tps")
     @Expose
     public ChatCommandsCategory chatCommandsCategory = new ChatCommandsCategory();
+
+    @Category(name = "Slayer", desc = "Slayer session stats, shown by !slayer")
+    @Expose
+    public SlayerCategory slayerCategory = new SlayerCategory();
 
     @Category(name = "Dev", desc = "Dev Options")
     @Expose
