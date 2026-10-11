@@ -9,6 +9,9 @@ plugins {
 repositories {
     maven("https://repo.hypixel.net/repository/Hypixel/")
     maven("https://maven.notenoughupdates.org/releases/")
+    maven("https://api.modrinth.com/maven") {
+        content { includeGroup("maven.modrinth") }
+    }
 }
 
 java {
@@ -24,6 +27,7 @@ val minecraft_version: String = (project.findProperty("minecraft_version") as? S
 val loader_version: String = (project.findProperty("loader_version") as? String) ?: "0.19.5"
 val fabric_version: String = (project.findProperty("fabric_version") as? String) ?: "0.161.0+26.2"
 val hypixel_mod_api_version: String = (project.findProperty("hypixel_mod_api_version") as? String) ?: "1.0.2"
+val hypixel_mod_api_fabric_version: String = (project.findProperty("hypixel_mod_api_fabric_version") as? String) ?: "1.0.2+build.1+mc26.1"
 val moulconfig_version: String = (project.findProperty("moulconfig_version") as? String) ?: "4.7.2"
 val fabric_language_kotlin_version: String = (project.findProperty("fabric_language_kotlin_version") as? String) ?: "1.14.2+kotlin.2.4.21"
 
@@ -71,6 +75,8 @@ dependencies {
 
     // Hypixel Mod API
     implementation("net.hypixel:mod-api:$hypixel_mod_api_version")
+    // The Hypixel Mod API Fabric mod itself, so runClient satisfies the "hypixel-mod-api" dependency in fabric.mod.json
+    localRuntime("maven.modrinth:hypixel-mod-api:$hypixel_mod_api_fabric_version")
 
 
 }
@@ -99,6 +105,7 @@ modrinth {
     dependencies {
         required.project("fabric-api")
         required.project("fabric-language-kotlin")
+        required.project("hypixel-mod-api")
     }
 }
 
