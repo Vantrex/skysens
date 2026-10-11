@@ -4,6 +4,7 @@ import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.enums.DropTierEnum;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 public class LootShareAccordion {
@@ -17,6 +18,16 @@ public class LootShareAccordion {
     @ConfigEditorDropdown
     @Expose
     public DropTierEnum minimumTier = DropTierEnum.RARE;
+
+    @ConfigOption(name = "Minimum price (millions)", desc = "Only share drops worth at least this many million coins (bazaar instant sell, else lowest BIN). 0 shares every drop.")
+    @ConfigEditorSlider(minValue = 0f, maxValue = 100f, minStep = 0.1f)
+    @Expose
+    public float minimumPriceMillions = 0f;
+
+    @ConfigOption(name = "Share unknown prices", desc = "Share drops whose price can't be determined when a minimum price is set")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean shareUnknownPrice = true;
 
     @ConfigOption(name = "Share pet drops", desc = "Also share PET DROP! messages")
     @ConfigEditorBoolean
