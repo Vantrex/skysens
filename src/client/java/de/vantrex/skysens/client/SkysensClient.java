@@ -2,10 +2,10 @@ package de.vantrex.skysens.client;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import de.vantrex.skysens.client.config.SkysensConfig;
+import de.vantrex.skysens.client.config.ui.SkysensConfigScreen;
 import de.vantrex.skysens.client.handler.ChatHandler;
 import de.vantrex.skysens.client.handler.TickHandlers;
 import de.vantrex.skysens.client.handler.UseHandlers;
-import de.vantrex.skysens.client.dungeon.DungeonStateManager;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
 import de.vantrex.skysens.client.service.LocationService;
 import de.vantrex.skysens.client.service.SensitivityService;
@@ -19,6 +19,8 @@ import net.hypixel.data.type.GameType;
 import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.Screen;
 
 import java.io.File;
 import java.util.concurrent.Executors;
@@ -29,7 +31,13 @@ public class SkysensClient implements ClientModInitializer {
 
     @Getter
     private static SkysensClient instance;
-    public static final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(2);
+    // Daemon threads so the scheduler never keeps the JVM alive after Minecraft stops
+    // (otherwise the client shutdown watchdog writes a crash report).
+    public static final ScheduledExecutorService SCHEDULER = Executors.newScheduledThreadPool(2, runnable -> {
+        Thread thread = new Thread(runnable, "SkySens Scheduler");
+        thread.setDaemon(true);
+        return thread;
+    });
 
     private boolean isOnSkyBlock = false;
     private LocationService locationService;
@@ -42,7 +50,7 @@ public class SkysensClient implements ClientModInitializer {
     public void onInitializeClient() {
         this.createConfigDirectory();
         RepositoryRegistry.loadRepositories();
-        SkysensConfig.getConfig().reloadFromFile();
+        SkysensConfig.getConfig(); // creating the config loads it from disk
         this.locationService = LocationService.getInstance();
         this.initHypixelApiHandler();
         Runtime.getRuntime().addShutdownHook(new Thread(SkysensConfig.getConfig()::saveToFile));
@@ -52,7 +60,6 @@ public class SkysensClient implements ClientModInitializer {
         UseHandlers.register();
         TickHandlers.register();
         ChatHandler.register();
-        DungeonStateManager.getInstance();
     }
 
     private void createConfigDirectory() {
@@ -91,7 +98,11 @@ public class SkysensClient implements ClientModInitializer {
                     .executes(context -> {
                         Minecraft client = Minecraft.getInstance();
                         // Schedule the screen opening on the main thread
-                        client.execute(SkysensConfig.getConfig()::openConfigGui);
+                        client.execute(() -> {
+                            // Don't return to the chat screen the command was typed in
+                            Screen parent = client.gui.screen() instanceof ChatScreen ? null : client.gui.screen();
+                            client.gui.setScreen(new SkysensConfigScreen(parent));
+                        });
                         return 1;
                     }));
             dispatcher.register(ClientCommands.literal("mocklocation")

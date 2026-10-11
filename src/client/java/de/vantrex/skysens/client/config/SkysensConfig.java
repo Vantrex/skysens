@@ -8,7 +8,6 @@ import de.vantrex.skysens.client.config.categories.bazaar.BazaarCategory;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
 import de.vantrex.skysens.client.config.categories.mining.MiningCategory;
 import de.vantrex.skysens.client.config.categories.qol.QolCategory;
-import de.vantrex.skysens.client.config.gui.GuiOptionEditorDynamicZoneDropdown;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.annotations.Category;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
@@ -19,13 +18,18 @@ import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
 import lombok.NoArgsConstructor;
 import net.fabricmc.loader.api.FabricLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 
 @NoArgsConstructor
 public class SkysensConfig extends Config {
 
 
+    private static final Logger LOGGER = LoggerFactory.getLogger("skysens");
     private static ManagedConfig<SkysensConfig> CONFIG;
 
     @Category(name = "General", desc = "General Options")
@@ -48,9 +52,17 @@ public class SkysensConfig extends Config {
     @Expose
     public DevCategory devCategory = new DevCategory();
 
-    @Category(name = "Dungeon", desc = "Dungeon Options")
+    /**
+     * Id of the selected config GUI theme (see ThemePreset). Deliberately has no @Category / @ConfigOption:
+     * MoulConfig's processor only inspects fields annotated with @Category, so this stays out of the option
+     * tree, while @Expose makes Gson persist it in config.json.
+     */
     @Expose
-    public de.vantrex.skysens.client.dungeon.config.DungeonCategory dungeonCategory = new de.vantrex.skysens.client.dungeon.config.DungeonCategory();
+    public String guiTheme = "MIDNIGHT";
+
+    /** Selected config GUI font: a FontFamily id (default INTER, unknown values fall back to INTER). Same persistence approach as {@link #guiTheme}. */
+    @Expose
+    public String guiFont = "INTER";
 
     @Override
     public void saveNow() {
@@ -77,7 +89,20 @@ public class SkysensConfig extends Config {
                         public Unit invoke(ManagedConfigBuilder<SkysensConfig> skysensConfigManagedConfigBuilder) {
                             skysensConfigManagedConfigBuilder.customProcessor(ConfigEditorDynamicZoneDropdown.class,
                                     (processedOption, configEditorDynamicZoneDropdown)
-                                            -> new GuiOptionEditorDynamicZoneDropdown(processedOption, configEditorDynamicZoneDropdown.fieldName()));
+                                            -> new ZoneDropdownEditorStub(processedOption));
+                            // MoulConfig keeps the defaults when parsing fails, and the next save would
+                            // overwrite the user's file. Keep a copy of the unreadable file first.
+                            skysensConfigManagedConfigBuilder.setLoadFailed((dataFile, exception) -> {
+                                File file = dataFile.getFile();
+                                File backup = new File(file.getParentFile(),
+                                        file.getName() + ".broken-" + System.currentTimeMillis());
+                                try {
+                                    Files.copy(file.toPath(), backup.toPath());
+                                    LOGGER.error("Could not load {}, kept a copy at {}", file, backup, exception);
+                                } catch (IOException copyException) {
+                                    LOGGER.error("Could not load {} or back it up", file, exception);
+                                }
+                            });
                             return Unit.INSTANCE;
                         }
                     }

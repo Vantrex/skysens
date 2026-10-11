@@ -44,7 +44,7 @@ public class SensitivityService {
             category.zones.set(Optional.ofNullable(newValue.getZoneEnum()).map(aClass -> getFirstZoneEnumConstant(aClass).ordinal()).orElse(0));
             category.zones.notifyObservers();
             SensitivityConfiguration.LocationSensitivity locationSensitivity = config.getLocationSensitivities().get(newValue);
-            ClientUtil.sendDebug("Switched to location " + newValue.name() + " with sensitivity config: " + locationSensitivity.toString());
+            ClientUtil.sendDebug("Switched to location " + newValue.name() + " with sensitivity config: " + locationSensitivity);
             if (locationSensitivity == null) {
                 category.enableForLocation.set(false);
                 category.locationSensitivity.set(this.translatedMinecraftClientSensitivity());
@@ -87,7 +87,11 @@ public class SensitivityService {
                 category.zoneSensitivity.set(this.translatedMinecraftClientSensitivity());
                 return;
             }
-            Enum<? extends ZoneEnum<?>> enumConstant = (Enum<? extends ZoneEnum<?>>) zoneEnumClass.getEnumConstants()[newValue];
+            Object[] zoneConstants = zoneEnumClass.getEnumConstants();
+            if (newValue == null || newValue < 0 || newValue >= zoneConstants.length) {
+                return;
+            }
+            Enum<? extends ZoneEnum<?>> enumConstant = (Enum<? extends ZoneEnum<?>>) zoneConstants[newValue];
             locationSensitivity.getZoneSensitivities().computeIfAbsent(enumConstant.name(), zone -> new SensitivityConfiguration.ZoneSensitivity(false, this.translatedMinecraftClientSensitivity()));
             SensitivityConfiguration.ZoneSensitivity zoneSensitivity = locationSensitivity.getZoneSensitivities().get(enumConstant.name());
             category.enableForZone.set(zoneSensitivity.isEnabled());
@@ -105,7 +109,12 @@ public class SensitivityService {
             if (zoneEnumClass == null) {
                 return;
             }
-            Enum<? extends ZoneEnum<?>> enumConstant = (Enum<? extends ZoneEnum<?>>) zoneEnumClass.getEnumConstants()[category.zones.get()];
+            Object[] zoneConstants = zoneEnumClass.getEnumConstants();
+            Integer zoneIndex = category.zones.get();
+            if (zoneIndex == null || zoneIndex < 0 || zoneIndex >= zoneConstants.length) {
+                return;
+            }
+            Enum<? extends ZoneEnum<?>> enumConstant = (Enum<? extends ZoneEnum<?>>) zoneConstants[zoneIndex];
             locationSensitivity.getZoneSensitivities().computeIfAbsent(enumConstant.name(), zone -> new SensitivityConfiguration.ZoneSensitivity(false, this.translatedMinecraftClientSensitivity()))
                     .setEnabled(newValue);
             this.saveConfiguration();
@@ -121,7 +130,12 @@ public class SensitivityService {
             if (zoneEnumClass == null) {
                 return;
             }
-            Enum<? extends ZoneEnum<?>> enumConstant = (Enum<? extends ZoneEnum<?>>) zoneEnumClass.getEnumConstants()[category.zones.get()];
+            Object[] zoneConstants = zoneEnumClass.getEnumConstants();
+            Integer zoneIndex = category.zones.get();
+            if (zoneIndex == null || zoneIndex < 0 || zoneIndex >= zoneConstants.length) {
+                return;
+            }
+            Enum<? extends ZoneEnum<?>> enumConstant = (Enum<? extends ZoneEnum<?>>) zoneConstants[zoneIndex];
             locationSensitivity.getZoneSensitivities().computeIfAbsent(enumConstant.name(), zone -> new SensitivityConfiguration.ZoneSensitivity(false, this.translatedMinecraftClientSensitivity()))
                     .setSensitivity(this.convertIntegerLikeFloatToSensitivityFloat(newValue));
             this.saveConfiguration();
