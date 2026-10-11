@@ -39,6 +39,11 @@ public class LootShareAccordion {
     @Expose
     public boolean petDrops = true;
 
+    @ConfigOption(name = "Share runes", desc = "Also share rune drops (e.g. Lavatears Rune). They still count for the profit tracker.")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean shareRunes = false;
+
     @ConfigOption(name = "Include Magic Find", desc = "Keep the \"(+123% Magic Find)\" part of the drop message")
     @ConfigEditorBoolean
     @Expose

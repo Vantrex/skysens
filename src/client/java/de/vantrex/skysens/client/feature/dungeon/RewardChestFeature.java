@@ -16,6 +16,7 @@ import de.vantrex.skysens.client.repository.ProfitRepository;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
 import de.vantrex.skysens.client.service.LocationService;
 import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.ItemIdUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -270,16 +271,12 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
         }
         final Matcher book = BOOK.matcher(reward);
         if (book.matches()) {
-            final String enchant = toId(book.group(1));
-            final int level = romanToInt(book.group(2));
-            final OptionalDouble ultimate = prices.getPriceById("ENCHANTMENT_ULTIMATE_" + enchant + "_" + level);
-            return ultimate.isPresent() ? ultimate.getAsDouble()
-                    : prices.getPriceById("ENCHANTMENT_" + enchant + "_" + level).orElse(0);
+            return prices.getBookPrice(book.group(1), ItemIdUtil.romanToInt(book.group(2))).orElse(0);
         }
         final Matcher shard = SHARD.matcher(reward);
         if (shard.matches()) {
             final double amount = shard.group(2) == null ? 1 : parseNumber(shard.group(2));
-            final OptionalDouble price = prices.getPriceById("SHARD_" + toId(shard.group(1)));
+            final OptionalDouble price = prices.getPriceById("SHARD_" + ItemIdUtil.toId(shard.group(1)));
             if (price.isPresent()) {
                 return price.getAsDouble() * amount;
             }
@@ -315,10 +312,6 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
         return chest.charAt(0) + chest.substring(1).toLowerCase(Locale.ROOT) + " Chest";
     }
 
-    private static String toId(String name) {
-        return name.trim().replace("'", "").replaceAll("[^A-Za-z0-9]+", "_").toUpperCase(Locale.ROOT);
-    }
-
     private static String strip(String text) {
         final String stripped = ChatFormatting.stripFormatting(text);
         return (stripped == null ? text : stripped).trim();
@@ -326,17 +319,6 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
 
     private static double parseNumber(String number) {
         return Double.parseDouble(number.replace(",", ""));
-    }
-
-    private static int romanToInt(String roman) {
-        final Map<Character, Integer> values = Map.of('I', 1, 'V', 5, 'X', 10, 'L', 50, 'C', 100);
-        int total = 0;
-        for (int i = 0; i < roman.length(); i++) {
-            final int value = values.get(roman.charAt(i));
-            final boolean subtract = i + 1 < roman.length() && values.get(roman.charAt(i + 1)) > value;
-            total += subtract ? -value : value;
-        }
-        return total;
     }
 
 }
