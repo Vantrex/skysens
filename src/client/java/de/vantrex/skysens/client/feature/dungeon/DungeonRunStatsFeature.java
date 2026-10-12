@@ -42,35 +42,59 @@ public class DungeonRunStatsFeature implements GameMessageListeningFeature {
             return;
         }
         final String text = ChatFormatting.stripFormatting(message.getString());
-        if (text == null) {
+        if (text == null || this.handleOwnDeath(text) || this.handleFloorEntered(text)) {
             return;
         }
-        if (OWN_DEATH.matcher(text).find()) {
-            this.deaths++;
-            return;
+        this.handleRunSummary(text);
+    }
+
+    private boolean handleOwnDeath(String text) {
+        if (!OWN_DEATH.matcher(text).find()) {
+            return false;
         }
-        if (ENTERED.matcher(text).find()) {
-            this.deaths = 0;
-            return;
+        this.deaths++;
+        return true;
+    }
+
+    private boolean handleFloorEntered(String text) {
+        if (!ENTERED.matcher(text).find()) {
+            return false;
         }
+        this.deaths = 0;
+        return true;
+    }
+
+    private void handleRunSummary(String text) {
         final Matcher header = HEADER.matcher(text);
         final Matcher time = TIME.matcher(text);
         final Matcher score = SCORE.matcher(text);
         if (!header.find() || !time.find() || !score.find()) {
             return;
         }
-        final long seconds = (time.group(1) == null ? 0 : Long.parseLong(time.group(1))) * 3600
-                + (time.group(2) == null ? 0 : Long.parseLong(time.group(2))) * 60
-                + Long.parseLong(time.group(3));
-        final String rank = score.group(2);
         final String floor = header.group(1).toUpperCase(Locale.ROOT);
+        final long seconds = parseSeconds(time);
+        final String rank = score.group(2);
         final DungeonRunStats.FloorStats floorStats = DungeonRunStats.getInstance()
                 .record(floor, seconds, Integer.parseInt(score.group(1)), rank.equals("S+"), this.deaths);
         this.deaths = 0;
         if (SkysensConfig.getInstance().dungeonCategory.runStats.chatSummary) {
-            ClientUtil.sendPrefixed("§7Run #" + floorStats.runs + " (" + floor + "): " + DungeonRunStats.formatTime(seconds)
-                    + " " + rank + " | session avg " + DungeonRunStats.formatTime(floorStats.avgSeconds()));
+            sendRunSummary(floor, seconds, rank, floorStats);
         }
+    }
+
+    /** Reads the "[Nh ][Nm ]Ns" run time of a matched {@link #TIME}. */
+    private static long parseSeconds(Matcher time) {
+        return groupOrZero(time, 1) * 3600 + groupOrZero(time, 2) * 60 + groupOrZero(time, 3);
+    }
+
+    private static long groupOrZero(Matcher matcher, int group) {
+        final String value = matcher.group(group);
+        return value == null ? 0 : Long.parseLong(value);
+    }
+
+    private static void sendRunSummary(String floor, long seconds, String rank, DungeonRunStats.FloorStats floorStats) {
+        ClientUtil.sendPrefixed("§7Run #" + floorStats.runs + " (" + floor + "): " + DungeonRunStats.formatTime(seconds)
+                + " " + rank + " | session avg " + DungeonRunStats.formatTime(floorStats.avgSeconds()));
     }
 
 }
