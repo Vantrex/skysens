@@ -8,6 +8,7 @@ import de.vantrex.skysens.client.price.BazaarOrderBook;
 import de.vantrex.skysens.client.repository.BazaarOrderRepository.Order;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
 import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.ExponentialBackoff;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -37,6 +38,8 @@ public class BazaarOrderService {
     private static final double EPSILON = 0.0001;
 
     private final Object lock = new Object();
+    /** Failed fetches wait 30s, then 1m, 2m, ... up to 30m, so an API outage isn't hammered. */
+    private final ExponentialBackoff backoff = new ExponentialBackoff(30_000, 30 * 60_000);
     private long nextPollAt;
 
     private BazaarOrderService() {
@@ -178,12 +181,15 @@ public class BazaarOrderService {
     }
 
     private void pollSafely() {
+        if (!this.backoff.canAttempt()) {
+            return;
+        }
         try {
             this.poll();
         } catch (Exception e) {
-            LOGGER.warn("Could not check bazaar orders", e);
-            // don't hammer the API after a failure
-            this.nextPollAt = System.currentTimeMillis() + 60_000;
+            final long delay = this.backoff.onFailure();
+            LOGGER.warn("Could not check bazaar orders ({} failed in a row), retrying in {}s",
+                    this.backoff.failures(), delay / 1000, e);
         }
     }
 
@@ -205,6 +211,7 @@ public class BazaarOrderService {
         }
         this.nextPollAt = System.currentTimeMillis() + (long) (Math.max(20f, config.pollIntervalSeconds) * 1000);
         final BazaarOrderBook book = BazaarOrderBook.fetch();
+        this.backoff.onSuccess();
 
         final List<Runnable> alerts = new ArrayList<>();
         synchronized (this.lock) {
