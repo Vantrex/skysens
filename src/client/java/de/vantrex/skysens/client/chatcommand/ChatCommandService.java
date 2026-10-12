@@ -112,7 +112,7 @@ public final class ChatCommandService {
             ClientUtil.sendDebug("Ignoring !" + label + " from " + sender + ", it can't be used in " + channel.getPrefix() + " chat");
             return;
         }
-        if (config.deferToOtherMods) {
+        if (config.deferToOtherMods && command.get().defersToOtherMods()) {
             for (final ChatCommandBridge bridge : this.bridges) {
                 if (bridge.handles(channel, label, sender)) {
                     ClientUtil.sendDebug(bridge.name() + " answers !" + label + " in " + channel.getPrefix() + " chat, skipping");
