@@ -17,8 +17,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Session stats of slayer quests, read from chat: "SLAYER QUEST STARTED!", "SLAYER BOSS! The X spawned!",
@@ -75,32 +78,61 @@ public final class SlayerService {
             return;
         }
         final String text = line.trim();
-        if (text.equals("SLAYER QUEST STARTED!")) {
-            this.questStartMs = System.currentTimeMillis();
-            this.bossSpawnMs = 0;
+        if (this.handleQuestStarted(text) || this.handleBossSpawn(text) || this.handleQuestComplete(text)
+                || this.handleQuestFailed(text) || this.handleSlayerLevel(text)) {
             return;
         }
+        this.handleRngMeter(text);
+    }
+
+    private boolean handleQuestStarted(String text) {
+        if (!text.equals("SLAYER QUEST STARTED!")) {
+            return false;
+        }
+        this.questStartMs = System.currentTimeMillis();
+        this.bossSpawnMs = 0;
+        return true;
+    }
+
+    private boolean handleBossSpawn(String text) {
         final Matcher spawn = BOSS_SPAWN.matcher(text);
-        if (spawn.matches()) {
-            this.currentBoss = spawn.group(1);
-            this.bossSpawnMs = System.currentTimeMillis();
-            return;
+        if (!spawn.matches()) {
+            return false;
         }
-        if (text.equals("SLAYER QUEST COMPLETE!")) {
-            this.onComplete();
-            return;
+        this.currentBoss = spawn.group(1);
+        this.bossSpawnMs = System.currentTimeMillis();
+        return true;
+    }
+
+    private boolean handleQuestComplete(String text) {
+        if (!text.equals("SLAYER QUEST COMPLETE!")) {
+            return false;
         }
-        if (text.equals("SLAYER QUEST FAILED!")) {
-            this.stats(this.currentBoss).failed++;
-            this.bossSpawnMs = 0;
-            this.questStartMs = 0;
-            return;
+        this.onComplete();
+        return true;
+    }
+
+    private boolean handleQuestFailed(String text) {
+        if (!text.equals("SLAYER QUEST FAILED!")) {
+            return false;
         }
+        this.stats(this.currentBoss).failed++;
+        this.bossSpawnMs = 0;
+        this.questStartMs = 0;
+        return true;
+    }
+
+    /** The level line comes right before the RNG meter line and tells which slayer the meter belongs to. */
+    private boolean handleSlayerLevel(String text) {
         final Matcher level = SLAYER_LEVEL.matcher(text);
-        if (level.matches()) {
-            this.lastSlayerType = level.group(1);
-            return;
+        if (!level.matches()) {
+            return false;
         }
+        this.lastSlayerType = level.group(1);
+        return true;
+    }
+
+    private void handleRngMeter(String text) {
         final Matcher rng = RNG_METER.matcher(text);
         if (rng.matches() && this.lastSlayerType != null) {
             this.rngMeter.put(this.lastSlayerType, Long.parseLong(rng.group(1).replace(",", "")));
@@ -155,28 +187,32 @@ public final class SlayerService {
     }
 
     private String describe(String boss, BossStats stats, SlayerFieldsAccordion fields) {
-        final StringBuilder out = new StringBuilder(boss).append(": ").append(stats.kills).append(stats.kills == 1 ? " boss" : " bosses");
+        final Stream<String> details = Stream.of(
+                fields.averageKillTime ? averageTime("avg kill", stats.killTimeMs, stats.killTimed) : null,
+                fields.averageQuestTime ? averageTime("avg quest", stats.questTimeMs, stats.questTimed) : null,
+                fields.failed && stats.failed > 0 ? stats.failed + " failed" : null,
+                fields.rngMeter ? this.rngMeterOf(boss) : null);
+        return Stream.concat(Stream.of(headline(boss, stats, fields)), details.filter(Objects::nonNull))
+                .collect(Collectors.joining(" | "));
+    }
+
+    /** E.g. "Inferno Demonlord IV: 42 bosses (31.2/h)". */
+    private static String headline(String boss, BossStats stats, SlayerFieldsAccordion fields) {
+        final String headline = boss + ": " + stats.kills + (stats.kills == 1 ? " boss" : " bosses");
         final double perHour = stats.perHour();
-        if (fields.bossesPerHour && !Double.isNaN(perHour)) {
-            out.append(String.format(Locale.ROOT, " (%.1f/h)", perHour));
-        }
-        if (fields.averageKillTime && stats.killTimed > 0) {
-            out.append(" | avg kill ").append(formatDuration(stats.killTimeMs / stats.killTimed));
-        }
-        if (fields.averageQuestTime && stats.questTimed > 0) {
-            out.append(" | avg quest ").append(formatDuration(stats.questTimeMs / stats.questTimed));
-        }
-        if (fields.failed && stats.failed > 0) {
-            out.append(" | ").append(stats.failed).append(" failed");
-        }
-        if (fields.rngMeter) {
-            final String slayer = slayerOf(boss);
-            final Long xp = slayer == null ? null : this.rngMeter.get(slayer);
-            if (xp != null) {
-                out.append(" | RNG ").append(NumberUtil.formatCoins(xp)).append(" XP");
-            }
-        }
-        return out.toString();
+        return fields.bossesPerHour && !Double.isNaN(perHour)
+                ? headline + String.format(Locale.ROOT, " (%.1f/h)", perHour)
+                : headline;
+    }
+
+    private static @Nullable String averageTime(String label, long totalMs, int count) {
+        return count > 0 ? label + " " + formatDuration(totalMs / count) : null;
+    }
+
+    private @Nullable String rngMeterOf(String boss) {
+        final String slayer = slayerOf(boss);
+        final Long xp = slayer == null ? null : this.rngMeter.get(slayer);
+        return xp == null ? null : "RNG " + NumberUtil.formatCoins(xp) + " XP";
     }
 
     /**
