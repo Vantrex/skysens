@@ -20,5 +20,9 @@ public class DungeonCategory {
     @Accordion
     @Expose
     public RunStatsAccordion runStats = new RunStatsAccordion();
+    @ConfigOption(name = "Kismet Reroll Advisor", desc = "Shows whether rerolling a reward chest with a Kismet Feather is worth it")
+    @Accordion
+    @Expose
+    public KismetAdvisorAccordion kismetAdvisor = new KismetAdvisorAccordion();
 
 }
