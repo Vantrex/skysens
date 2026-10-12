@@ -3,7 +3,9 @@ package de.vantrex.skysens.client.service;
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.enums.NotificationDisplayTypeEnum;
+import de.vantrex.skysens.client.feature.afk.AfkTracker;
 import de.vantrex.skysens.client.model.Notification;
+import de.vantrex.skysens.client.model.NotificationSound;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import lombok.Synchronized;
@@ -59,6 +61,9 @@ public class NotificationService {
         if (this.handleCurrentNotification()) {
             return;
         }
+        if (SkysensConfig.getInstance().generalCategory.holdNotificationsWhileAfk && AfkTracker.getInstance().isAfk()) {
+            return;
+        }
         final Notification nextNotification = this.getNextNotification();
         if (nextNotification == null) {
             return;
@@ -89,6 +94,10 @@ public class NotificationService {
 
     private void displayNotification(Notification notification, boolean first) {
         final NotificationDisplayTypeEnum displayType = this.getDisplayType(notification);
+        final NotificationSound sound = notification.getSound();
+        if (first && sound != null) {
+            ClientUtil.playSound(sound.sound(), sound.volume(), sound.pitch());
+        }
         if (!first && displayType == NotificationDisplayTypeEnum.CHAT) {
             return;
         }

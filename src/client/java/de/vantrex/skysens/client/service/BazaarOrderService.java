@@ -3,8 +3,10 @@ package de.vantrex.skysens.client.service;
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.bazaar.OrderAlerts;
+import de.vantrex.skysens.client.feature.afk.AfkTracker;
 import de.vantrex.skysens.client.feature.combat.CombatTracker;
 import de.vantrex.skysens.client.model.Notification;
+import de.vantrex.skysens.client.model.NotificationSound;
 import de.vantrex.skysens.client.price.BazaarOrderBook;
 import de.vantrex.skysens.client.repository.BazaarOrderRepository.Order;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
@@ -218,7 +220,7 @@ public class BazaarOrderService {
         final BazaarOrderBook book = BazaarOrderBook.fetch();
         this.backoff.onSuccess();
 
-        // shown by deliverPendingAlerts on the client thread, once out of combat and runs
+        // shown by deliverPendingAlerts on the client thread, once out of combat and runs and not AFK
         synchronized (this.lock) {
             for (final Order order : this.orders()) {
                 if (order.complete) {
@@ -290,7 +292,7 @@ public class BazaarOrderService {
     }
 
     /**
-     * Shows the held back outbid/undercut alerts once the player is out of combat and not in a dungeon or Kuudra run
+     * Shows the held back outbid/undercut alerts once the player is out of combat, not AFK and not in a dungeon or Kuudra run
      * (each condition configurable). Alerts of orders that were filled or removed meanwhile are dropped. Client thread.
      */
     public void deliverPendingAlerts() {
@@ -315,16 +317,22 @@ public class BazaarOrderService {
         if (config.waitOutOfInstances && LocationService.getInstance().isInInstance()) {
             return false;
         }
+        if (SkysensConfig.getInstance().generalCategory.holdNotificationsWhileAfk && AfkTracker.getInstance().isAfk()) {
+            return false;
+        }
         return !config.waitOutOfCombat || CombatTracker.getInstance().isOutOfCombatFor(config.outOfCombatSeconds);
     }
 
     /** Client thread. {@code chatLine} is used where only chat can show it (type CHAT, or off SkyBlock). */
     private void alert(Component title, Component subtitle, Component chatLine, boolean filled) {
         final OrderAlerts config = this.config();
-        if (config.playSound) {
-            ClientUtil.playSound(filled ? SoundEvents.NOTE_BLOCK_PLING.value() : SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, filled ? 1.5F : 0.8F);
-        }
+        final NotificationSound sound = !config.playSound ? null : filled
+                ? new NotificationSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 1.5F)
+                : new NotificationSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, 0.8F);
         if (!SkysensClient.getInstance().isOnSkyBlock()) {
+            if (sound != null) {
+                ClientUtil.playSound(sound.sound(), sound.volume(), sound.pitch());
+            }
             ClientUtil.sendMessage(chatLine);
             return;
         }
@@ -334,6 +342,7 @@ public class BazaarOrderService {
                 .subtitle(chat ? null : subtitle)
                 .displayType(config.displayType)
                 .displayTime(Duration.ofSeconds(4))
+                .sound(sound)
                 .build());
     }
 

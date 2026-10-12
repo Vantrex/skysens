@@ -19,6 +19,11 @@ public class GeneralCategory {
     @Expose
     public boolean playSound;
 
+    @ConfigOption(name = "Hold Notifications While AFK", desc = "Keep notifications back while you have not moved for a minute, and show them once you move again")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean holdNotificationsWhileAfk = true;
+
     @ConfigOption(name = "Profit Tracker", desc = "Session and all-time profit of drops and reward chests, shown by !profit")
     @Accordion
     @Expose
