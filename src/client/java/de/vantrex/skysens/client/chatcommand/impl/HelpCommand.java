@@ -44,6 +44,12 @@ public class HelpCommand implements ChatCommand {
         return SkysensConfig.getInstance().chatCommandsCategory.commands.help;
     }
 
+    /** Other mods' !help lists their own commands, not SkySens' ones, so this always answers. */
+    @Override
+    public boolean defersToOtherMods() {
+        return false;
+    }
+
     @Override
     public void execute(@NotNull ChatCommandContext context) {
         if (context.hasArgs()) {

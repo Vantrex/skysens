@@ -47,6 +47,14 @@ public interface ChatCommand {
     }
 
     /**
+     * Whether to stay quiet when Odin or SkyHanni already answer this command and "Let other mods answer" is on.
+     * Commands whose SkySens answer differs from the other mods' (e.g. !help listing SkySens' commands) return false.
+     */
+    default boolean defersToOtherMods() {
+        return true;
+    }
+
+    /**
      * Runs the command on the client thread. Replies may be sent later from any thread via
      * {@link ChatCommandContext#reply(String)}.
      */
