@@ -17,7 +17,7 @@ import java.util.List;
  */
 public class ActivityCommand implements ChatCommand {
 
-    /** Room left for the channel command ("/cc ") in front of the reply. */
+    /** Room left for the channel command ("/cchat ") in front of the reply. */
     private static final int MAX_LENGTH = 245;
     private static final int MAX_COUNT = 10;
 
