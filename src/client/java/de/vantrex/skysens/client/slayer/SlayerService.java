@@ -33,6 +33,9 @@ public final class SlayerService {
     private static final Pattern BOSS_SPAWN = Pattern.compile("^SLAYER BOSS! The (.+) spawned!$");
     private static final Pattern SLAYER_LEVEL = Pattern.compile("^(\\w+) Slayer LVL \\d+ - .*$");
     private static final Pattern RNG_METER = Pattern.compile("^RNG Meter - ([\\d,]+) Stored XP$");
+    /** The sidebar line with the quest progress before the boss spawns, e.g. "(1,200/2,400) Combat XP". */
+    private static final long QUEST_SIDEBAR_GRACE_MS = 5_000;
+    private static final Pattern QUEST_PROGRESS = Pattern.compile("^\\([\\d,.kKmM]+/[\\d,.kKmM]+\\) .+$");
     /** The boss names as shown on the spawn message, mapped to the slayer's name used in the level lines. */
     private static final Map<String, String> BOSS_TO_SLAYER = Map.of(
             "Revenant Horror", "Zombie",
@@ -53,8 +56,21 @@ public final class SlayerService {
     private long questStartMs;
     private long bossSpawnMs;
     private int totalKills;
+    /** Whether a quest is running, also when its start wasn't seen (then from the boss spawn on). */
+    private boolean questRunning;
+    private long questRunningSinceMs;
+    /** Time of the running quest and boss fight that counts, i.e. without idle stretches. */
+    private long questActiveMs;
+    private long killActiveMs;
+    /** Questing time of the session for profit per hour, with its own (longer) idle pause. */
+    private long profitActiveMs;
+    private long lastTickMs;
+    private long lastInputMs;
+    /** The quest progress line of the sidebar (e.g. "(1,200/2,400) Combat XP") and when it last changed. */
+    private @Nullable String progressLine;
+    private long progressChangedMs;
 
-    /** Stats of one boss type. Quest times only count quests whose start was seen. */
+    /** Stats of one boss type, times without idle stretches. Quest times only count quests whose start was seen. */
     public static final class BossStats {
         public int kills;
         public int failed;
@@ -91,6 +107,12 @@ public final class SlayerService {
         }
         this.questStartMs = System.currentTimeMillis();
         this.bossSpawnMs = 0;
+        this.questRunning = true;
+        this.questRunningSinceMs = this.questStartMs;
+        this.questActiveMs = 0;
+        this.killActiveMs = 0;
+        this.progressLine = null;
+        this.progressChangedMs = this.questStartMs;
         return true;
     }
 
@@ -101,6 +123,11 @@ public final class SlayerService {
         }
         this.currentBoss = spawn.group(1);
         this.bossSpawnMs = System.currentTimeMillis();
+        if (!this.questRunning) {
+            this.questRunning = true;
+            this.questRunningSinceMs = this.bossSpawnMs;
+        }
+        this.killActiveMs = 0;
         return true;
     }
 
@@ -117,8 +144,7 @@ public final class SlayerService {
             return false;
         }
         this.stats(this.currentBoss).failed++;
-        this.bossSpawnMs = 0;
-        this.questStartMs = 0;
+        this.endQuest();
         return true;
     }
 
@@ -140,25 +166,106 @@ public final class SlayerService {
     }
 
     private void onComplete() {
-        final long now = System.currentTimeMillis();
         final BossStats stats = this.stats(this.currentBoss);
         stats.kills++;
         this.totalKills++;
         if (this.bossSpawnMs > 0) {
-            stats.killTimeMs += now - this.bossSpawnMs;
+            stats.killTimeMs += this.killActiveMs;
             stats.killTimed++;
         }
         if (this.questStartMs > 0) {
-            stats.questTimeMs += now - this.questStartMs;
+            stats.questTimeMs += this.questActiveMs;
             stats.questTimed++;
         }
-        this.bossSpawnMs = 0;
-        // the next quest starts right away, its start message sets this again
-        this.questStartMs = 0;
+        // the next quest starts right away, its start message sets the timers again
+        this.endQuest();
         final int every = (int) config().summaryEveryBosses;
         if (every > 0 && this.totalKills % every == 0) {
             ClientUtil.sendPrefixed("Slayer: " + this.summary());
         }
+    }
+
+    private void endQuest() {
+        this.bossSpawnMs = 0;
+        this.questStartMs = 0;
+        this.questRunning = false;
+        this.questActiveMs = 0;
+        this.killActiveMs = 0;
+        this.progressLine = null;
+    }
+
+    /**
+     * Advances the quest timers by the time since the last tick, unless the player is idle: no input for longer than
+     * the idle pause, or (before the boss spawns) no quest progress for longer than the no progress pause. Idle
+     * stretches count up to the pause, so short breaks are still part of the quest.
+     *
+     * @param input        whether the player gave input (moved, looked around, clicked) this tick
+     * @param sidebarLines the sidebar lines if they were read this tick, else null
+     */
+    public void onTick(boolean input, @Nullable List<String> sidebarLines) {
+        if (!config().enabled) {
+            return;
+        }
+        final long now = System.currentTimeMillis();
+        if (input || this.lastInputMs == 0) {
+            this.lastInputMs = now;
+        }
+        // a frozen or closed game doesn't count as questing
+        final long delta = this.lastTickMs == 0 ? 0 : Math.max(0, Math.min(now - this.lastTickMs, 1_000));
+        this.lastTickMs = now;
+        if (sidebarLines != null && this.questRunning) {
+            if (this.questGone(sidebarLines, now)) {
+                // cancelled at Maddox, or lost to a disconnect: no complete or failed message comes
+                this.endQuest();
+                return;
+            }
+            this.updateProgress(sidebarLines, now);
+        }
+        if (!this.questRunning) {
+            return;
+        }
+        final long idleMs = now - this.lastInputMs;
+        if (idleMs <= config().profitIdlePauseMinutes * 60_000) {
+            this.profitActiveMs += delta;
+        }
+        if (idleMs > config().idlePauseSeconds * 1_000) {
+            return;
+        }
+        if (this.bossSpawnMs > 0) {
+            this.killActiveMs += delta;
+            this.questActiveMs += delta;
+        } else if (!this.progressStalled(now)) {
+            this.questActiveMs += delta;
+        }
+    }
+
+    /**
+     * Whether the sidebar no longer shows a slayer quest. An empty sidebar (server switch) and the first seconds of a
+     * quest (the sidebar may not be updated yet) don't count.
+     */
+    private boolean questGone(List<String> sidebarLines, long now) {
+        if (sidebarLines.isEmpty() || now - this.questRunningSinceMs < QUEST_SIDEBAR_GRACE_MS) {
+            return false;
+        }
+        return sidebarLines.stream().noneMatch(line -> line.startsWith("Slayer Quest"));
+    }
+
+    private void updateProgress(List<String> sidebarLines, long now) {
+        for (final String line : sidebarLines) {
+            if (QUEST_PROGRESS.matcher(line).matches()) {
+                if (!line.equals(this.progressLine)) {
+                    this.progressLine = line;
+                    this.progressChangedMs = now;
+                }
+                return;
+            }
+        }
+    }
+
+    /** Only once a progress line was seen, so an unknown sidebar format doesn't pause the timer. */
+    private boolean progressStalled(long now) {
+        final float pauseSeconds = config().noProgressPauseSeconds;
+        return pauseSeconds > 0 && this.progressLine != null && now - this.progressChangedMs > pauseSeconds * 1_000;
     }
 
     private BossStats stats(@Nullable String boss) {
@@ -216,8 +323,8 @@ public final class SlayerService {
     }
 
     /**
-     * Profit per boss and per hour of the profit tracker's slayer activity, or null if it has none. The tracker
-     * doesn't split by boss type, so this covers all slayers of the session.
+     * Profit per boss and per hour of questing of the profit tracker's slayer activity, or null if it has none. The
+     * tracker doesn't split by boss type, so this covers all slayers of the session.
      */
     private @Nullable String profit() {
         if (this.totalKills == 0) {
@@ -229,9 +336,9 @@ public final class SlayerService {
         }
         final ProfitStats stats = activity.stats();
         final StringBuilder out = new StringBuilder(formatSigned(stats.profit / this.totalKills)).append("/boss");
-        final double perHour = stats.perHour();
-        if (!Double.isNaN(perHour)) {
-            out.append(" (").append(formatSigned(perHour)).append("/h)");
+        // per hour of questing as timed here, the tracker's own uptime knows nothing about idling during a quest
+        if (this.profitActiveMs >= 60_000) {
+            out.append(" (").append(formatSigned(stats.profit / (this.profitActiveMs / 3_600_000.0))).append("/h)");
         }
         return out.toString();
     }

@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.feature.dungeon;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.ItemIdUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
@@ -18,7 +19,8 @@ import java.util.regex.Pattern;
  *   Score: 301 (S+)
  *   +514,710 Cata EXP ...
  * </pre>
- * Normal floors use "The Catacombs - F7" as header. Own deaths ("☠ You were killed by Storm and became a ghost.")
+ * Normal floors use "The Catacombs - F7" as header. The floor entry message ("Vantrex entered MM The Catacombs,
+ * Floor VII!") sets the floor that reward chests opened in the instance count for. Own deaths ("☠ You were killed by Storm and became a ghost.")
  * are counted between the floor entry message and the summary.
  */
 public class DungeonRunStatsFeature implements GameMessageListeningFeature {
@@ -26,7 +28,7 @@ public class DungeonRunStatsFeature implements GameMessageListeningFeature {
     private static final Pattern HEADER = Pattern.compile("(?m)^\\s*(?:Master Mode|The Catacombs) - ([MF]\\d+)\\s*$");
     private static final Pattern TIME = Pattern.compile("(?m)^\\s*Defeated .+ in (?:(\\d+)h )?(?:(\\d+)m )?(\\d+)s\\s*$");
     private static final Pattern SCORE = Pattern.compile("(?m)^\\s*Score: (\\d+) \\(([A-Z+]+)\\)");
-    private static final Pattern ENTERED = Pattern.compile("entered (?:MM )?The Catacombs, Floor [IVX]+!");
+    private static final Pattern ENTERED = Pattern.compile("entered (MM )?The Catacombs, (?:Floor ([IVX]+)|Entrance)!");
     private static final Pattern OWN_DEATH = Pattern.compile("^\\s*☠ You (?:were killed by .+|died) and became a ghost\\.");
 
     private int deaths;
@@ -57,10 +59,15 @@ public class DungeonRunStatsFeature implements GameMessageListeningFeature {
     }
 
     private boolean handleFloorEntered(String text) {
-        if (!ENTERED.matcher(text).find()) {
+        final Matcher entered = ENTERED.matcher(text);
+        if (!entered.find()) {
             return false;
         }
         this.deaths = 0;
+        // the reward chests of this instance count for its floor; the Entrance has no stats
+        DungeonRunStats.getInstance().setCurrentFloor(entered.group(2) == null
+                ? null
+                : (entered.group(1) == null ? "F" : "M") + ItemIdUtil.romanToInt(entered.group(2)));
         return true;
     }
 
