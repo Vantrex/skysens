@@ -269,9 +269,12 @@ public class BazaarOrderService {
         if (diff < config.minimumCoins || percent < config.minimumPercent) {
             return null;
         }
-        // one alert per change: the same best price doesn't alert again
-        if (Math.abs(order.lastAlertedPrice - best) < EPSILON) {
-            return null;
+        // alert once when outbid/undercut, then only when the better price moved a lot further away from yours
+        if (order.lastAlertedPrice > 0) {
+            final double lastDiff = Math.abs(order.pricePerUnit - order.lastAlertedPrice);
+            if ((diff - lastDiff) / order.pricePerUnit * 100 < config.realertPercent) {
+                return null;
+            }
         }
         order.lastAlertedPrice = best;
         final String detail = String.format(Locale.ROOT, "%s - %s %s (%s%s, %.1f%%) | yours %s",
