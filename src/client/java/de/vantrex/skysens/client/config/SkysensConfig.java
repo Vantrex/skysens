@@ -15,6 +15,7 @@ import de.vantrex.skysens.client.config.categories.chat.ChatCommandsCategory;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
 import de.vantrex.skysens.client.config.categories.mining.MiningCategory;
 import de.vantrex.skysens.client.config.categories.qol.QolCategory;
+import de.vantrex.skysens.client.config.categories.slayer.SlayerCategory;
 import de.vantrex.skysens.client.config.categories.visuals.VisualsCategory;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.annotations.Category;
@@ -70,6 +71,9 @@ public class SkysensConfig extends Config {
     @Expose
     public ChatCommandsCategory chatCommandsCategory = new ChatCommandsCategory();
 
+    @Category(name = "Slayer", desc = "Slayer session stats, shown by !slayer")
+    @Expose
+    public SlayerCategory slayerCategory = new SlayerCategory();
     @Category(name = "Chat Filter", desc = "Hide spammy chat messages, one option per message")
     @Expose
     public de.vantrex.skysens.client.config.categories.chatfilter.ChatFilterCategory chatFilterCategory = new de.vantrex.skysens.client.config.categories.chatfilter.ChatFilterCategory();

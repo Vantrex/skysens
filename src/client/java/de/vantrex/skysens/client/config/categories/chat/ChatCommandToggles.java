@@ -67,4 +67,9 @@ public class ChatCommandToggles {
     @Expose
     public boolean dice = false;
 
+    @ConfigOption(name = "!slayer", desc = "Sends this session's slayer stats: bosses killed, bosses per hour, average kill time and profit (see the Slayer category)")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean slayer = false;
+
 }
