@@ -22,5 +22,10 @@ public class BazaarCategory {
     @Expose
     public HighlightOwnBuyOrder highlightOwnBuyOrders = new HighlightOwnBuyOrder();
 
+    @ConfigOption(name = "Order Alerts", desc = "Alerts for outbid, undercut and filled bazaar orders")
+    @Accordion
+    @Expose
+    public OrderAlerts orderAlerts = new OrderAlerts();
+
 
 }

@@ -22,6 +22,7 @@ import de.vantrex.skysens.client.feature.visuals.HideOtherPlayersFeature;
 import de.vantrex.skysens.client.feature.visuals.HeldItemTransformFeature;
 import de.vantrex.skysens.client.feature.qol.sensitivity.LocationBasedSensitivityFeature;
 import de.vantrex.skysens.client.feature.qol.sensitivity.ZoneBasedSensitivityFeature;
+import de.vantrex.skysens.client.feature.bazaar.BazaarOrderTrackingFeature;
 import de.vantrex.skysens.client.feature.slayer.SlayerTrackingFeature;
 import lombok.Getter;
 
@@ -60,6 +61,7 @@ public class FeatureService {
         this.featureRegistry.register(new LootShareFeature());
         this.featureRegistry.register(new SackProfitFeature());
         this.featureRegistry.register(this.rewardChestFeature);
+        this.featureRegistry.register(new BazaarOrderTrackingFeature());
         this.featureRegistry.register(new DungeonRunStatsFeature());
         this.featureRegistry.register(new SlayerTrackingFeature());
         this.featureRegistry.register(new de.vantrex.skysens.client.feature.dungeon.KismetAdvisorFeature());
