@@ -34,6 +34,7 @@ public final class SlayerService {
     private static final Pattern SLAYER_LEVEL = Pattern.compile("^(\\w+) Slayer LVL \\d+ - .*$");
     private static final Pattern RNG_METER = Pattern.compile("^RNG Meter - ([\\d,]+) Stored XP$");
     /** The sidebar line with the quest progress before the boss spawns, e.g. "(1,200/2,400) Combat XP". */
+    private static final long QUEST_SIDEBAR_GRACE_MS = 5_000;
     private static final Pattern QUEST_PROGRESS = Pattern.compile("^\\([\\d,.kKmM]+/[\\d,.kKmM]+\\) .+$");
     /** The boss names as shown on the spawn message, mapped to the slayer's name used in the level lines. */
     private static final Map<String, String> BOSS_TO_SLAYER = Map.of(
@@ -57,6 +58,7 @@ public final class SlayerService {
     private int totalKills;
     /** Whether a quest is running, also when its start wasn't seen (then from the boss spawn on). */
     private boolean questRunning;
+    private long questRunningSinceMs;
     /** Time of the running quest and boss fight that counts, i.e. without idle stretches. */
     private long questActiveMs;
     private long killActiveMs;
@@ -106,6 +108,7 @@ public final class SlayerService {
         this.questStartMs = System.currentTimeMillis();
         this.bossSpawnMs = 0;
         this.questRunning = true;
+        this.questRunningSinceMs = this.questStartMs;
         this.questActiveMs = 0;
         this.killActiveMs = 0;
         this.progressLine = null;
@@ -120,7 +123,10 @@ public final class SlayerService {
         }
         this.currentBoss = spawn.group(1);
         this.bossSpawnMs = System.currentTimeMillis();
-        this.questRunning = true;
+        if (!this.questRunning) {
+            this.questRunning = true;
+            this.questRunningSinceMs = this.bossSpawnMs;
+        }
         this.killActiveMs = 0;
         return true;
     }
@@ -208,6 +214,11 @@ public final class SlayerService {
         final long delta = this.lastTickMs == 0 ? 0 : Math.max(0, Math.min(now - this.lastTickMs, 1_000));
         this.lastTickMs = now;
         if (sidebarLines != null && this.questRunning) {
+            if (this.questGone(sidebarLines, now)) {
+                // cancelled at Maddox, or lost to a disconnect: no complete or failed message comes
+                this.endQuest();
+                return;
+            }
             this.updateProgress(sidebarLines, now);
         }
         if (!this.questRunning) {
@@ -226,6 +237,17 @@ public final class SlayerService {
         } else if (!this.progressStalled(now)) {
             this.questActiveMs += delta;
         }
+    }
+
+    /**
+     * Whether the sidebar no longer shows a slayer quest. An empty sidebar (server switch) and the first seconds of a
+     * quest (the sidebar may not be updated yet) don't count.
+     */
+    private boolean questGone(List<String> sidebarLines, long now) {
+        if (sidebarLines.isEmpty() || now - this.questRunningSinceMs < QUEST_SIDEBAR_GRACE_MS) {
+            return false;
+        }
+        return sidebarLines.stream().noneMatch(line -> line.startsWith("Slayer Quest"));
     }
 
     private void updateProgress(List<String> sidebarLines, long now) {
