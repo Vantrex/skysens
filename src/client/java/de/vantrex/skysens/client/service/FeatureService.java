@@ -58,6 +58,7 @@ public class FeatureService {
         this.featureRegistry.register(new LootShareFeature());
         this.featureRegistry.register(new SackProfitFeature());
         this.featureRegistry.register(this.rewardChestFeature);
+        this.featureRegistry.register(new de.vantrex.skysens.client.feature.dungeon.KismetAdvisorFeature());
         this.featureRegistry.register(new DungeonNpcProfitFeature());
         this.featureRegistry.register(new de.vantrex.skysens.client.feature.chat.ChatSpamFilterFeature());
         this.featureRegistry.register(new JunkHighlightFeature());
