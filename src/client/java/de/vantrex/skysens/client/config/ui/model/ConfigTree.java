@@ -6,6 +6,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorColour;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorText;
 import io.github.notenoughupdates.moulconfig.gui.editors.GuiOptionEditorAccordion;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedCategory;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption;
@@ -77,6 +78,7 @@ public final class ConfigTree {
         if (field.isAnnotationPresent(ConfigEditorDropdown.class)) return OptionKind.DROPDOWN;
         if (field.isAnnotationPresent(ConfigEditorDynamicZoneDropdown.class)) return OptionKind.ZONE_DROPDOWN;
         if (field.isAnnotationPresent(ConfigEditorColour.class)) return OptionKind.COLOUR;
+        if (field.isAnnotationPresent(ConfigEditorText.class)) return OptionKind.TEXT;
         return OptionKind.UNSUPPORTED;
     }
 
