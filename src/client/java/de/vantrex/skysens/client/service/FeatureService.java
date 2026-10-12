@@ -13,6 +13,7 @@ import de.vantrex.skysens.client.feature.dungeon.RewardChestFeature;
 import de.vantrex.skysens.client.feature.mining.notification.FiletOFortuneNotificationFeature;
 import de.vantrex.skysens.client.feature.mining.notification.PickaxeAbilityResetNotificationFeature;
 import de.vantrex.skysens.client.feature.mining.notification.PowderPumpkinBuffNotificationFeature;
+import de.vantrex.skysens.client.feature.qol.JunkHighlightFeature;
 import de.vantrex.skysens.client.feature.qol.SwingAnimationFeature;
 import de.vantrex.skysens.client.feature.visuals.CameraTweaksFeature;
 import de.vantrex.skysens.client.feature.visuals.EntityScaleFeature;
@@ -58,6 +59,8 @@ public class FeatureService {
         this.featureRegistry.register(new SackProfitFeature());
         this.featureRegistry.register(this.rewardChestFeature);
         this.featureRegistry.register(new DungeonNpcProfitFeature());
+        this.featureRegistry.register(new de.vantrex.skysens.client.feature.chat.ChatSpamFilterFeature());
+        this.featureRegistry.register(new JunkHighlightFeature());
 
     }
 
