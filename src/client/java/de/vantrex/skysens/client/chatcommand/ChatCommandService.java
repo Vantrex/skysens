@@ -10,7 +10,9 @@ import de.vantrex.skysens.client.chatcommand.impl.FpsCommand;
 import de.vantrex.skysens.client.chatcommand.impl.HelpCommand;
 import de.vantrex.skysens.client.chatcommand.impl.PingCommand;
 import de.vantrex.skysens.client.chatcommand.impl.ProfitCommand;
+import de.vantrex.skysens.client.chatcommand.impl.RunsCommand;
 import de.vantrex.skysens.client.chatcommand.impl.ServerCommand;
+import de.vantrex.skysens.client.chatcommand.impl.SlayerCommand;
 import de.vantrex.skysens.client.chatcommand.impl.TpsCommand;
 import de.vantrex.skysens.client.chatcommand.impl.WarpToCommand;
 import de.vantrex.skysens.client.chatcommand.impl.ZoneCommand;
@@ -66,6 +68,8 @@ public final class ChatCommandService {
         this.registry.register(new CoinFlipCommand());
         this.registry.register(new DiceCommand());
         this.registry.register(new ActivityCommand());
+        this.registry.register(new RunsCommand());
+        this.registry.register(new SlayerCommand());
     }
 
     /** Handles a received chat message. Called on the client thread. */

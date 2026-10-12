@@ -16,4 +16,13 @@ public class DungeonCategory {
     @Expose
     public ChestLootShareAccordion chestLootShare = new ChestLootShareAccordion();
 
+    @ConfigOption(name = "Run Stats", desc = "Average time, score and deaths of your dungeon runs this session")
+    @Accordion
+    @Expose
+    public RunStatsAccordion runStats = new RunStatsAccordion();
+    @ConfigOption(name = "Kismet Reroll Advisor", desc = "Shows whether rerolling a reward chest with a Kismet Feather is worth it")
+    @Accordion
+    @Expose
+    public KismetAdvisorAccordion kismetAdvisor = new KismetAdvisorAccordion();
+
 }
