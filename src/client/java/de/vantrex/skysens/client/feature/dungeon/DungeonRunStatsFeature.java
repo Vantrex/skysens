@@ -27,10 +27,14 @@ public class DungeonRunStatsFeature implements Feature, SkysensListener<DungeonR
         final DungeonRunStats.FloorStats floorStats = DungeonRunStats.getInstance().record(event.getFloor(),
                 event.getSeconds(), event.getScore(), event.getRank().equals("S+"), event.getDeaths());
         if (SkysensConfig.getInstance().dungeonCategory.runStats.chatSummary) {
-            ClientUtil.sendPrefixed("§7Run #" + floorStats.runs + " (" + event.getFloor() + "): "
-                    + DungeonRunStats.formatTime(event.getSeconds()) + " " + event.getRank()
-                    + " | session avg " + DungeonRunStats.formatTime(floorStats.avgSeconds()));
+            sendRunSummary(event, floorStats);
         }
+    }
+
+    private static void sendRunSummary(DungeonRunCompleteEvent event, DungeonRunStats.FloorStats floorStats) {
+        ClientUtil.sendPrefixed("§7Run #" + floorStats.runs + " (" + event.getFloor() + "): "
+                + DungeonRunStats.formatTime(event.getSeconds()) + " " + event.getRank()
+                + " | session avg " + DungeonRunStats.formatTime(floorStats.avgSeconds()));
     }
 
 }

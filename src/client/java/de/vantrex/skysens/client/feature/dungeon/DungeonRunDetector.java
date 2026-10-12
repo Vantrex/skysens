@@ -95,50 +95,47 @@ public class DungeonRunDetector implements GameMessageListeningFeature {
     }
 
     private void handleLine(String line) {
-        if (OWN_DEATH.matcher(line).find()) {
-            this.deaths++;
+        if (this.handleOwnDeath(line) || this.handleFloorEntered(line) || this.handleHeader(line)
+                || this.pendingFloor == null || this.handleTime(line)) {
             return;
         }
-        final Matcher entered = ENTERED.matcher(line);
-        if (entered.find()) {
-            this.onFloorEntered(entered);
-            return;
-        }
-        final Matcher hypixelHeader = HYPIXEL_HEADER.matcher(line);
-        if (hypixelHeader.matches()) {
-            // the Entrance has no stats
-            this.startSummary(hypixelHeader.group(2) == null
-                    ? null
-                    : (hypixelHeader.group(1) == null ? "F" : "M") + ItemIdUtil.romanToInt(hypixelHeader.group(2)));
-            return;
-        }
-        final Matcher odinHeader = ODIN_HEADER.matcher(line);
-        if (odinHeader.matches()) {
-            this.startSummary(odinHeader.group(1).toUpperCase(Locale.ROOT));
-            return;
-        }
-        if (this.pendingFloor == null) {
-            return;
-        }
-        final Matcher time = TIME.matcher(line);
-        if (time.matches()) {
-            this.pendingSeconds = parseSeconds(time);
-            return;
-        }
-        final Matcher score = SCORE.matcher(line);
-        if (score.find() && this.pendingSeconds >= 0) {
-            this.completeRun(Integer.parseInt(score.group(1)), score.group(2));
-        }
+        this.handleScore(line);
     }
 
-    private void onFloorEntered(Matcher entered) {
+    private boolean handleOwnDeath(String line) {
+        if (!OWN_DEATH.matcher(line).find()) {
+            return false;
+        }
+        this.deaths++;
+        return true;
+    }
+
+    private boolean handleFloorEntered(String line) {
+        final Matcher entered = ENTERED.matcher(line);
+        if (!entered.find()) {
+            return false;
+        }
         this.deaths = 0;
         this.pendingFloor = null;
         this.lastRunAt = 0;
-        // the reward chests of this instance count for its floor; the Entrance has no stats
-        DungeonRunStats.getInstance().setCurrentFloor(entered.group(2) == null
-                ? null
-                : (entered.group(1) == null ? "F" : "M") + ItemIdUtil.romanToInt(entered.group(2)));
+        // the reward chests of this instance count for its floor
+        DungeonRunStats.getInstance().setCurrentFloor(floorName(entered.group(1) != null, entered.group(2)));
+        return true;
+    }
+
+    /** Starts reading a summary at its header, in Hypixel's or Odin's format. */
+    private boolean handleHeader(String line) {
+        final Matcher hypixel = HYPIXEL_HEADER.matcher(line);
+        if (hypixel.matches()) {
+            this.startSummary(floorName(hypixel.group(1) != null, hypixel.group(2)));
+            return true;
+        }
+        final Matcher odin = ODIN_HEADER.matcher(line);
+        if (odin.matches()) {
+            this.startSummary(odin.group(1).toUpperCase(Locale.ROOT));
+            return true;
+        }
+        return false;
     }
 
     private void startSummary(@Nullable String floor) {
@@ -146,18 +143,46 @@ public class DungeonRunDetector implements GameMessageListeningFeature {
         this.pendingSeconds = -1;
     }
 
+    private boolean handleTime(String line) {
+        final Matcher time = TIME.matcher(line);
+        if (!time.matches()) {
+            return false;
+        }
+        this.pendingSeconds = parseSeconds(time);
+        return true;
+    }
+
+    private void handleScore(String line) {
+        final Matcher score = SCORE.matcher(line);
+        if (score.find() && this.pendingSeconds >= 0) {
+            this.completeRun(Integer.parseInt(score.group(1)), score.group(2));
+        }
+    }
+
     private void completeRun(int score, String rank) {
         final String floor = this.pendingFloor;
-        final long seconds = this.pendingSeconds;
         this.pendingFloor = null;
-        final long now = System.currentTimeMillis();
-        if (now - this.lastRunAt < SAME_RUN_MS) {
+        if (this.isSameRunAsLast()) {
             return;
         }
-        this.lastRunAt = now;
         final int deaths = this.deaths;
         this.deaths = 0;
-        EventListenerRegistry.REGISTRY.fireEvent(new DungeonRunCompleteEvent(floor, seconds, score, rank, deaths));
+        EventListenerRegistry.REGISTRY.fireEvent(new DungeonRunCompleteEvent(floor, this.pendingSeconds, score, rank, deaths));
+    }
+
+    /** Whether a run was completed moments ago, i.e. this summary is the same run in the other format. */
+    private boolean isSameRunAsLast() {
+        final long now = System.currentTimeMillis();
+        if (now - this.lastRunAt < SAME_RUN_MS) {
+            return true;
+        }
+        this.lastRunAt = now;
+        return false;
+    }
+
+    /** "M7" / "F5" from the roman floor number, null for the Entrance (it has no stats). */
+    private static @Nullable String floorName(boolean masterMode, @Nullable String romanFloor) {
+        return romanFloor == null ? null : (masterMode ? "M" : "F") + ItemIdUtil.romanToInt(romanFloor);
     }
 
     /** Reads the "[Nh ][Nm ]Ns" run time of a matched {@link #TIME}. */
