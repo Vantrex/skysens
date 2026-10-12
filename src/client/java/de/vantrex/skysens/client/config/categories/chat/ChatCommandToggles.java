@@ -71,6 +71,7 @@ public class ChatCommandToggles {
     @ConfigEditorBoolean
     @Expose
     public boolean activity = false;
+
     @ConfigOption(name = "!runs", desc = "Sends the stats of your dungeon runs this session: !runs [floor], e.g. !runs m7")
     @ConfigEditorBoolean
     @Expose
