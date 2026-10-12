@@ -18,6 +18,11 @@ public class SlayerCategory {
     @Expose
     public float summaryEveryBosses = 0f;
 
+    @ConfigOption(name = "Send Summary to Co-op Chat", desc = "Also send the summary every N bosses to your co-op chat (/cc), not just your own chat")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean summaryToCoopChat = false;
+
     @ConfigOption(name = "Idle Pause (seconds)", desc = "Pause the quest and kill timers (bosses per hour, average times) after this long without input (moving, looking around, clicking). Shorter breaks still count")
     @ConfigEditorSlider(minValue = 5f, maxValue = 300f, minStep = 5f)
     @Expose

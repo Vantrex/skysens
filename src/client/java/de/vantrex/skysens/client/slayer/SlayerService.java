@@ -1,5 +1,7 @@
 package de.vantrex.skysens.client.slayer;
 
+import de.vantrex.skysens.client.chatcommand.ChatChannel;
+import de.vantrex.skysens.client.chatcommand.ChatCommandService;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.slayer.SlayerCategory;
 import de.vantrex.skysens.client.config.categories.slayer.SlayerFieldsAccordion;
@@ -181,7 +183,11 @@ public final class SlayerService {
         this.endQuest();
         final int every = (int) config().summaryEveryBosses;
         if (every > 0 && this.totalKills % every == 0) {
-            ClientUtil.sendPrefixed("Slayer: " + this.summary());
+            final String summary = this.summary();
+            ClientUtil.sendPrefixed("Slayer: " + summary);
+            if (config().summaryToCoopChat) {
+                ChatCommandService.getInstance().send(ChatChannel.COOP, summary);
+            }
         }
     }
 
