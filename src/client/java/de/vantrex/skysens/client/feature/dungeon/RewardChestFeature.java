@@ -123,9 +123,9 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
 
     private static boolean isNearRewardChests() {
         final SkyblockLocationEnum location = LocationService.getInstance().getCurrentLocation();
-        // Kuudra is entered from the Crimson Isle
-        return location == SkyblockLocationEnum.DUNGEON_HUB || location == SkyblockLocationEnum.CATACOMBS
-                || location == SkyblockLocationEnum.CRIMSON_ISLE;
+        // dungeon and Kuudra runs, the Dungeon Hub (Croesus) and the Crimson Isle
+        return location != null && location.isInstance()
+                || location == SkyblockLocationEnum.DUNGEON_HUB || location == SkyblockLocationEnum.CRIMSON_ISLE;
     }
 
     /** Cost parts from the lore of the open button, or null if the lore has no cost (yet). Runs every tick, so no pricing here. */

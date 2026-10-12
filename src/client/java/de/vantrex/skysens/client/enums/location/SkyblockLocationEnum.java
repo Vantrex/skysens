@@ -39,15 +39,24 @@ public enum SkyblockLocationEnum {
 
     // Farming Islands
     THE_FARMING_ISLANDS("The Farming Islands", "⏣ The Farming Islands", FarmingIslandsZoneEnum.class),
-    CATACOMBS("Catacombs", "Catacombs"),
+    // Instances: dungeon and Kuudra runs
+    CATACOMBS("Catacombs", "Catacombs", null, true),
+    KUUDRA("Kuudra", "Kuudra", null, true),
     ;
 
     private final String displayName;
     private final String scoreboardName;
     private final Class<? extends ZoneEnum<?>> zoneEnum;
+    /** Whether this is a run (dungeon, Kuudra) rather than an island. */
+    private final boolean instance;
 
     SkyblockLocationEnum(final @NonNull String displayName, final String scoreboardName) {
         this(displayName, scoreboardName, null);
+    }
+
+    SkyblockLocationEnum(final @NonNull String displayName, final String scoreboardName,
+                         final Class<? extends ZoneEnum<?>> zoneEnum) {
+        this(displayName, scoreboardName, zoneEnum, false);
     }
 
     public static @Nullable SkyblockLocationEnum fromMode(final String scoreboardName) {
