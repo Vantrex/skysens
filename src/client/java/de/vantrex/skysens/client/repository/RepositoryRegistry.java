@@ -17,6 +17,7 @@ public final class RepositoryRegistry {
     public static ProfitRepository PROFIT_REPOSITORY;
     public static CoopRepository COOP_REPOSITORY;
     public static BazaarOrderRepository BAZAAR_ORDER_REPOSITORY;
+    public static DungeonRunRepository DUNGEON_RUN_REPOSITORY;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path BASE_DIR = FabricLoader.getInstance().getConfigDir().resolve("skysens/repositories");
@@ -27,6 +28,7 @@ public final class RepositoryRegistry {
         PROFIT_REPOSITORY = loadRepository(ProfitRepository.class);
         COOP_REPOSITORY = loadRepository(CoopRepository.class);
         BAZAAR_ORDER_REPOSITORY = loadRepository(BazaarOrderRepository.class);
+        DUNGEON_RUN_REPOSITORY = loadRepository(DungeonRunRepository.class);
     }
 
     private static <T> T loadRepository(Class<T> clazz) {
@@ -52,6 +54,7 @@ public final class RepositoryRegistry {
         saveRepository(PROFIT_REPOSITORY);
         saveRepository(COOP_REPOSITORY);
         saveRepository(BAZAAR_ORDER_REPOSITORY);
+        saveRepository(DUNGEON_RUN_REPOSITORY);
     }
 
     private static void saveRepository(Object repository) {

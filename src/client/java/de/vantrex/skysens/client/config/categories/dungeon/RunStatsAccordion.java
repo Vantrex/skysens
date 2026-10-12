@@ -6,7 +6,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 public class RunStatsAccordion {
 
-    @ConfigOption(name = "Enabled", desc = "Track the completed dungeon runs of this session per floor (time, score, deaths). See the !runs chat command")
+    @ConfigOption(name = "Enabled", desc = "Track the completed dungeon runs per floor (time, score, deaths and, with Chest Profit enabled, reward chest profit) for this session, today and all time. See the !runs chat command")
     @ConfigEditorBoolean
     @Expose
     public boolean enabled = true;
@@ -30,5 +30,10 @@ public class RunStatsAccordion {
     @ConfigEditorBoolean
     @Expose
     public boolean replyDeaths = true;
+
+    @ConfigOption(name = "!runs: Chest profit", desc = "Include the floor's reward chest profit, per run and per hour of run time, in the !runs reply. Needs Chest Profit enabled; chests opened at Croesus count for the run's floor")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean replyProfit = true;
 
 }

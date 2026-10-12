@@ -52,6 +52,9 @@ import java.util.regex.Pattern;
  * </pre>
  * The message has no cost, so the cost is read from the "Open Reward Chest" button (slot 31) while the
  * chest is open, like SkyHanni and Odin do: "100,000 Coins", "FREE" and/or a key.
+ * <p>
+ * The profit of a dungeon chest also counts for its floor in {@link DungeonRunStats}: the floor of the instance
+ * for chests opened in the run, or the floor of the run opened at Croesus ("Master Catacombs - Floor VII").
  */
 @SkySensFeature
 public class RewardChestFeature implements GameMessageListeningFeature, AfterTickFeature {
@@ -59,6 +62,8 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
     private static final Pattern REWARDS_HEADER = Pattern.compile("^\\s*(\\w+) CHEST REWARDS\\s*$");
     /** Boss room and Croesus chests ("Bedrock Chest", "Bedrock"), Kuudra chests ("Paid Chest Chest"). */
     private static final Pattern CHEST_SCREEN = Pattern.compile("^(Wood|Iron|Gold|Diamond|Emerald|Obsidian|Bedrock|Free|Paid)(?: Chest){0,2}$");
+    /** A run's chests at Croesus. */
+    private static final Pattern CROESUS_RUN_SCREEN = Pattern.compile("^(Master )?Catacombs - Floor ([IVX]+)$");
     private static final int OPEN_BUTTON_SLOT = 31;
     /** A cost seen longer ago than this belongs to another chest. */
     private static final long COST_MAX_AGE_MS = 2 * 60 * 1000;
@@ -72,10 +77,17 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
     private static final Pattern AMOUNT = Pattern.compile("^(.+?) x([\\d,]+)$");
 
     private final Map<String, SeenCost> costByChest = new HashMap<>();
+    private final Map<String, SeenFloor> floorByChest = new HashMap<>();
+    /** The floor of the run last opened at Croesus. */
+    private @Nullable SeenFloor croesusFloor;
     private final ProfitRepository.DungeonChestStats session = new ProfitRepository.DungeonChestStats();
 
     /** Cost parts seen on the open button: coins, and keys that are priced once the chest is opened. */
     private record SeenCost(double coins, List<String> keys, long seenAt) {
+    }
+
+    /** The floor ("M7") a chest belongs to. */
+    private record SeenFloor(String floor, long seenAt) {
     }
 
     private record Reward(String name, double value) {
@@ -103,12 +115,24 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
             this.finishPending();
         }
         final Screen screen = Minecraft.getInstance().gui.screen();
-        final Matcher title = screen == null ? null : CHEST_SCREEN.matcher(screen.getTitle().getString().trim());
+        final String screenTitle = screen == null ? null : screen.getTitle().getString().trim();
+        final Matcher croesusRun = screenTitle == null ? null : CROESUS_RUN_SCREEN.matcher(screenTitle);
+        if (croesusRun != null && croesusRun.matches()) {
+            this.croesusFloor = new SeenFloor((croesusRun.group(1) == null ? "F" : "M")
+                    + ItemIdUtil.romanToInt(croesusRun.group(2)), System.currentTimeMillis());
+        }
+        final Matcher title = screenTitle == null ? null : CHEST_SCREEN.matcher(screenTitle);
         final boolean chestOpen = title != null && title.matches();
         if (chestOpen || isNearRewardChests()) {
             // load prices before the first chest is opened; only here, not everywhere on SkyBlock
             ItemPriceService.getInstance().prefetch();
             ItemPriceService.getInstance().prefetchOwn();
+        }
+        if (chestOpen) {
+            final SeenFloor floor = this.currentChestFloor();
+            if (floor != null) {
+                this.floorByChest.put(title.group(1).toUpperCase(Locale.ROOT), floor);
+            }
         }
         if (!chestOpen || !(screen instanceof AbstractContainerScreen<?> container)
                 || container.getMenu().slots.size() <= OPEN_BUTTON_SLOT) {
@@ -126,6 +150,16 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
         // dungeon and Kuudra runs, the Dungeon Hub (Croesus) and the Crimson Isle
         return location != null && location.isInstance()
                 || location == SkyblockLocationEnum.DUNGEON_HUB || location == SkyblockLocationEnum.CRIMSON_ISLE;
+    }
+
+    /** The floor of a chest open right now: the instance's floor in a run, else the run last opened at Croesus. */
+    private @Nullable SeenFloor currentChestFloor() {
+        if (LocationService.getInstance().getCurrentLocation() == SkyblockLocationEnum.CATACOMBS) {
+            final String floor = DungeonRunStats.getInstance().getCurrentFloor();
+            return floor == null ? null : new SeenFloor(floor, System.currentTimeMillis());
+        }
+        final SeenFloor croesus = this.croesusFloor;
+        return croesus != null && System.currentTimeMillis() - croesus.seenAt() <= COST_MAX_AGE_MS ? croesus : null;
     }
 
     /** Cost parts from the lore of the open button, or null if the lore has no cost (yet). Runs every tick, so no pricing here. */
@@ -218,7 +252,13 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
         if (config.chestProfit.enabled) {
             this.session.add(revenue, cost);
             RepositoryRegistry.PROFIT_REPOSITORY.dungeonChests.add(revenue, cost);
+            // the total stays tracked as "Dungeons", the floor's share comes on top for the run stats
             ProfitService.getInstance().record(isKuudra(chest) ? ProfitService.KUUDRA : ProfitService.DUNGEONS, profit);
+            final SeenFloor floor = this.floorByChest.remove(chest);
+            if (!isKuudra(chest) && floor != null && System.currentTimeMillis() - floor.seenAt() <= COST_MAX_AGE_MS
+                    && config.runStats.enabled) {
+                DungeonRunStats.getInstance().recordChest(floor.floor(), profit);
+            }
             if (config.chestProfit.chatSummary) {
                 ClientUtil.sendPrefixed("§7" + chestName + ": " + coins(profit)
                         + " §8(" + NumberUtil.formatCoins(revenue) + " - " + (costKnown ? NumberUtil.formatCoins(cost) : "? cost") + ")"
