@@ -22,6 +22,8 @@ public final class Notification implements Comparable<Notification> {
     @Builder.Default
     private final Instant creationTime = Instant.now();
     private @Nullable Duration displayTime;
+    /** Played once the notification is displayed, not when it is queued. */
+    private final @Nullable NotificationSound sound;
 
     @Override
     public int compareTo(@NotNull Notification o) {
