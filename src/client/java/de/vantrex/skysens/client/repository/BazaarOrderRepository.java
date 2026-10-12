@@ -30,7 +30,7 @@ public class BazaarOrderRepository {
         /** Set when "[Bazaar] Your ... was filled!" arrived; such orders are only waiting to be claimed. */
         @Expose
         public boolean complete;
-        /** The price that triggered the last outbid/undercut alert, 0 if none, so one change alerts once. */
+        /** The price that triggered the last outbid/undercut alert, 0 if none, so it only alerts again on a big change. */
         @Expose
         public double lastAlertedPrice;
         /** The price was derived from the chat message (sell offers include tax there), not read from the GUI. */

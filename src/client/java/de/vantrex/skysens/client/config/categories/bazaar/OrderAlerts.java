@@ -54,6 +54,11 @@ public class OrderAlerts {
     @Expose
     public float minimumCoins = 0f;
 
+    @ConfigOption(name = "Alert again after (%)", desc = "An order alerts once when outbid or undercut. It only alerts again when the better price moved this many percent of your price further away.")
+    @ConfigEditorSlider(minValue = 1f, maxValue = 50f, minStep = 1f)
+    @Expose
+    public float realertPercent = 5f;
+
     @ConfigOption(name = "Only on SkyBlock", desc = "Only alert while you are on SkyBlock. Otherwise alerts also show as chat messages elsewhere on Hypixel.")
     @ConfigEditorBoolean
     @Expose

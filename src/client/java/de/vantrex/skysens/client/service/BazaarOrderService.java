@@ -17,6 +17,7 @@ import lombok.Getter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -238,7 +239,7 @@ public class BazaarOrderService {
         }
     }
 
-    private Runnable checkOutbid(OrderAlerts config, Order order, BazaarOrderBook.Prices prices) {
+    private @Nullable Runnable checkOutbid(OrderAlerts config, Order order, BazaarOrderBook.Prices prices) {
         if (!config.outbidAlerts) {
             return null;
         }
@@ -251,7 +252,7 @@ public class BazaarOrderService {
         return this.alertFor(config, order, best, best - order.pricePerUnit, "Outbid", "top buy order", "+");
     }
 
-    private Runnable checkUndercut(OrderAlerts config, Order order, BazaarOrderBook.Prices prices) {
+    private @Nullable Runnable checkUndercut(OrderAlerts config, Order order, BazaarOrderBook.Prices prices) {
         if (!config.undercutAlerts) {
             return null;
         }
@@ -264,23 +265,39 @@ public class BazaarOrderService {
         return this.alertFor(config, order, best, order.pricePerUnit - best, "Undercut", "lowest sell offer", "-");
     }
 
-    private Runnable alertFor(OrderAlerts config, Order order, double best, double diff, String title, String what, String sign) {
-        final double percent = diff / order.pricePerUnit * 100;
-        if (diff < config.minimumCoins || percent < config.minimumPercent) {
-            return null;
-        }
-        // one alert per change: the same best price doesn't alert again
-        if (Math.abs(order.lastAlertedPrice - best) < EPSILON) {
+    private @Nullable Runnable alertFor(OrderAlerts config, Order order, double best, double diff, String title, String what, String sign) {
+        if (!this.shouldAlert(config, order, diff)) {
             return null;
         }
         order.lastAlertedPrice = best;
+        return this.priceAlert(order, best, diff, title, what, sign);
+    }
+
+    /** Alerts once when outbid/undercut, then only when the better price moved a lot further away from yours. */
+    private boolean shouldAlert(OrderAlerts config, Order order, double diff) {
+        if (diff < config.minimumCoins || percentOf(order, diff) < config.minimumPercent) {
+            return false;
+        }
+        if (order.lastAlertedPrice <= 0) {
+            return true;
+        }
+        final double lastDiff = Math.abs(order.pricePerUnit - order.lastAlertedPrice);
+        return percentOf(order, diff - lastDiff) >= config.realertPercent;
+    }
+
+    private Runnable priceAlert(Order order, double best, double diff, String title, String what, String sign) {
         final String detail = String.format(Locale.ROOT, "%s - %s %s (%s%s, %.1f%%) | yours %s",
-                order.item, what, price(best), sign, price(diff), percent, price(order.pricePerUnit));
+                order.item, what, price(best), sign, price(diff), percentOf(order, diff), price(order.pricePerUnit));
         return () -> this.alert(
                 Component.literal(title + "!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
                 Component.literal(detail).withStyle(ChatFormatting.YELLOW),
                 Component.literal("[Bazaar] " + title + ": " + detail).withStyle(ChatFormatting.RED),
                 false);
+    }
+
+    /** {@code coins} as percent of the order's price. */
+    private static double percentOf(Order order, double coins) {
+        return coins / order.pricePerUnit * 100;
     }
 
     /** Short price: "1.2M", "12.5k", and one decimal below 1k since many bazaar items cost only a few coins. */
