@@ -16,4 +16,19 @@ public class ChestProfitAccordion {
     @Expose
     public boolean chatSummary = true;
 
+    @ConfigOption(name = "Count NPC sales", desc = "Add the coins from selling items to an NPC (\"You sold ...\") to your profit")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean npcSales = true;
+
+    @ConfigOption(name = "NPC sales only in dungeons", desc = "Only count NPC sales in the Dungeon Hub and dungeons. When off, sales anywhere count.")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean npcSalesDungeonsOnly = true;
+
+    @ConfigOption(name = "Count salvaged essence", desc = "Add the value of essence from salvaging dungeon gear to your dungeon profit")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean salvage = true;
+
 }
