@@ -101,7 +101,7 @@ public class WarpToMenuScreen extends Screen {
         final ClientPacketListener connection = Minecraft.getInstance().getConnection();
         if (connection != null) {
             // our own client sees the message too and arms the invite auto-accept, see WarpToService
-            connection.sendCommand("cc !warpto " + member);
+            connection.sendCommand("cchat !warpto " + member);
         }
     }
 

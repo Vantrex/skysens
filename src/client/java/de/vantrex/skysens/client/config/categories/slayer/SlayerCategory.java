@@ -18,7 +18,7 @@ public class SlayerCategory {
     @Expose
     public float summaryEveryBosses = 0f;
 
-    @ConfigOption(name = "Send Summary to Co-op Chat", desc = "Also send the summary every N bosses to your co-op chat (/cc), not just your own chat")
+    @ConfigOption(name = "Send Summary to Co-op Chat", desc = "Also send the summary every N bosses to your co-op chat (/cchat), not just your own chat")
     @ConfigEditorBoolean
     @Expose
     public boolean summaryToCoopChat = false;

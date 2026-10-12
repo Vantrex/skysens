@@ -14,9 +14,9 @@ import java.util.regex.Pattern;
 public class ChatHandler {
 
     private static final FeatureRegistry FEATURE_REGISTRY = FeatureService.getInstance().getFeatureRegistry();
-    /** Just "!warpto" without a player, typed in a chat channel or with /cc. */
+    /** Just "!warpto" without a player, typed in a chat channel or with /cchat. */
     private static final Pattern BARE_WARPTO_CHAT = Pattern.compile("^\\s*!warpto\\s*$", Pattern.CASE_INSENSITIVE);
-    private static final Pattern BARE_WARPTO_COMMAND = Pattern.compile("^(?:cc|coopchat)\\s+!warpto\\s*$", Pattern.CASE_INSENSITIVE);
+    private static final Pattern BARE_WARPTO_COMMAND = Pattern.compile("^(?:cc|cchat|coopchat)\\s+!warpto\\s*$", Pattern.CASE_INSENSITIVE);
 
     public static void register() {
         ClientReceiveMessageEvents.GAME.register((message, overlay) -> {

@@ -33,7 +33,7 @@ public class ChatCommandsCategory {
     @Expose
     public boolean autoAcceptWarpInvite = false;
 
-    @ConfigOption(name = "Warp menu", desc = "Typing just !warpto (or /cc !warpto) opens a menu with your co-op members, a click sends !warpto <member>. Members are read from the tab list on your private island. Also bindable to a key in Controls")
+    @ConfigOption(name = "Warp menu", desc = "Typing just !warpto (or /cchat !warpto) opens a menu with your co-op members, a click sends !warpto <member>. Members are read from the tab list on your private island. Also bindable to a key in Controls")
     @ConfigEditorBoolean
     @Expose
     public boolean warpToMenu = true;
