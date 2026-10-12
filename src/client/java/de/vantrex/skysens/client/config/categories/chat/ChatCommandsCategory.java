@@ -23,7 +23,7 @@ public class ChatCommandsCategory {
     @Expose
     public boolean onlyOwnMessages = false;
 
-    @ConfigOption(name = "Let other mods answer", desc = "Stay quiet for commands that Odin or SkyHanni already answer, to avoid double replies")
+    @ConfigOption(name = "Let other mods answer", desc = "Stay quiet for commands that Odin or SkyHanni already answer, to avoid double replies. !help always answers")
     @ConfigEditorBoolean
     @Expose
     public boolean deferToOtherMods = true;
