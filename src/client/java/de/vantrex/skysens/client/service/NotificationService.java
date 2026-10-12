@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.service;
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.enums.NotificationDisplayTypeEnum;
+import de.vantrex.skysens.client.feature.afk.AfkTracker;
 import de.vantrex.skysens.client.model.Notification;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
@@ -57,6 +58,9 @@ public class NotificationService {
             return;
         }
         if (this.handleCurrentNotification()) {
+            return;
+        }
+        if (SkysensConfig.getInstance().generalCategory.holdNotificationsWhileAfk && AfkTracker.getInstance().isAfk()) {
             return;
         }
         final Notification nextNotification = this.getNextNotification();

@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.service;
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.bazaar.OrderAlerts;
+import de.vantrex.skysens.client.feature.afk.AfkTracker;
 import de.vantrex.skysens.client.feature.combat.CombatTracker;
 import de.vantrex.skysens.client.model.Notification;
 import de.vantrex.skysens.client.price.BazaarOrderBook;
@@ -218,7 +219,7 @@ public class BazaarOrderService {
         final BazaarOrderBook book = BazaarOrderBook.fetch();
         this.backoff.onSuccess();
 
-        // shown by deliverPendingAlerts on the client thread, once out of combat and runs
+        // shown by deliverPendingAlerts on the client thread, once out of combat and runs and not AFK
         synchronized (this.lock) {
             for (final Order order : this.orders()) {
                 if (order.complete) {
@@ -290,7 +291,7 @@ public class BazaarOrderService {
     }
 
     /**
-     * Shows the held back outbid/undercut alerts once the player is out of combat and not in a dungeon or Kuudra run
+     * Shows the held back outbid/undercut alerts once the player is out of combat, not AFK and not in a dungeon or Kuudra run
      * (each condition configurable). Alerts of orders that were filled or removed meanwhile are dropped. Client thread.
      */
     public void deliverPendingAlerts() {
@@ -313,6 +314,9 @@ public class BazaarOrderService {
 
     private static boolean canShowPriceAlerts(OrderAlerts config) {
         if (config.waitOutOfInstances && LocationService.getInstance().isInInstance()) {
+            return false;
+        }
+        if (SkysensConfig.getInstance().generalCategory.holdNotificationsWhileAfk && AfkTracker.getInstance().isAfk()) {
             return false;
         }
         return !config.waitOutOfCombat || CombatTracker.getInstance().isOutOfCombatFor(config.outOfCombatSeconds);

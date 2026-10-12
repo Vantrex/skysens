@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.service;
 import de.vantrex.skysens.client.feature.FeatureRegistry;
 import de.vantrex.skysens.client.feature.activity.ActivityTrackingFeature;
 import de.vantrex.skysens.client.feature.bazaar.BazaarDisableClickFeature;
+import de.vantrex.skysens.client.feature.afk.AfkTracker;
 import de.vantrex.skysens.client.feature.combat.CombatTracker;
 import de.vantrex.skysens.client.feature.bazaar.BazaarHighlightFeature;
 import de.vantrex.skysens.client.feature.chat.ChatCommandFeature;
@@ -72,6 +73,7 @@ public class FeatureService {
         this.featureRegistry.register(new de.vantrex.skysens.client.feature.chat.ChatSpamFilterFeature());
         this.featureRegistry.register(new JunkHighlightFeature());
         this.featureRegistry.register(CombatTracker.getInstance());
+        this.featureRegistry.register(AfkTracker.getInstance());
 
     }
 
