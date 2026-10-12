@@ -106,6 +106,7 @@ public class BazaarOrderTrackingFeature implements GameMessageListeningFeature, 
     /** Reads the orders from the "Your Bazaar Orders" GUI while it is open, and syncs when they changed. */
     @Override
     public void afterTick() {
+        BazaarOrderService.getInstance().deliverPendingAlerts();
         final Minecraft client = Minecraft.getInstance();
         if (!(client.gui.screen() instanceof AbstractContainerScreen<?> screen)
                 || !GUI_TITLE.matcher(screen.getTitle().getString()).matches()
