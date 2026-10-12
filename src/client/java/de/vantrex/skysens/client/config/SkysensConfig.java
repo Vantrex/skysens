@@ -70,6 +70,10 @@ public class SkysensConfig extends Config {
     @Expose
     public ChatCommandsCategory chatCommandsCategory = new ChatCommandsCategory();
 
+    @Category(name = "Chat Filter", desc = "Hide spammy chat messages, one option per message")
+    @Expose
+    public de.vantrex.skysens.client.config.categories.chatfilter.ChatFilterCategory chatFilterCategory = new de.vantrex.skysens.client.config.categories.chatfilter.ChatFilterCategory();
+
     @Category(name = "Dev", desc = "Dev Options")
     @Expose
     public DevCategory devCategory = new DevCategory();
