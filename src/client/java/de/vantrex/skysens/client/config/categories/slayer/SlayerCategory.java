@@ -18,6 +18,21 @@ public class SlayerCategory {
     @Expose
     public float summaryEveryBosses = 0f;
 
+    @ConfigOption(name = "Idle Pause (seconds)", desc = "Pause the quest and kill timers (bosses per hour, average times) after this long without input (moving, looking around, clicking). Shorter breaks still count")
+    @ConfigEditorSlider(minValue = 5f, maxValue = 300f, minStep = 5f)
+    @Expose
+    public float idlePauseSeconds = 30f;
+
+    @ConfigOption(name = "No Progress Pause (seconds)", desc = "Pause the quest timer after this long without slayer quest progress in the sidebar, before the boss spawns. 0 = off")
+    @ConfigEditorSlider(minValue = 0f, maxValue = 300f, minStep = 5f)
+    @Expose
+    public float noProgressPauseSeconds = 60f;
+
+    @ConfigOption(name = "Profit Idle Pause (minutes)", desc = "Time without input after which questing no longer counts for slayer profit per hour")
+    @ConfigEditorSlider(minValue = 1f, maxValue = 30f, minStep = 1f)
+    @Expose
+    public float profitIdlePauseMinutes = 5f;
+
     @ConfigOption(name = "Summary Fields", desc = "Which values !slayer and the chat summary include")
     @Accordion
     @Expose

@@ -6,17 +6,17 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 public class SlayerFieldsAccordion {
 
-    @ConfigOption(name = "Bosses per Hour", desc = "Killed bosses per hour of questing")
+    @ConfigOption(name = "Bosses per Hour", desc = "Killed bosses per hour of questing, without idle time")
     @ConfigEditorBoolean
     @Expose
     public boolean bossesPerHour = true;
 
-    @ConfigOption(name = "Average Kill Time", desc = "Average time from the boss spawning to the quest completing")
+    @ConfigOption(name = "Average Kill Time", desc = "Average time from the boss spawning to the quest completing, without idle time")
     @ConfigEditorBoolean
     @Expose
     public boolean averageKillTime = true;
 
-    @ConfigOption(name = "Average Quest Time", desc = "Average time from the quest starting to completing, including killing the minibosses")
+    @ConfigOption(name = "Average Quest Time", desc = "Average time from the quest starting to completing, including killing the minibosses, without idle time")
     @ConfigEditorBoolean
     @Expose
     public boolean averageQuestTime = false;
@@ -26,7 +26,7 @@ public class SlayerFieldsAccordion {
     @Expose
     public boolean failed = true;
 
-    @ConfigOption(name = "Profit", desc = "Slayer profit per boss and per hour, from the profit tracker (needs it enabled; with SkyHanni as tracker source it has the slayer spawn costs subtracted)")
+    @ConfigOption(name = "Profit", desc = "Slayer profit per boss and per hour of questing (see Profit Idle Pause), from the profit tracker (needs it enabled; with SkyHanni as tracker source it has the slayer spawn costs subtracted)")
     @ConfigEditorBoolean
     @Expose
     public boolean profit = true;
