@@ -4,6 +4,7 @@ import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.enums.NotificationDisplayTypeEnum;
 import de.vantrex.skysens.client.model.Notification;
+import de.vantrex.skysens.client.model.NotificationSound;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import lombok.Synchronized;
@@ -89,6 +90,10 @@ public class NotificationService {
 
     private void displayNotification(Notification notification, boolean first) {
         final NotificationDisplayTypeEnum displayType = this.getDisplayType(notification);
+        final NotificationSound sound = notification.getSound();
+        if (first && sound != null) {
+            ClientUtil.playSound(sound.sound(), sound.volume(), sound.pitch());
+        }
         if (!first && displayType == NotificationDisplayTypeEnum.CHAT) {
             return;
         }

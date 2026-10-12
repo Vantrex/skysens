@@ -5,6 +5,7 @@ import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.bazaar.OrderAlerts;
 import de.vantrex.skysens.client.feature.combat.CombatTracker;
 import de.vantrex.skysens.client.model.Notification;
+import de.vantrex.skysens.client.model.NotificationSound;
 import de.vantrex.skysens.client.price.BazaarOrderBook;
 import de.vantrex.skysens.client.repository.BazaarOrderRepository.Order;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
@@ -321,10 +322,13 @@ public class BazaarOrderService {
     /** Client thread. {@code chatLine} is used where only chat can show it (type CHAT, or off SkyBlock). */
     private void alert(Component title, Component subtitle, Component chatLine, boolean filled) {
         final OrderAlerts config = this.config();
-        if (config.playSound) {
-            ClientUtil.playSound(filled ? SoundEvents.NOTE_BLOCK_PLING.value() : SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, filled ? 1.5F : 0.8F);
-        }
+        final NotificationSound sound = !config.playSound ? null : filled
+                ? new NotificationSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 1.5F)
+                : new NotificationSound(SoundEvents.EXPERIENCE_ORB_PICKUP, 1.0F, 0.8F);
         if (!SkysensClient.getInstance().isOnSkyBlock()) {
+            if (sound != null) {
+                ClientUtil.playSound(sound.sound(), sound.volume(), sound.pitch());
+            }
             ClientUtil.sendMessage(chatLine);
             return;
         }
@@ -334,6 +338,7 @@ public class BazaarOrderService {
                 .subtitle(chat ? null : subtitle)
                 .displayType(config.displayType)
                 .displayTime(Duration.ofSeconds(4))
+                .sound(sound)
                 .build());
     }
 
