@@ -55,8 +55,9 @@ public final class BazaarOrderBook {
         final Map<String, Prices> products = new HashMap<>();
         for (final Map.Entry<String, JsonElement> entry : getJson(BAZAAR_URL).getAsJsonObject("products").entrySet()) {
             final JsonObject product = entry.getValue().getAsJsonObject();
-            // buy_summary: buy orders, highest first; sell_summary: sell offers, lowest first
-            products.put(entry.getKey(), new Prices(top(product, "buy_summary"), top(product, "sell_summary")));
+            // named after the instant action that fills against them: sell_summary holds the buy orders (highest
+            // first, what insta-sell hits), buy_summary holds the sell offers (lowest first, what insta-buy hits)
+            products.put(entry.getKey(), new Prices(top(product, "sell_summary"), top(product, "buy_summary")));
         }
         return new BazaarOrderBook(products);
     }
