@@ -59,4 +59,19 @@ public class OrderAlerts {
     @Expose
     public boolean onlyOnSkyBlock = true;
 
+    @ConfigOption(name = "Wait until out of combat", desc = "Hold outbid and undercut alerts while you are fighting and show them once you stopped. Only the latest alert per order is shown.")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean waitOutOfCombat = true;
+
+    @ConfigOption(name = "Out of combat after (seconds)", desc = "Seconds without taking or dealing damage until you count as out of combat")
+    @ConfigEditorSlider(minValue = 3f, maxValue = 60f, minStep = 1f)
+    @Expose
+    public float outOfCombatSeconds = 10f;
+
+    @ConfigOption(name = "Wait until out of dungeons and Kuudra", desc = "Hold outbid and undercut alerts during dungeon and Kuudra runs and show them once you left. Only the latest alert per order is shown.")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean waitOutOfInstances = true;
+
 }

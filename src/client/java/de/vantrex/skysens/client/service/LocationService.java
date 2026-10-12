@@ -142,6 +142,11 @@ public class LocationService {
     }
 
 
+    /** Whether the player is in a dungeon or Kuudra run. */
+    public boolean isInInstance() {
+        return this.currentLocation != null && this.currentLocation.isInstance();
+    }
+
     public static String getLocationName(@Nullable SkyblockLocationEnum location) {
         return location == null ? "Unknown" : location.getDisplayName();
     }
@@ -151,6 +156,10 @@ public class LocationService {
     }
 
     private static SkyblockLocationEnum getLocationFromMode(String mode) {
+        // Hypixel calls the dungeon map "Dungeon"; the enum keeps CATACOMBS since sensitivity settings are saved by name
+        if (mode.equalsIgnoreCase("DUNGEON")) {
+            return SkyblockLocationEnum.CATACOMBS;
+        }
         try {
             return SkyblockLocationEnum.valueOf(mode.toUpperCase());
         } catch (Exception ignored) {

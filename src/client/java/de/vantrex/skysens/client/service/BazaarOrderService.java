@@ -3,15 +3,16 @@ package de.vantrex.skysens.client.service;
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.bazaar.OrderAlerts;
+import de.vantrex.skysens.client.feature.combat.CombatTracker;
 import de.vantrex.skysens.client.model.Notification;
 import de.vantrex.skysens.client.price.BazaarOrderBook;
 import de.vantrex.skysens.client.repository.BazaarOrderRepository.Order;
 import de.vantrex.skysens.client.repository.RepositoryRegistry;
 import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.ExponentialBackoff;
+import de.vantrex.skysens.client.util.NumberUtil;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import org.slf4j.Logger;
@@ -19,7 +20,9 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
@@ -41,6 +44,8 @@ public class BazaarOrderService {
     /** Failed fetches wait 30s, then 1m, 2m, ... up to 30m, so an API outage isn't hammered. */
     private final ExponentialBackoff backoff = new ExponentialBackoff(30_000, 30 * 60_000);
     private long nextPollAt;
+    /** Outbid/undercut alerts held back during combat or runs, the latest one per order. Guarded by {@link #lock}. */
+    private final Map<Order, Runnable> pendingPriceAlerts = new IdentityHashMap<>();
 
     private BazaarOrderService() {
         // the interval is read on every check, so config changes apply without restarting anything
@@ -213,7 +218,7 @@ public class BazaarOrderService {
         final BazaarOrderBook book = BazaarOrderBook.fetch();
         this.backoff.onSuccess();
 
-        final List<Runnable> alerts = new ArrayList<>();
+        // shown by deliverPendingAlerts on the client thread, once out of combat and runs
         synchronized (this.lock) {
             for (final Order order : this.orders()) {
                 if (order.complete) {
@@ -225,12 +230,9 @@ public class BazaarOrderService {
                 }
                 final Runnable alert = order.buy ? this.checkOutbid(config, order, prices) : this.checkUndercut(config, order, prices);
                 if (alert != null) {
-                    alerts.add(alert);
+                    this.pendingPriceAlerts.put(order, alert);
                 }
             }
-        }
-        if (!alerts.isEmpty()) {
-            Minecraft.getInstance().execute(() -> alerts.forEach(Runnable::run));
         }
     }
 
@@ -241,6 +243,7 @@ public class BazaarOrderService {
         final double best = prices.highestBuyOrder();
         if (best <= order.pricePerUnit + EPSILON) {
             order.lastAlertedPrice = 0;
+            this.pendingPriceAlerts.remove(order);
             return null;
         }
         return this.alertFor(config, order, best, best - order.pricePerUnit, "Outbid", "top buy order", "+");
@@ -253,6 +256,7 @@ public class BazaarOrderService {
         final double best = prices.lowestSellOffer();
         if (best <= 0 || best >= order.pricePerUnit - EPSILON) {
             order.lastAlertedPrice = 0;
+            this.pendingPriceAlerts.remove(order);
             return null;
         }
         return this.alertFor(config, order, best, order.pricePerUnit - best, "Undercut", "lowest sell offer", "-");
@@ -268,7 +272,7 @@ public class BazaarOrderService {
             return null;
         }
         order.lastAlertedPrice = best;
-        final String detail = String.format(Locale.ROOT, "%s - %s %s (%s%s, %.2f%%) | yours %s",
+        final String detail = String.format(Locale.ROOT, "%s - %s %s (%s%s, %.1f%%) | yours %s",
                 order.item, what, price(best), sign, price(diff), percent, price(order.pricePerUnit));
         return () -> this.alert(
                 Component.literal(title + "!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
@@ -277,8 +281,41 @@ public class BazaarOrderService {
                 false);
     }
 
+    /** Short price: "1.2M", "12.5k", and one decimal below 1k since many bazaar items cost only a few coins. */
     private static String price(double value) {
-        return String.format(Locale.ROOT, "%,.1f", value);
+        if (value >= 999.5) {
+            return NumberUtil.formatCoins(value);
+        }
+        return java.math.BigDecimal.valueOf(value).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
+    }
+
+    /**
+     * Shows the held back outbid/undercut alerts once the player is out of combat and not in a dungeon or Kuudra run
+     * (each condition configurable). Alerts of orders that were filled or removed meanwhile are dropped. Client thread.
+     */
+    public void deliverPendingAlerts() {
+        final OrderAlerts config = this.config();
+        final List<Runnable> alerts;
+        synchronized (this.lock) {
+            if (this.pendingPriceAlerts.isEmpty() || !canShowPriceAlerts(config)) {
+                return;
+            }
+            alerts = new ArrayList<>();
+            this.pendingPriceAlerts.forEach((order, alert) -> {
+                if (!order.complete && this.orders().contains(order)) {
+                    alerts.add(alert);
+                }
+            });
+            this.pendingPriceAlerts.clear();
+        }
+        alerts.forEach(Runnable::run);
+    }
+
+    private static boolean canShowPriceAlerts(OrderAlerts config) {
+        if (config.waitOutOfInstances && LocationService.getInstance().isInInstance()) {
+            return false;
+        }
+        return !config.waitOutOfCombat || CombatTracker.getInstance().isOutOfCombatFor(config.outOfCombatSeconds);
     }
 
     /** Client thread. {@code chatLine} is used where only chat can show it (type CHAT, or off SkyBlock). */
