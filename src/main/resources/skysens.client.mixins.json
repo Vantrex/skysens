@@ -18,7 +18,8 @@
     "MinecraftMixin",
     "HudMixin",
     "ServerStatsMixin",
-    "PlayerTabOverlayAccessor"
+    "PlayerTabOverlayAccessor",
+    "ChatComponentMixin"
   ],
   "injectors": {
     "defaultRequire": 1
