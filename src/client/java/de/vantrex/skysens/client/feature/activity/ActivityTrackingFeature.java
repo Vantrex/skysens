@@ -6,6 +6,7 @@ import de.vantrex.skysens.client.activity.ActivityType;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.event.EventListenerRegistry;
 import de.vantrex.skysens.client.event.SkysensListener;
+import de.vantrex.skysens.client.event.impl.DungeonRunCompleteEvent;
 import de.vantrex.skysens.client.event.impl.LocationChangeEvent;
 import de.vantrex.skysens.client.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.feature.SkySensFeature;
@@ -16,15 +17,13 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Feeds the {@link ActivityTracker} from island changes and chat: dungeon end summaries
- * ("Master Mode - M7 ... Defeated Maxor, ... in 07m 01s"), "SLAYER QUEST COMPLETE!" (the boss comes from
+ * Feeds the {@link ActivityTracker} from island changes, completed dungeon runs (see
+ * {@link de.vantrex.skysens.client.feature.dungeon.DungeonRunDetector}) and chat: "SLAYER QUEST COMPLETE!" (the boss comes from
  * "SLAYER BOSS! The X spawned!"), "KUUDRA DOWN!" and dug up Diana burrows ("You dug out a Griffin Burrow!").
  */
 @SkySensFeature
 public class ActivityTrackingFeature implements GameMessageListeningFeature, SkysensListener<LocationChangeEvent> {
 
-    /** "Master Mode - M7" / "The Catacombs - F5", followed somewhere by "Defeated ... in 07m 01s". */
-    private static final Pattern DUNGEON_PATTERN = Pattern.compile("(?:Master Mode|The Catacombs) - ([FM]\\d)\\b.*?Defeated .*? in ((?:\\d+h )?(?:\\d+m )?\\d+s)", Pattern.DOTALL);
     private static final Pattern SLAYER_SPAWN_PATTERN = Pattern.compile("^SLAYER BOSS! The (.+?) spawned!.*");
     private static final Pattern KUUDRA_TIME_PATTERN = Pattern.compile("^Time: ((?:\\d+h )?(?:\\d+m )?\\d+s).*");
     private static final Pattern DURATION_PART = Pattern.compile("(\\d+)([hms])");
@@ -39,6 +38,7 @@ public class ActivityTrackingFeature implements GameMessageListeningFeature, Sky
 
     public ActivityTrackingFeature() {
         EventListenerRegistry.REGISTRY.registerListener(this, LocationChangeEvent.class);
+        EventListenerRegistry.REGISTRY.registerListener(this::onDungeonRun, DungeonRunCompleteEvent.class);
         Runtime.getRuntime().addShutdownHook(new Thread(() -> ActivityTracker.getInstance().shutdown()));
     }
 
@@ -46,6 +46,12 @@ public class ActivityTrackingFeature implements GameMessageListeningFeature, Sky
     public void handle(LocationChangeEvent event) {
         if (this.isActive()) {
             ActivityTracker.getInstance().onLocationChange(event.getNewLocation());
+        }
+    }
+
+    private void onDungeonRun(DungeonRunCompleteEvent event) {
+        if (this.isActive()) {
+            ActivityTracker.getInstance().record(ActivityType.DUNGEON, event.getFloor(), event.getSeconds() * 1_000L);
         }
     }
 
@@ -62,13 +68,6 @@ public class ActivityTrackingFeature implements GameMessageListeningFeature, Sky
         final ActivityTracker tracker = ActivityTracker.getInstance();
         final long now = System.currentTimeMillis();
 
-        if (text.contains("Defeated")) {
-            final Matcher dungeon = DUNGEON_PATTERN.matcher(text);
-            if (dungeon.find()) {
-                tracker.record(ActivityType.DUNGEON, dungeon.group(1), parseDuration(dungeon.group(2)));
-                return;
-            }
-        }
         final Matcher spawn = SLAYER_SPAWN_PATTERN.matcher(text);
         if (spawn.matches()) {
             this.lastBoss = spawn.group(1);
