@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.service;
 
 import de.vantrex.skysens.client.feature.FeatureRegistry;
+import de.vantrex.skysens.client.feature.activity.ActivityTrackingFeature;
 import de.vantrex.skysens.client.feature.bazaar.BazaarDisableClickFeature;
 import de.vantrex.skysens.client.feature.bazaar.BazaarHighlightFeature;
 import de.vantrex.skysens.client.feature.chat.ChatCommandFeature;
@@ -61,6 +62,7 @@ public class FeatureService {
         this.featureRegistry.register(new LootShareFeature());
         this.featureRegistry.register(new SackProfitFeature());
         this.featureRegistry.register(this.rewardChestFeature);
+        this.featureRegistry.register(new ActivityTrackingFeature());
         this.featureRegistry.register(new BazaarOrderTrackingFeature());
         this.featureRegistry.register(new DungeonRunStatsFeature());
         this.featureRegistry.register(new SlayerTrackingFeature());

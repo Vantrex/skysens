@@ -67,6 +67,11 @@ public class ChatCommandToggles {
     @Expose
     public boolean dice = false;
 
+    @ConfigOption(name = "!activity", desc = "Sends your latest activities (dungeon runs, slayers, Diana, ...) with counts and how long ago, e.g. !activity 5. Settings under \"Activity\" below")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean activity = false;
+
     @ConfigOption(name = "!runs", desc = "Sends the stats of your dungeon runs this session: !runs [floor], e.g. !runs m7")
     @ConfigEditorBoolean
     @Expose

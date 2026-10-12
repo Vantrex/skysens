@@ -53,4 +53,9 @@ public class ChatCommandsCategory {
     @Expose
     public LootShareAccordion lootShare = new LootShareAccordion();
 
+    @ConfigOption(name = "Activity", desc = "Settings of !activity, the list of your recent activities")
+    @Accordion
+    @Expose
+    public ActivityAccordion activity = new ActivityAccordion();
+
 }

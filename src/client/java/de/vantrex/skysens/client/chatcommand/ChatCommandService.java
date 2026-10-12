@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.chatcommand;
 
 import de.vantrex.skysens.client.SkysensClient;
+import de.vantrex.skysens.client.chatcommand.impl.ActivityCommand;
 import de.vantrex.skysens.client.chatcommand.impl.BuffsCommand;
 import de.vantrex.skysens.client.chatcommand.impl.CoinFlipCommand;
 import de.vantrex.skysens.client.chatcommand.impl.CoordsCommand;
@@ -66,6 +67,7 @@ public final class ChatCommandService {
         this.registry.register(new FpsCommand());
         this.registry.register(new CoinFlipCommand());
         this.registry.register(new DiceCommand());
+        this.registry.register(new ActivityCommand());
         this.registry.register(new RunsCommand());
         this.registry.register(new SlayerCommand());
     }
