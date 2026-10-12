@@ -67,6 +67,11 @@ public class ChatCommandToggles {
     @Expose
     public boolean dice = false;
 
+    @ConfigOption(name = "!runs", desc = "Sends the stats of your dungeon runs this session: !runs [floor], e.g. !runs m7")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean runs = false;
+
     @ConfigOption(name = "!slayer", desc = "Sends this session's slayer stats: bosses killed, bosses per hour, average kill time and profit (see the Slayer category)")
     @ConfigEditorBoolean
     @Expose

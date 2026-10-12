@@ -8,6 +8,7 @@ import de.vantrex.skysens.client.feature.chat.LootShareFeature;
 import de.vantrex.skysens.client.feature.chat.SackProfitFeature;
 import de.vantrex.skysens.client.feature.chat.WarpToFeature;
 import de.vantrex.skysens.client.feature.chat.WarpToMenuFeature;
+import de.vantrex.skysens.client.feature.dungeon.DungeonRunStatsFeature;
 import de.vantrex.skysens.client.feature.dungeon.DungeonNpcProfitFeature;
 import de.vantrex.skysens.client.feature.dungeon.RewardChestFeature;
 import de.vantrex.skysens.client.feature.mining.notification.FiletOFortuneNotificationFeature;
@@ -59,6 +60,7 @@ public class FeatureService {
         this.featureRegistry.register(new LootShareFeature());
         this.featureRegistry.register(new SackProfitFeature());
         this.featureRegistry.register(this.rewardChestFeature);
+        this.featureRegistry.register(new DungeonRunStatsFeature());
         this.featureRegistry.register(new SlayerTrackingFeature());
         this.featureRegistry.register(new de.vantrex.skysens.client.feature.dungeon.KismetAdvisorFeature());
         this.featureRegistry.register(new DungeonNpcProfitFeature());
