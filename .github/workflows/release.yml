@@ -59,6 +59,7 @@ jobs:
         env:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
+          MODRINTH_VERSION_TYPE: release
           CHANGELOG: ${{ github.event.head_commit.message }}
 
       # Creates the v<version> tag on this commit, only after the Modrinth upload succeeded.
