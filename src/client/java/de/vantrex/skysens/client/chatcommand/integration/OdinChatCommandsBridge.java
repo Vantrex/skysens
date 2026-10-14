@@ -1,7 +1,7 @@
 package de.vantrex.skysens.client.chatcommand.integration;
 
 import de.vantrex.skysens.client.chatcommand.ChatChannel;
-import de.vantrex.skysens.client.stats.KotlinObjectAccessor;
+import de.vantrex.skysens.client.util.KotlinObjectAccessor;
 import net.fabricmc.loader.api.FabricLoader;
 import org.jetbrains.annotations.NotNull;
 

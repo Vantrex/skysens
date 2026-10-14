@@ -5,6 +5,7 @@ import de.vantrex.skysens.client.chatcommand.ChatCommand;
 import de.vantrex.skysens.client.chatcommand.ChatCommandContext;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.chat.ActivityAccordion;
+import de.vantrex.skysens.client.util.TimeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -95,22 +96,10 @@ public class ActivityCommand implements ChatCommand {
         }
         text.append(" (");
         if (entry.duration() > 0) {
-            text.append(formatTime(entry.duration())).append(", ");
+            text.append(TimeUtil.formatHoursMinutes(entry.duration())).append(", ");
         }
-        text.append(formatTime(now - entry.end)).append(" ago)");
+        text.append(TimeUtil.formatHoursMinutes(now - entry.end)).append(" ago)");
         return text.toString();
-    }
-
-    private static String formatTime(long millis) {
-        final long minutes = millis / 60_000L;
-        if (minutes < 1) {
-            return "<1m";
-        }
-        if (minutes < 60) {
-            return minutes + "m";
-        }
-        final long hours = minutes / 60;
-        return minutes % 60 == 0 ? hours + "h" : hours + "h" + minutes % 60 + "m";
     }
 
 }

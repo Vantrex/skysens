@@ -6,6 +6,7 @@ import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.dungeon.RunStatsAccordion;
 import de.vantrex.skysens.client.feature.dungeon.DungeonRunStats;
 import de.vantrex.skysens.client.util.NumberUtil;
+import de.vantrex.skysens.client.util.TimeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Locale;
@@ -67,8 +68,8 @@ public class RunsCommand implements ChatCommand {
         }).append(floor).append(": ").append(floorStats.runs).append(floorStats.runs == 1 ? " run" : " runs");
         if (floorStats.runs > 0) {
             if (config.replyTimes) {
-                reply.append(" | avg ").append(DungeonRunStats.formatTime(floorStats.avgSeconds()))
-                        .append(" (best ").append(DungeonRunStats.formatTime(floorStats.bestSeconds)).append(")");
+                reply.append(" | avg ").append(TimeUtil.formatRunTime(floorStats.avgSeconds()))
+                        .append(" (best ").append(TimeUtil.formatRunTime(floorStats.bestSeconds)).append(")");
             }
             if (config.replyScore) {
                 reply.append(" | S+ ").append(Math.round(floorStats.sPlusRate() * 100)).append("%");

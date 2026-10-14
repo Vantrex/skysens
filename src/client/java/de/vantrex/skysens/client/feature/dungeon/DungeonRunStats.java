@@ -196,9 +196,4 @@ public final class DungeonRunStats {
         return RepositoryRegistry.DUNGEON_RUN_REPOSITORY;
     }
 
-    public static @NotNull String formatTime(double seconds) {
-        final long total = Math.round(seconds);
-        return (total / 60) + "m" + String.format(Locale.ROOT, "%02d", total % 60) + "s";
-    }
-
 }

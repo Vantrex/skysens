@@ -2,6 +2,7 @@ package de.vantrex.skysens.client.chatcommand.warp;
 
 import de.vantrex.skysens.client.repository.CoopRepository.Coop;
 import de.vantrex.skysens.client.repository.CoopRepository.Member;
+import de.vantrex.skysens.client.util.TimeUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
@@ -82,18 +83,7 @@ public class WarpToMenuScreen extends Screen {
             return List.of();
         }
         final long minutes = TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - coop.lastSeenAt);
-        return List.of("Online status from your private island, " + formatAge(minutes));
-    }
-
-    private static String formatAge(long minutes) {
-        if (minutes < 1) {
-            return "just now";
-        }
-        if (minutes < 60) {
-            return minutes + " min ago";
-        }
-        final long hours = minutes / 60;
-        return hours < 24 ? hours + " h ago" : hours / 24 + " d ago";
+        return List.of("Online status from your private island, " + TimeUtil.formatAge(minutes));
     }
 
     private void warpTo(String member) {
