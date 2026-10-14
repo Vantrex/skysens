@@ -19,4 +19,7 @@ and creates a tagged GitHub release. That's why `master` only gets merges from `
 - The version comes from the git tags: the latest `v*` tag's patch number is bumped (`v1.0.3` → `1.0.4`).
 - For a minor/major release, set `mod_version` in `gradle.properties` (e.g. `1.1.0`) in the change
   that goes to `master`; a version higher than the latest tag is released as-is.
+- Every push to `development` runs `.github/workflows/beta.yml`, which publishes a beta to Modrinth
+  (version type `beta`) as `<next release version>-beta.<run number>`, e.g. `1.0.4-beta.12`. Betas create
+  no git tag or GitHub release, so they don't affect release numbering.
 - Modrinth dependencies are declared in the `modrinth { dependencies { } }` block in `build.gradle.kts`.
