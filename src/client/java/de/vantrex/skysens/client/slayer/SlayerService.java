@@ -9,6 +9,7 @@ import de.vantrex.skysens.client.profit.ProfitService;
 import de.vantrex.skysens.client.profit.ProfitStats;
 import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
+import de.vantrex.skysens.client.util.TimeUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -319,7 +320,7 @@ public final class SlayerService {
     }
 
     private static @Nullable String averageTime(String label, long totalMs, int count) {
-        return count > 0 ? label + " " + formatDuration(totalMs / count) : null;
+        return count > 0 ? label + " " + TimeUtil.formatMinutesSeconds(totalMs / count) : null;
     }
 
     private @Nullable String rngMeterOf(String boss) {
@@ -360,11 +361,6 @@ public final class SlayerService {
 
     private static String formatSigned(double coins) {
         return (coins < 0 ? "-" : "") + NumberUtil.formatCoins(Math.abs(coins));
-    }
-
-    private static String formatDuration(long ms) {
-        final long seconds = Math.round(ms / 1000.0);
-        return seconds >= 60 ? seconds / 60 + "m " + seconds % 60 + "s" : seconds + "s";
     }
 
     private static SlayerCategory config() {

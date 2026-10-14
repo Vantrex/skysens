@@ -1,4 +1,4 @@
-package de.vantrex.skysens.client.stats;
+package de.vantrex.skysens.client.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

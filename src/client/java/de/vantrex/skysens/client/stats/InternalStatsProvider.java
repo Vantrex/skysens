@@ -1,6 +1,12 @@
 package de.vantrex.skysens.client.stats;
 
 import de.vantrex.skysens.client.SkysensClient;
+import de.vantrex.skysens.client.event.EventListenerRegistry;
+import de.vantrex.skysens.client.event.SkysensListener;
+import de.vantrex.skysens.client.event.impl.SkyblockJoinEvent;
+import de.vantrex.skysens.client.event.impl.SkyblockQuitEvent;
+import lombok.Getter;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.multiplayer.ClientPacketListener;
@@ -27,26 +33,24 @@ import java.util.concurrent.TimeUnit;
  */
 public final class InternalStatsProvider implements ServerStatsProvider {
 
-    private static final int TPS_SAMPLES = 10;
+    static final int TPS_SAMPLES = 10;
     private static final int MIN_TPS_SAMPLES = 3;
     private static final long PING_MAX_AGE_MS = 5000;
     private static final long PING_TIMEOUT_MS = 3000;
 
     private static final InternalStatsProvider INSTANCE = new InternalStatsProvider();
 
-    // TPS state, only touched on the client thread
-    private final double[] tpsSamples = new double[TPS_SAMPLES];
-    private int tpsIndex;
-    private int tpsCount;
     private long lastTimePacketNanos;
     private ClientLevel lastLevel;
 
     // ping state, pongs arrive on the network thread
     private final List<CompletableFuture<OptionalInt>> pendingPings = new ArrayList<>();
-    private volatile int lastPing = -1;
     private volatile long lastPingAt;
 
+    private final @Getter ClientStats clientStats = new ClientStats();
+
     private InternalStatsProvider() {
+        this.registerListeners();
     }
 
     public static InternalStatsProvider getInstance() {
@@ -63,15 +67,17 @@ public final class InternalStatsProvider implements ServerStatsProvider {
         return true;
     }
 
-    /** Called on the client thread for every time update packet. */
+    /**
+     * Called on the client thread for every time update packet.
+     */
     public void onTimeUpdate() {
         final long now = System.nanoTime();
         final ClientLevel level = Minecraft.getInstance().level;
         if (level != this.lastLevel) {
             // new world: the gap since the last packet says nothing about the server
             this.lastLevel = level;
-            this.tpsCount = 0;
-            this.tpsIndex = 0;
+            this.clientStats.setTpsCount(0);
+            this.clientStats.setTpsIndex(0);
             this.lastTimePacketNanos = now;
             return;
         }
@@ -80,15 +86,19 @@ public final class InternalStatsProvider implements ServerStatsProvider {
         if (elapsedMs <= 0) {
             return;
         }
-        this.tpsSamples[this.tpsIndex] = Math.min(20.0, 20_000.0 / elapsedMs);
-        this.tpsIndex = (this.tpsIndex + 1) % TPS_SAMPLES;
-        this.tpsCount = Math.min(this.tpsCount + 1, TPS_SAMPLES);
+        this.clientStats.getTpsSamples()[this.clientStats.getTpsIndex()] = Math.min(20.0, 20_000.0 / elapsedMs);
+        final var newTpsIndex = (this.clientStats.getTpsIndex() + 1) % TPS_SAMPLES;
+        this.clientStats.setTpsIndex(newTpsIndex);
+        final var tpsCount = Math.min(this.clientStats.getTpsCount() + 1, TPS_SAMPLES);
+        this.clientStats.setTpsCount(tpsCount);
     }
 
-    /** Called on the network thread for every pong. {@code requestTime} is the {@link Util#getMillis()} of the request. */
+    /**
+     * Called on the network thread for every pong. {@code requestTime} is the {@link Util#getMillis()} of the request.
+     */
     public void onPong(long requestTime) {
         final int ping = (int) Math.max(0, Util.getMillis() - requestTime);
-        this.lastPing = ping;
+        this.clientStats.setLastPing(ping);
         this.lastPingAt = System.currentTimeMillis();
         final List<CompletableFuture<OptionalInt>> waiting;
         synchronized (this.pendingPings) {
@@ -101,20 +111,20 @@ public final class InternalStatsProvider implements ServerStatsProvider {
 
     @Override
     public @NotNull OptionalDouble tps() {
-        if (this.tpsCount < MIN_TPS_SAMPLES) {
+        if (this.clientStats.getTpsCount() < MIN_TPS_SAMPLES) {
             return OptionalDouble.empty();
         }
         double total = 0;
-        for (int i = 0; i < this.tpsCount; i++) {
-            total += this.tpsSamples[i];
+        for (int i = 0; i < this.clientStats.getTpsCount(); i++) {
+            total += this.clientStats.getTpsSamples()[i];
         }
-        return OptionalDouble.of(total / this.tpsCount);
+        return OptionalDouble.of(total / this.clientStats.getTpsCount());
     }
 
     @Override
     public @NotNull CompletableFuture<OptionalInt> ping() {
-        if (this.lastPing >= 0 && System.currentTimeMillis() - this.lastPingAt <= PING_MAX_AGE_MS) {
-            return CompletableFuture.completedFuture(OptionalInt.of(this.lastPing));
+        if (this.clientStats.getLastPing() >= 0 && System.currentTimeMillis() - this.lastPingAt <= PING_MAX_AGE_MS) {
+            return CompletableFuture.completedFuture(OptionalInt.of(this.clientStats.getLastPing()));
         }
         final CompletableFuture<OptionalInt> future = new CompletableFuture<>();
         synchronized (this.pendingPings) {
@@ -136,6 +146,19 @@ public final class InternalStatsProvider implements ServerStatsProvider {
             client.execute(() -> future.complete(OptionalInt.empty()));
         }, PING_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         return future;
+    }
+
+    private void registerListeners() {
+        EventListenerRegistry.REGISTRY.registerListener(_ -> this.onSkyblockQuit(), SkyblockQuitEvent.class);
+        EventListenerRegistry.REGISTRY.registerListener(_ -> this.onSkyblockJoin(), SkyblockJoinEvent.class);
+    }
+
+    private void onSkyblockJoin() {
+        this.clientStats.startSession();
+    }
+
+    private void onSkyblockQuit() {
+        this.clientStats.stopSession();
     }
 
 }

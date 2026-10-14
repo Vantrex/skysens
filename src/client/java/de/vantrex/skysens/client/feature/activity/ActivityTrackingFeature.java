@@ -10,6 +10,7 @@ import de.vantrex.skysens.client.event.impl.DungeonRunCompleteEvent;
 import de.vantrex.skysens.client.event.impl.LocationChangeEvent;
 import de.vantrex.skysens.client.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.feature.SkySensFeature;
+import de.vantrex.skysens.client.util.TimeUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
@@ -26,7 +27,6 @@ public class ActivityTrackingFeature implements GameMessageListeningFeature, Sky
 
     private static final Pattern SLAYER_SPAWN_PATTERN = Pattern.compile("^SLAYER BOSS! The (.+?) spawned!.*");
     private static final Pattern KUUDRA_TIME_PATTERN = Pattern.compile("^Time: ((?:\\d+h )?(?:\\d+m )?\\d+s).*");
-    private static final Pattern DURATION_PART = Pattern.compile("(\\d+)([hms])");
     private static final Pattern BURROW_PATTERN = Pattern.compile("^(?:Woah! )?You dug out .*");
 
     private static final long KUUDRA_TIME_WINDOW_MS = 5_000L;
@@ -87,27 +87,12 @@ public class ActivityTrackingFeature implements GameMessageListeningFeature, Sky
         final Matcher kuudraTime = KUUDRA_TIME_PATTERN.matcher(text);
         if (kuudraTime.matches() && now - this.kuudraDownAt <= KUUDRA_TIME_WINDOW_MS) {
             this.kuudraDownAt = 0;
-            tracker.record(ActivityType.KUUDRA, "Kuudra", parseDuration(kuudraTime.group(1)));
+            tracker.record(ActivityType.KUUDRA, "Kuudra", TimeUtil.parseDuration(kuudraTime.group(1)));
             return;
         }
         if (BURROW_PATTERN.matcher(text).matches()) {
             tracker.record(ActivityType.DIANA, "Diana", 0);
         }
-    }
-
-    /** Parses "1h 02m 03s" style durations into milliseconds. */
-    static long parseDuration(String text) {
-        long millis = 0;
-        final Matcher matcher = DURATION_PART.matcher(text);
-        while (matcher.find()) {
-            final long value = Long.parseLong(matcher.group(1));
-            millis += switch (matcher.group(2)) {
-                case "h" -> value * 3_600_000L;
-                case "m" -> value * 60_000L;
-                default -> value * 1_000L;
-            };
-        }
-        return millis;
     }
 
     @Override

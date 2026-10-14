@@ -4,6 +4,9 @@ import com.mojang.brigadier.arguments.StringArgumentType;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.VisualsSettingsTransfer;
 import de.vantrex.skysens.client.config.ui.SkysensConfigScreen;
+import de.vantrex.skysens.client.event.EventListenerRegistry;
+import de.vantrex.skysens.client.event.impl.SkyblockJoinEvent;
+import de.vantrex.skysens.client.event.impl.SkyblockQuitEvent;
 import de.vantrex.skysens.client.handler.ChatHandler;
 import de.vantrex.skysens.client.handler.KeyHandlers;
 import de.vantrex.skysens.client.handler.TickHandlers;
@@ -19,6 +22,7 @@ import lombok.Getter;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.hypixel.data.type.GameType;
 import net.hypixel.modapi.HypixelModAPI;
@@ -88,16 +92,27 @@ public class SkysensClient implements ClientModInitializer {
             var serverType = (GameType) packet.getServerType()
                     .filter(serverType1 -> serverType1 instanceof GameType)
                     .orElse(null);
+            final boolean currentlyOnSkyBlock = this.isOnSkyBlock;
             if (!GameType.SKYBLOCK.equals(serverType)) {
                 this.isOnSkyBlock = false;
+                if (currentlyOnSkyBlock) {
+                    EventListenerRegistry.REGISTRY.fireEvent(new SkyblockQuitEvent());
+                }
                 return;
             }
             this.isOnSkyBlock = true;
+            EventListenerRegistry.REGISTRY.fireEvent(new SkyblockJoinEvent());
             var lobbyName = packet.getLobbyName().orElse(null);
             var mode = packet.getMode().orElse(null);
             var map = packet.getMap().orElse(null);
             ClientUtil.sendDebug("Server: " + this.serverName + " | Lobby: " + lobbyName + " | Map: " + map + " | Mode: " + mode);
             this.locationService.handleLocationUpdate(map);
+        });
+        ClientPlayConnectionEvents.DISCONNECT.register((listener, client) -> {
+            if (this.isOnSkyBlock) {
+                this.isOnSkyBlock = false;
+                EventListenerRegistry.REGISTRY.fireEvent(new SkyblockQuitEvent());
+            }
         });
     }
 

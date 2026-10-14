@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.stats;
 
+import de.vantrex.skysens.client.util.KotlinObjectAccessor;
 import net.fabricmc.loader.api.FabricLoader;
 import org.jetbrains.annotations.NotNull;
 

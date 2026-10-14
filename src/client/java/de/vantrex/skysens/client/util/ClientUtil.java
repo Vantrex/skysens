@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.util;
 
 import de.vantrex.skysens.client.config.SkysensConfig;
+import lombok.Getter;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -14,6 +15,11 @@ import java.util.Optional;
 public class ClientUtil {
 
     private final Minecraft CLIENT = Minecraft.getInstance();
+    /**
+     * -- GETTER --
+     * True while SkySens itself is showing a message.
+     */
+    @Getter
     private boolean sendingOwnMessage;
 
     public void sendMessage(@NotNull final String message) {
@@ -43,11 +49,6 @@ public class ClientUtil {
         } finally {
             sendingOwnMessage = false;
         }
-    }
-
-    /** True while SkySens itself is showing a message. */
-    public boolean isSendingOwnMessage() {
-        return sendingOwnMessage;
     }
 
     public void sendDebug(final @NotNull String message) {

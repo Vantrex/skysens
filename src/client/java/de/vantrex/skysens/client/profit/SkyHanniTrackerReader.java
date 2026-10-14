@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.profit;
 
+import de.vantrex.skysens.client.util.TimeUtil;
 import net.fabricmc.loader.api.FabricLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -258,7 +259,7 @@ final class SkyHanniTrackerReader {
         }
         final Method uptime = findMethod(data.getClass(), "getTotalUptime", 0);
         if (uptime != null && uptime.invoke(data) instanceof Long rawDuration) {
-            stats.uptimeMs = durationToMillis(rawDuration);
+            stats.uptimeMs = TimeUtil.kotlinDurationToMillis(rawDuration);
         }
         return stats;
     }
@@ -282,12 +283,6 @@ final class SkyHanniTrackerReader {
             return string;
         }
         return (String) internalName.getClass().getMethod("unbox-impl").invoke(internalName);
-    }
-
-    /** Decodes kotlin.time.Duration's raw long: nanoseconds or milliseconds, marked by the lowest bit. */
-    private static long durationToMillis(long raw) {
-        final long value = raw >> 1;
-        return (raw & 1) == 0 ? value / 1_000_000 : value;
     }
 
     private static @Nullable Object invokeGetter(Object target, String name) throws ReflectiveOperationException {

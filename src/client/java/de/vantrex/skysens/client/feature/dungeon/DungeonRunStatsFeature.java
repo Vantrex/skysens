@@ -6,6 +6,7 @@ import de.vantrex.skysens.client.event.SkysensListener;
 import de.vantrex.skysens.client.event.impl.DungeonRunCompleteEvent;
 import de.vantrex.skysens.client.feature.Feature;
 import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.TimeUtil;
 
 /** Records every completed dungeon run (see {@link DungeonRunDetector}) in the {@link DungeonRunStats}. */
 public class DungeonRunStatsFeature implements Feature, SkysensListener<DungeonRunCompleteEvent> {
@@ -33,8 +34,8 @@ public class DungeonRunStatsFeature implements Feature, SkysensListener<DungeonR
 
     private static void sendRunSummary(DungeonRunCompleteEvent event, DungeonRunStats.FloorStats floorStats) {
         ClientUtil.sendPrefixed("§7Run #" + floorStats.runs + " (" + event.getFloor() + "): "
-                + DungeonRunStats.formatTime(event.getSeconds()) + " " + event.getRank()
-                + " | session avg " + DungeonRunStats.formatTime(floorStats.avgSeconds()));
+                + TimeUtil.formatRunTime(event.getSeconds()) + " " + event.getRank()
+                + " | session avg " + TimeUtil.formatRunTime(floorStats.avgSeconds()));
     }
 
 }
