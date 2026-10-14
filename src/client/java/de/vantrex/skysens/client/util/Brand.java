@@ -20,6 +20,11 @@ public class Brand {
         return gradient("[" + NAME + "]", Style.EMPTY).append(Component.literal(" "));
     }
 
+    /** "[SkySens] " to put in front of "player" sent chat messages. */
+    public @NotNull String uncoloredPrefix() {
+        return "["  + NAME + "] ";
+    }
+
     /** "SkySens" in the brand gradient. */
     public @NotNull MutableComponent name() {
         return gradient(NAME, Style.EMPTY);
