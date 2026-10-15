@@ -143,7 +143,7 @@ public final class ChatCommandService {
      * so a burst (e.g. several drops at once) doesn't get us muted. Safe to call from any thread.
      */
     public void send(@NotNull ChatChannel channel, @NotNull String message) {
-        final String command = channel.getReplyCommand() + " " + Brand.prefix() + sanitize(message);
+        final String command = channel.getReplyCommand() + " " + Brand.uncoloredPrefix() + sanitize(message);
         final String trimmed = command.length() > + MAX_CHAT_LENGTH ? command.substring(0, MAX_CHAT_LENGTH) : command;
 
         final long delay;
