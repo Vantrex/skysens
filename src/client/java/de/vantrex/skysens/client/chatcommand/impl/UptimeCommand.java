@@ -9,18 +9,17 @@ import de.vantrex.skysens.client.util.TimeUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.TextStyle;
 import java.util.Locale;
 
-/** {@code !uotime} sends the uptime of the player on skyblock. */
+/** {@code !uptime} sends the uptime of the player on skyblock. */
 public class UptimeCommand implements ChatCommand {
 
-    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
+    /** {@code zzzz} resolves DST, e.g. "Central European Summer Time" instead of "Central European Time" */
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm (zzzz)", Locale.ENGLISH);
     private static final String RESPONSE = "Current uptime: %s | Accumulated session uptime (with rejoins): %s";
-    private static final String LAST_JOINED = " | Last joined Skyblock at: %s (%s)";
+    private static final String LAST_JOINED = " | Last joined Skyblock at: %s";
 
     @Override
     public @NotNull String name() {
@@ -43,31 +42,18 @@ public class UptimeCommand implements ChatCommand {
 
     private String buildClientStats() {
         final ClientStats clientStats = InternalStatsProvider.getInstance().getClientStats();
-        final boolean isOnSkyblock = SkysensClient.getInstance().isOnSkyBlock();
-        final StringBuilder builder = new StringBuilder();
-        builder.append(RESPONSE.formatted(
+        return RESPONSE.formatted(
                 TimeUtil.formatDuration(clientStats.getCurrentSessionPlaytime()),
                 TimeUtil.formatDuration(clientStats.getAccumulatedSessionPlaytime())
-        ));
-        if (isOnSkyblock) {
-            builder.append(buildLastJoined(clientStats));
-        }
-        return builder.toString();
+        ) + buildLastJoined(clientStats);
     }
 
     private String buildLastJoined(final ClientStats clientStats) {
         if (clientStats.getCurrentSessionJoin() == null) {
             return "<Error> Please report this!";
         }
-        final var systemDefaultTimezone = ZoneId.systemDefault();
-        final var lastJoinedAt = LocalDateTime.ofInstant(Instant.ofEpochMilli(clientStats.getCurrentSessionJoin()), systemDefaultTimezone);
-        final var formattedDate = DATE_TIME_FORMATTER.format(lastJoinedAt);
-        final var timeZoneDisplayName = systemDefaultTimezone.getDisplayName(TextStyle.FULL_STANDALONE, Locale.ENGLISH);
-        return LAST_JOINED
-                .formatted(
-                        formattedDate,
-                        timeZoneDisplayName
-                );
+        final var lastJoinedAt = Instant.ofEpochMilli(clientStats.getCurrentSessionJoin()).atZone(ZoneId.systemDefault());
+        return LAST_JOINED.formatted(DATE_TIME_FORMATTER.format(lastJoinedAt));
     }
 
 }

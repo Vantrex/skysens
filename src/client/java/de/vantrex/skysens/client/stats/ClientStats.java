@@ -28,6 +28,9 @@ public final class ClientStats {
     private long accumulatedSessionPlaytime = 0;
 
     public void startSession() {
+        if (this.currentSessionJoin != null) {
+            return;
+        }
         this.currentSessionJoin = System.currentTimeMillis();
     }
 
