@@ -101,7 +101,9 @@ public class SkysensClient implements ClientModInitializer {
                 return;
             }
             this.isOnSkyBlock = true;
-            EventListenerRegistry.REGISTRY.fireEvent(new SkyblockJoinEvent());
+            if (!currentlyOnSkyBlock) {
+                EventListenerRegistry.REGISTRY.fireEvent(new SkyblockJoinEvent());
+            }
             var lobbyName = packet.getLobbyName().orElse(null);
             var mode = packet.getMode().orElse(null);
             var map = packet.getMap().orElse(null);
