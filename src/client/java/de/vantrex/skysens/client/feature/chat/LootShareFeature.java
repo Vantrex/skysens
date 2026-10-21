@@ -28,9 +28,12 @@ import java.util.regex.Pattern;
 @SkySensFeature
 public class LootShareFeature implements GameMessageListeningFeature, AfterTickFeature {
 
-    /** Anchored at the start, so chat messages ("Co-op > X: RARE DROP! ...") never match. */
+    /**
+     * Anchored at the start, so chat messages ("Co-op > X: RARE DROP! ...") never match. Leaves out the " (2)"
+     * that chat stacking appends to repeated messages.
+     */
     private static final Pattern DROP_PATTERN = Pattern.compile(
-            "^((?:VERY |CRAZY )?RARE DROP!|INSANE DROP!|PRAY TO RNGESUS DROP!|PET DROP!) (.+)$");
+            "^((?:VERY |CRAZY )?RARE DROP!|INSANE DROP!|PRAY TO RNGESUS DROP!|PET DROP!) (.+?)(?: \\(\\d+\\))?$");
     /** "(+323% ✯ Magic Find)", some drops leave out the "%": "(+309 ✯ Magic Find)". */
     private static final Pattern MAGIC_FIND_PATTERN = Pattern.compile("\\s*\\(\\+[\\d,.]+%?[^)]*Magic Find\\)", Pattern.CASE_INSENSITIVE);
     /** "2x Item", "Item x2". */
@@ -61,7 +64,10 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
             ProfitService.getInstance().record(ProfitService.detectActivity(), value.getAsDouble());
             this.rememberDrop(item);
         }
-        if (!config.enabled || !this.shouldShareTier(matcher.group(1)) || !this.isWorthEnough(value, config)
+        final boolean worthSharing = value.isPresent()
+                ? isWorthEnough(value.getAsDouble(), config)
+                : shouldShareUnknownPrice(config);
+        if (!config.enabled || !this.shouldShareTier(matcher.group(1)) || !worthSharing
                 || (!config.shareRunes && RUNE_PATTERN.matcher(item).matches())) {
             return;
         }
@@ -115,14 +121,22 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
      * sack tracking can price its entries the same way.
      */
     static OptionalDouble dropValue(String item) {
+        final OptionalDouble value = lookUpValue(item);
+        if (value.isEmpty()) {
+            ClientUtil.sendDebug("Loot share: no price for " + item);
+        }
+        return value;
+    }
+
+    private static OptionalDouble lookUpValue(String item) {
         final ItemPriceService prices = ItemPriceService.getInstance();
         final Matcher book = BOOK_PATTERN.matcher(item);
         if (book.matches()) {
-            return logUnknown(item, prices.getBookPrice(book.group(1), ItemIdUtil.romanToInt(book.group(2))));
+            return prices.getBookPrice(book.group(1), ItemIdUtil.romanToInt(book.group(2)));
         }
         final Matcher rune = RUNE_PATTERN.matcher(item);
         if (rune.matches()) {
-            return logUnknown(item, prices.getRunePrice(rune.group(1), ItemIdUtil.romanToInt(rune.group(2))));
+            return prices.getRunePrice(rune.group(1), ItemIdUtil.romanToInt(rune.group(2)));
         }
         final Matcher matcher = ITEM_PATTERN.matcher(item);
         final String name = matcher.matches() ? matcher.group(2) : item;
@@ -130,15 +144,8 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
                 : matcher.group(1) != null ? Integer.parseInt(matcher.group(1))
                 : matcher.group(3) != null ? Integer.parseInt(matcher.group(3))
                 : 1;
-        final OptionalDouble price = logUnknown(name, prices.getPrice(name));
+        final OptionalDouble price = prices.getPrice(name);
         return price.isEmpty() ? price : OptionalDouble.of(price.getAsDouble() * amount);
-    }
-
-    private static OptionalDouble logUnknown(String name, OptionalDouble price) {
-        if (price.isEmpty()) {
-            ClientUtil.sendDebug("Loot share: no price for " + name);
-        }
-        return price;
     }
 
     /** Hypixel rejects some symbols (e.g. the Magic Find star) in player messages, and they break price lookups. */
@@ -152,18 +159,13 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
         return name.startsWith("(") && name.endsWith(")") ? name.substring(1, name.length() - 1).trim() : name;
     }
 
-    private boolean isWorthEnough(OptionalDouble value, LootShareAccordion config) {
+    private static boolean isWorthEnough(double value, LootShareAccordion config) {
         // e.g. a bazaar item without sell offers has an insta-buy price of 0
-        if (value.isPresent() && value.getAsDouble() <= 0) {
-            return false;
-        }
-        if (config.minimumPriceMillions <= 0) {
-            return true;
-        }
-        if (value.isEmpty()) {
-            return config.shareUnknownPrice;
-        }
-        return value.getAsDouble() >= config.minimumPriceMillions * 1_000_000.0;
+        return value > 0 && value >= config.minimumPriceMillions * 1_000_000.0;
+    }
+
+    private static boolean shouldShareUnknownPrice(LootShareAccordion config) {
+        return config.minimumPriceMillions <= 0 || config.shareUnknownPrice;
     }
 
     @Override
