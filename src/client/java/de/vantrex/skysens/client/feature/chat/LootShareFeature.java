@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class LootShareFeature implements GameMessageListeningFeature, AfterTickFeature {
 
     /**
-     * Anchored at the start, so chat messages ("Co-op > X: RARE DROP! ...") never match. Leaves out the " (2)"
+     * Anchored at the start, so chat messages (i.e. "Co-op/Party > X: RARE DROP! ...") never match. Leaves out the " (2)"
      * that chat stacking appends to repeated messages.
      */
     private static final Pattern DROP_PATTERN = Pattern.compile(
