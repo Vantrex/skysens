@@ -82,7 +82,8 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
     }
 
     private static boolean needsPrices(LootShareAccordion config) {
-        return isTrackingProfit() || (config.enabled && (config.showPrice || config.minimumPriceMillions > 0));
+        // sharing always needs the price, worthless drops are never shared
+        return isTrackingProfit() || config.enabled;
     }
 
     private static boolean isTrackingProfit() {
@@ -152,6 +153,10 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
     }
 
     private boolean isWorthEnough(OptionalDouble value, LootShareAccordion config) {
+        // e.g. a bazaar item without sell offers has an insta-buy price of 0
+        if (value.isPresent() && value.getAsDouble() <= 0) {
+            return false;
+        }
         if (config.minimumPriceMillions <= 0) {
             return true;
         }
