@@ -8,6 +8,7 @@ import net.hypixel.modapi.packet.impl.clientbound.ClientboundPartyInfoPacket;
 import net.hypixel.modapi.packet.impl.serverbound.ServerboundPartyInfoPacket;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,11 +28,11 @@ public class PartyService {
 
     private PartyService() {
         HypixelModAPI.getInstance()
-                .createHandler(ClientboundPartyInfoPacket.class, packet -> this.complete(Optional.of(packet.isInParty())))
+                .createHandler(ClientboundPartyInfoPacket.class, packet -> this.complete(packet.isInParty()))
                 .onError(reason -> {
                     // e.g. RATE_LIMITED: Hypixel limits how often mods may ask, and other mods ask too
                     ClientUtil.sendDebug("Party info request failed: " + reason);
-                    this.complete(Optional.empty());
+                    this.complete(null);
                 });
     }
 
@@ -50,7 +51,7 @@ public class PartyService {
         if (sendRequest) {
             client.execute(() -> {
                 if (!HypixelModAPI.getInstance().sendPacket(new ServerboundPartyInfoPacket())) {
-                    this.complete(Optional.empty());
+                    this.complete(null);
                 }
             });
         }
@@ -63,7 +64,9 @@ public class PartyService {
         return future;
     }
 
-    private void complete(Optional<Boolean> result) {
+    /** @param inParty null if Hypixel did not answer */
+    private void complete(@Nullable Boolean inParty) {
+        final Optional<Boolean> result = Optional.ofNullable(inParty);
         final List<CompletableFuture<Optional<Boolean>>> waiting;
         synchronized (this.pending) {
             waiting = new ArrayList<>(this.pending);

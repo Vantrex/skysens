@@ -93,26 +93,26 @@ final class HypixelPriceProvider implements ItemPriceProvider {
     public @NotNull OptionalDouble price(@NotNull String itemName) {
         this.refresh();
         final String id = this.toId(itemName);
-        if (id == null) {
-            return OptionalDouble.empty();
-        }
-        final Double bazaar = this.bazaarPrices.get(id);
-        if (bazaar != null && bazaar > 0) {
-            return OptionalDouble.of(bazaar);
-        }
-        final Double bin = this.lowestBins.get(id);
-        return bin != null && bin > 0 ? OptionalDouble.of(bin) : OptionalDouble.empty();
+        return id == null ? OptionalDouble.empty() : this.lookUp(id);
     }
 
     /** Price by item id: bazaar ids ("ENCHANTMENT_ULTIMATE_WISDOM_2", "ESSENCE_WITHER") or NEU lowest BIN ids. */
     @NotNull OptionalDouble priceById(@NotNull String id) {
         this.refresh();
+        return this.lookUp(id);
+    }
+
+    private OptionalDouble lookUp(String id) {
         final Double bazaar = this.bazaarPrices.get(id);
         if (bazaar != null && bazaar > 0) {
             return OptionalDouble.of(bazaar);
         }
         final Double bin = this.lowestBins.get(id);
-        return bin != null && bin > 0 ? OptionalDouble.of(bin) : OptionalDouble.empty();
+        if (bin != null && bin > 0) {
+            return OptionalDouble.of(bin);
+        }
+        // a bazaar item without buy orders (e.g. Scorched Books) can't be insta-sold, it's worth nothing right now
+        return bazaar != null ? OptionalDouble.of(0) : OptionalDouble.empty();
     }
 
     private @Nullable String toId(String itemName) {
