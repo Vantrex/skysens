@@ -1,12 +1,17 @@
 package de.vantrex.skysens.client.chatcommand;
 
+import de.vantrex.skysens.client.features.activity.ActivityCommand;
+import de.vantrex.skysens.client.features.dungeon.RunsCommand;
+import de.vantrex.skysens.client.features.slayer.SlayerCommand;
+import de.vantrex.skysens.client.features.warp.WarpToCommand;
+import de.vantrex.skysens.client.skyblock.profit.ProfitCommand;
+
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.chatcommand.impl.*;
-import de.vantrex.skysens.client.chatcommand.integration.ChatCommandBridge;
-import de.vantrex.skysens.client.chatcommand.integration.OdinChatCommandsBridge;
-import de.vantrex.skysens.client.chatcommand.integration.SkyHanniPartyCommandsBridge;
+import de.vantrex.skysens.client.integration.odin.OdinChatCommandsBridge;
+import de.vantrex.skysens.client.integration.skyhanni.SkyHanniPartyCommandsBridge;
 import de.vantrex.skysens.client.config.SkysensConfig;
-import de.vantrex.skysens.client.config.categories.chat.ChatCommandsCategory;
+import de.vantrex.skysens.client.chatcommand.config.ChatCommandsCategory;
 import de.vantrex.skysens.client.util.Brand;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;

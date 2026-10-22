@@ -3,10 +3,10 @@ package de.vantrex.skysens.client.chatcommand.impl;
 import de.vantrex.skysens.client.chatcommand.ChatCommand;
 import de.vantrex.skysens.client.chatcommand.ChatCommandContext;
 import de.vantrex.skysens.client.config.SkysensConfig;
-import de.vantrex.skysens.client.config.categories.mining.notifcations.MiningConsumableBuffsNotificationAccordion;
-import de.vantrex.skysens.client.feature.mining.notification.FiletOFortuneNotificationFeature;
-import de.vantrex.skysens.client.feature.mining.notification.PowderPumpkinBuffNotificationFeature;
-import de.vantrex.skysens.client.repository.RepositoryRegistry;
+import de.vantrex.skysens.client.features.mining.config.MiningConsumableBuffsNotificationAccordion;
+import de.vantrex.skysens.client.features.mining.FiletOFortuneNotificationFeature;
+import de.vantrex.skysens.client.features.mining.PowderPumpkinBuffNotificationFeature;
+import de.vantrex.skysens.client.persistence.RepositoryRegistry;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

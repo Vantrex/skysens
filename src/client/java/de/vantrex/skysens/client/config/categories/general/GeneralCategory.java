@@ -1,7 +1,9 @@
 package de.vantrex.skysens.client.config.categories.general;
 
+import de.vantrex.skysens.client.skyblock.profit.config.ProfitTrackerAccordion;
+
 import com.google.gson.annotations.Expose;
-import de.vantrex.skysens.client.enums.NotificationDisplayTypeEnum;
+import de.vantrex.skysens.client.notification.NotificationDisplayTypeEnum;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;

@@ -1,22 +1,21 @@
 package de.vantrex.skysens.client.config;
 
-
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.annotations.Expose;
-import de.vantrex.skysens.client.config.categories.visuals.SwingAnimationAccordion;
+import de.vantrex.skysens.client.features.visuals.config.SwingAnimationAccordion;
 import de.vantrex.skysens.client.config.annotation.ConfigEditorDynamicZoneDropdown;
 import de.vantrex.skysens.client.config.categories.dev.DevCategory;
-import de.vantrex.skysens.client.config.categories.dungeon.DungeonCategory;
-import de.vantrex.skysens.client.config.categories.bazaar.BazaarCategory;
-import de.vantrex.skysens.client.config.categories.chat.ChatCommandsCategory;
+import de.vantrex.skysens.client.features.dungeon.config.DungeonCategory;
+import de.vantrex.skysens.client.features.bazaar.config.BazaarCategory;
+import de.vantrex.skysens.client.chatcommand.config.ChatCommandsCategory;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
-import de.vantrex.skysens.client.config.categories.mining.MiningCategory;
+import de.vantrex.skysens.client.features.mining.config.MiningCategory;
 import de.vantrex.skysens.client.config.categories.qol.QolCategory;
-import de.vantrex.skysens.client.config.categories.slayer.SlayerCategory;
-import de.vantrex.skysens.client.config.categories.visuals.VisualsCategory;
+import de.vantrex.skysens.client.features.slayer.config.SlayerCategory;
+import de.vantrex.skysens.client.features.visuals.config.VisualsCategory;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.annotations.Category;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
@@ -76,7 +75,7 @@ public class SkysensConfig extends Config {
     public SlayerCategory slayerCategory = new SlayerCategory();
     @Category(name = "Chat Filter", desc = "Hide spammy chat messages, one option per message")
     @Expose
-    public de.vantrex.skysens.client.config.categories.chatfilter.ChatFilterCategory chatFilterCategory = new de.vantrex.skysens.client.config.categories.chatfilter.ChatFilterCategory();
+    public de.vantrex.skysens.client.features.chatfilter.config.ChatFilterCategory chatFilterCategory = new de.vantrex.skysens.client.features.chatfilter.config.ChatFilterCategory();
 
     @Category(name = "Dev", desc = "Dev Options")
     @Expose

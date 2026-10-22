@@ -1,10 +1,10 @@
 package de.vantrex.skysens.client.stats;
 
 import de.vantrex.skysens.client.SkysensClient;
-import de.vantrex.skysens.client.event.EventListenerRegistry;
-import de.vantrex.skysens.client.event.SkysensListener;
-import de.vantrex.skysens.client.event.impl.SkyblockJoinEvent;
-import de.vantrex.skysens.client.event.impl.SkyblockQuitEvent;
+import de.vantrex.skysens.client.core.event.EventListenerRegistry;
+import de.vantrex.skysens.client.core.event.SkysensListener;
+import de.vantrex.skysens.client.skyblock.event.SkyblockJoinEvent;
+import de.vantrex.skysens.client.skyblock.event.SkyblockQuitEvent;
 import lombok.Getter;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.minecraft.client.Minecraft;
