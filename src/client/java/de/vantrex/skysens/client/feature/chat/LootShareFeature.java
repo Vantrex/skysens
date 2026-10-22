@@ -39,6 +39,8 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
     /** "2x Item", "Item x2". */
     private static final Pattern ITEM_PATTERN = Pattern.compile("^(?:(\\d{1,5})x )?(.+?)(?: x(\\d{1,5}))?$");
     private static final Pattern BOOK_PATTERN = Pattern.compile("^Enchanted Book \\((.+) ([IVXLC]+)\\)$");
+    /** "Fire Aspect III", an enchanted book named by its enchant only. */
+    private static final Pattern ENCHANT_PATTERN = Pattern.compile("^(.+) ([IVXLC]+)$");
     private static final Pattern RUNE_PATTERN = Pattern.compile("^(.+) Rune ([IVXLC]+)$");
     private static final String PET_DROP = "PET DROP!";
 
@@ -48,9 +50,6 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
             return;
         }
         final String text = ChatFormatting.stripFormatting(message.getString());
-        if (text == null) {
-            return;
-        }
         final Matcher matcher = DROP_PATTERN.matcher(text.trim());
         if (!matcher.matches()) {
             return;
@@ -145,7 +144,14 @@ public class LootShareFeature implements GameMessageListeningFeature, AfterTickF
                 : matcher.group(3) != null ? Integer.parseInt(matcher.group(3))
                 : 1;
         final OptionalDouble price = prices.getPrice(name);
-        return price.isEmpty() ? price : OptionalDouble.of(price.getAsDouble() * amount);
+        if (price.isEmpty()) {
+            // slayer books drop as just the enchant, e.g. "VERY RARE DROP! (Fire Aspect III)"
+            final Matcher enchant = ENCHANT_PATTERN.matcher(name);
+            return enchant.matches()
+                    ? prices.getBookPrice(enchant.group(1), ItemIdUtil.romanToInt(enchant.group(2)))
+                    : price;
+        }
+        return OptionalDouble.of(price.getAsDouble() * amount);
     }
 
     /** Hypixel rejects some symbols (e.g. the Magic Find star) in player messages, and they break price lookups. */
