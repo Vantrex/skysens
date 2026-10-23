@@ -38,6 +38,10 @@ public class SlayerTrackingFeature implements GameMessageListeningFeature, After
         EventListenerRegistry.REGISTRY.registerListener(service::onBossSpawn, SlayerBossSpawnEvent.class);
         EventListenerRegistry.REGISTRY.registerListener(service::onBossCocoon, SlayerBossCocoonEvent.class);
         EventListenerRegistry.REGISTRY.registerListener(service::onQuestEnd, SlayerQuestEndEvent.class);
+        final SlayerKillsLeftService killsLeftService = SlayerKillsLeftService.getInstance();
+        EventListenerRegistry.REGISTRY.registerListener(killsLeftService::onQuestStart, SlayerQuestStartEvent.class);
+        EventListenerRegistry.REGISTRY.registerListener(killsLeftService::onBossSpawn, SlayerBossSpawnEvent.class);
+        EventListenerRegistry.REGISTRY.registerListener(killsLeftService::onQuestEnd, SlayerQuestEndEvent.class);
     }
 
     @Override
@@ -60,6 +64,7 @@ public class SlayerTrackingFeature implements GameMessageListeningFeature, After
         }
         final List<String> sidebar = ++this.ticks % SIDEBAR_INTERVAL_TICKS == 0 ? ScoreboardUtil.getSidebarLines() : null;
         SlayerService.getInstance().onTick(this.hadInput(client.options, player), sidebar);
+        SlayerKillsLeftService.getInstance().onTick(sidebar);
     }
 
     /**
