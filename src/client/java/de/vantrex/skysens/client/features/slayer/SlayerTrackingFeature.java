@@ -25,6 +25,7 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -54,15 +55,12 @@ public class SlayerTrackingFeature implements GameMessageListeningFeature, After
         EventListenerRegistry.REGISTRY.registerListener(killsLeftService::onBossSpawn, SlayerBossSpawnEvent.class);
         EventListenerRegistry.REGISTRY.registerListener(killsLeftService::onQuestEnd, SlayerQuestEndEvent.class);
         HudElementRegistry.attachElementAfter(VanillaHudElements.OVERLAY_MESSAGE,
-                Identifier.fromNamespaceAndPath("skysens", "slayer_kills_left"), this::extractKillsLeft);
+                Identifier.fromNamespaceAndPath("skysens", "slayer_kills_left"), this::drawKillsLeft);
     }
 
     /** Draws the kills-left estimate as its own line above the action bar, Hypixel's action bar stays as it is. */
-    private void extractKillsLeft(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (!this.isActive() || !SkysensClient.getInstance().isOnSkyBlock()) {
-            return;
-        }
-        final Component killsLeft = SlayerKillsLeftService.getInstance().getActionBar();
+    private void drawKillsLeft(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
+        final Component killsLeft = this.extractKillsLeft();
         if (killsLeft == null) {
             return;
         }
@@ -74,6 +72,14 @@ public class SlayerTrackingFeature implements GameMessageListeningFeature, After
         final int x = (client.getWindow().getGuiScaledWidth() - font.width(killsLeft)) / 2;
         final int y = client.getWindow().getGuiScaledHeight() - offset;
         graphics.text(font, killsLeft, x, y, 0xFFFFFFFF, true);
+    }
+
+    /** The kills-left estimate to draw, null when the feature is off, outside SkyBlock or when there is none to show. */
+    private @Nullable Component extractKillsLeft() {
+        if (!this.isActive() || !SkysensClient.getInstance().isOnSkyBlock()) {
+            return null;
+        }
+        return SlayerKillsLeftService.getInstance().getActionBar();
     }
 
     @Override
