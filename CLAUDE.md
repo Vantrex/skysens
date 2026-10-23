@@ -54,22 +54,28 @@ reference mixins; mixins mostly loop over the feature lists in `FeatureRegistry`
 
 ## Branching workflow
 
-- `development` is the integration branch for all feature work. `master` only receives releases.
+- `development` is the integration branch for all feature work and publishes Modrinth alpha builds.
+- Promote `development` to `beta` when a beta is ready; `beta` publishes Modrinth beta builds.
+- Workflow changes on `development` reach `beta` when `development` is promoted/merged into `beta`.
+- Promote `beta` to `master` for a stable release. `master` only receives releases.
 - Start every feature or fix on its own branch created from the latest `origin/development`
   (e.g. `feature/<name>`, `fix/<name>`), never from `master`.
 - Open pull requests for feature branches against `development`, not `master`.
-- Only merge `development` into `master` once multiple features are done on it, and only when the user
-  asks for a release. Don't open or merge a `development` → `master` PR on your own initiative.
+- Don't promote branches or open promotion PRs unless the user asks. Don't open or merge a
+  `development` → `master` PR on your own initiative.
 
 ## Releases
 
 Every push to `master` runs `.github/workflows/release.yml`, which publishes a new version to Modrinth
-and creates a tagged GitHub release. That's why `master` only gets merges from `development`.
+and creates a tagged GitHub release. `master` gets releases promoted from `beta`.
 
 - The version comes from the git tags: the latest `v*` tag's patch number is bumped (`v1.0.3` → `1.0.4`).
 - For a minor/major release, set `mod_version` in `gradle.properties` (e.g. `1.1.0`) in the change
   that goes to `master`; a version higher than the latest tag is released as-is.
-- Every push to `development` runs `.github/workflows/beta.yml`, which publishes a beta to Modrinth
+- Every push to `development` runs `.github/workflows/alpha.yml`, which publishes an alpha to Modrinth
+  (version type `alpha`) as `<next release version>-alpha.<run number>`, e.g. `1.0.4-alpha.12`. Alphas create
+  no git tag or GitHub release, so they don't affect release numbering.
+- Every push to `beta` runs `.github/workflows/beta.yml`, which publishes a beta to Modrinth
   (version type `beta`) as `<next release version>-beta.<run number>`, e.g. `1.0.4-beta.12`. Betas create
   no git tag or GitHub release, so they don't affect release numbering.
 - Modrinth dependencies are declared in the `modrinth { dependencies { } }` block in `build.gradle.kts`.
