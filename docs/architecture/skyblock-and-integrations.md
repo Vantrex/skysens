@@ -7,9 +7,9 @@ Code that several features need and that is about SkyBlock itself, not about one
 | Package | Contents |
 |---|---|
 | `location/` | `LocationService`: current island (`SkyblockLocationEnum`, from the Mod API `map`) and zone (`Zone`, from the sidebar's `⏣`/`ф` line). `zone/` holds one `ZoneEnum` per island with the sidebar names |
-| `event/` | `SkyblockJoinEvent`, `SkyblockQuitEvent`, `LocationChangeEvent`, `ZoneChangeEvent` |
+| `event/` | `SkyblockJoinEvent`, `SkyblockQuitEvent`, `LocationChangeEvent`, `ZoneChangeEvent`, and from `SlayerTracker`: `SlayerQuestStartEvent`, `SlayerBossSpawnEvent`, `SlayerBossCocoonEvent`, `SlayerQuestEndEvent` |
 | `player/` | `PlayerService` (own name), `AfkTracker`, `CombatTracker` (both registered as features) |
-| `slayer/` | `SlayerTracker` (registered as a feature): whether a slayer quest is running, its boss and whether the boss spawned, from chat and the sidebar. Always on, unlike the slayer stats in `features/slayer/` |
+| `slayer/` | `SlayerTracker` (registered as a feature): whether a slayer quest is running, its boss and whether the boss spawned or was cocooned, from chat and the sidebar. Always on; the slayer stats in `features/slayer/` build on its events |
 | `entity/` | `EntityClassifier`: player / NPC / other, with the NPC heuristic (v2 UUID or no tab list entry) |
 | `item/` | `HypixelExtraAttributes` (item NBT), `ItemIdUtil` (display name → Hypixel id) |
 | `price/` | `ItemPriceService` + `ItemPriceProvider` chain |
