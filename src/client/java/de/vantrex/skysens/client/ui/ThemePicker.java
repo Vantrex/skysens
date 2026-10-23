@@ -5,6 +5,7 @@ import de.vantrex.skysens.client.ui.render.FontFamily;
 import de.vantrex.skysens.client.ui.render.RenderUtil;
 import de.vantrex.skysens.client.ui.render.Theme;
 import de.vantrex.skysens.client.ui.render.ThemePreset;
+import de.vantrex.skysens.client.ui.render.UiScale;
 import de.vantrex.skysens.client.ui.render.UiText;
 import de.vantrex.skysens.client.ui.widget.OptionWidget;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -22,6 +23,9 @@ import java.util.Locale;
  * The "Font" row opens a flyout submenu (hover or click) to the side of the popover listing all font families,
  * each rendered in its own font. The flyout is drawn and hit-tested as part of the popover overlay: it stays open
  * while the mouse is over the Font row or the flyout (plus a short grace delay), ESC closes it before the popover.
+ * <p>
+ * The "GUI scale" row below it toggles between Auto (smaller effective scale on large game scales) and Game (the
+ * game's own scale); the screen re-lays itself out right away.
  */
 public final class ThemePicker {
 
@@ -64,6 +68,8 @@ public final class ThemePicker {
     }
 
     private int bx, by;
+    private Runnable onScaleChanged = () -> {
+    };
     private int screenW = 400, screenH = 300;
     private boolean open;
 
@@ -74,7 +80,8 @@ public final class ThemePicker {
     /** False after ESC closed the flyout while the mouse rests on the Font row; re-armed once the mouse leaves it. */
     private boolean hoverArmed = true;
 
-    public void layout(int x, int y, int screenW, int screenH) {
+    public void layout(int x, int y, int screenW, int screenH, Runnable onScaleChanged) {
+        this.onScaleChanged = onScaleChanged;
         this.bx = x;
         this.by = y;
         this.screenW = screenW;
@@ -134,7 +141,7 @@ public final class ThemePicker {
     // ------------------------------------------------------------------ geometry
 
     private int popH() {
-        return ThemePreset.values().length * ROW_H + SECTION_H + FONT_ROW_H + PAD * 2;
+        return ThemePreset.values().length * ROW_H + (SECTION_H + FONT_ROW_H) * 2 + PAD * 2;
     }
 
     private int popW() {
@@ -161,6 +168,18 @@ public final class ThemePicker {
 
     private int fontRowY(int popY) {
         return fontSectionY(popY) + SECTION_H;
+    }
+
+    private int scaleSectionY(int popY) {
+        return fontRowY(popY) + FONT_ROW_H;
+    }
+
+    private int scaleRowY(int popY) {
+        return scaleSectionY(popY) + SECTION_H;
+    }
+
+    private boolean overScaleRow(double mx, double my) {
+        return RenderUtil.inside(mx, my, popX() + 2, scaleRowY(popY()), popW() - 4, FONT_ROW_H);
     }
 
     private boolean overFontRow(double mx, double my) {
@@ -258,6 +277,17 @@ public final class ThemePicker {
         String famName = UiText.ellipsize(UiText.family().displayName(),
                 nameRight - (px + 8 + UiText.width("Font")) - 8);
         UiText.drawRight(g, famName, nameRight, ty, Theme.ACCENT);
+
+        // scale row: label + active mode
+        int scY = scaleSectionY(py);
+        RenderUtil.rect(g, px + 6, scY + 2, pw - 12, 1, Theme.POPOVER_BORDER);
+        int sy = scaleRowY(py);
+        if (RenderUtil.inside(mouseX, mouseY, px + 2, sy, pw - 4, FONT_ROW_H)) {
+            RenderUtil.roundedRect(g, px + 2, sy, pw - 4, FONT_ROW_H, 3, Theme.ACCENT_SOFT);
+        }
+        int sty = sy + (FONT_ROW_H - UiText.lineHeight()) / 2 + 1;
+        UiText.draw(g, "GUI scale", px + 8, sty, Theme.TEXT);
+        UiText.drawRight(g, UiScale.isAuto() ? "Auto" : "Game", px + pw - 9, sty, Theme.ACCENT);
 
         renderFlyout(g, mouseX, mouseY);
     }
@@ -390,6 +420,10 @@ public final class ThemePicker {
             OptionWidget.playClick();
         } else if (overFontRow(mx, my)) {
             openFlyout(); // click also opens (accessibility); stays open
+            OptionWidget.playClick();
+        } else if (overScaleRow(mx, my)) {
+            UiScale.setAuto(!UiScale.isAuto());
+            onScaleChanged.run();
             OptionWidget.playClick();
         }
         return true;

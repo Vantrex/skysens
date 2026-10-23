@@ -4,8 +4,11 @@ import de.vantrex.skysens.client.skyblock.location.LocationService;
 
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.config.SkysensConfig;
+import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
 import de.vantrex.skysens.client.skyblock.player.AfkTracker;
+import de.vantrex.skysens.client.skyblock.player.CombatTracker;
 import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.ScoreboardUtil;
 import lombok.Getter;
 import lombok.Synchronized;
 import net.minecraft.client.Minecraft;
@@ -60,7 +63,7 @@ public class NotificationService {
         if (this.handleCurrentNotification()) {
             return;
         }
-        if (SkysensConfig.getInstance().generalCategory.holdNotificationsWhileAfk && AfkTracker.getInstance().isAfk()) {
+        if (!this.hasNextNotification() || this.isOnHold()) {
             return;
         }
         final Notification nextNotification = this.getNextNotification();
@@ -70,6 +73,23 @@ public class NotificationService {
         final var displayUntil = System.currentTimeMillis() + this.getDisplayTime(nextNotification);
         this.currentNotification = new CurrentNotification(nextNotification, displayUntil);
         this.displayNotification(nextNotification, true);
+    }
+
+    /** Whether queued notifications wait, e.g. while the player is AFK or fighting. They are shown once it is over. */
+    private boolean isOnHold() {
+        final GeneralCategory config = SkysensConfig.getInstance().generalCategory;
+        if (config.holdNotificationsWhileAfk && AfkTracker.getInstance().isAfk()) {
+            return true;
+        }
+        if (config.holdNotificationsInCombat
+                && !CombatTracker.getInstance().isOutOfCombatFor(config.notificationOutOfCombatSeconds)) {
+            return true;
+        }
+        if (config.holdNotificationsInInstances && this.locationService.isInInstance()) {
+            return true;
+        }
+        return config.holdNotificationsDuringSlayerQuest
+                && ScoreboardUtil.getSidebarLines().stream().anyMatch(line -> line.startsWith("Slayer Quest"));
     }
 
     private long getDisplayTime(final Notification notification) {

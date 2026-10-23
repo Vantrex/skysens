@@ -45,7 +45,7 @@ public class ToggleWidget extends CardWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    protected boolean onMouseClicked(double mx, double my, int button) {
         if (button == 0 && isHovered(mx, my)) {
             node.set(Boolean.valueOf(!isOn()));
             playClick();

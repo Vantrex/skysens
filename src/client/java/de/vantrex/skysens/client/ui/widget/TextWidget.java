@@ -76,7 +76,7 @@ public class TextWidget extends CardWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    protected boolean onMouseClicked(double mx, double my, int button) {
         if (button == 0 && RenderUtil.inside(mx, my, controlX(), controlY(), BOX_W, BOX_H)) {
             focusedWidget = this;
             return true;

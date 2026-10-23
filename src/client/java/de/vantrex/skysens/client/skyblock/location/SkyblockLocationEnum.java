@@ -74,6 +74,12 @@ public enum SkyblockLocationEnum {
         this(displayName, mapName, mode, zoneEnum, false);
     }
 
+    /** The display name, as shown in the config dropdown. */
+    @Override
+    public String toString() {
+        return displayName;
+    }
+
     /**
      * The island for a Mod API location packet. The mode is checked first since Hypixel keeps it when an island is
      * renamed; the map name (or constant name, for {@code /mocklocation}) is the fallback.

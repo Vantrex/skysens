@@ -7,7 +7,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 public class BazaarCategory {
 
-    @ConfigOption(name = "Disable click on non self-owned listings", desc = "Disable clicks on non self-owned listings in the Bazaar GUI. Bypassable by holding STRG.")
+    @ConfigOption(name = "Disable click on non self-owned listings", desc = "Disable clicks on non self-owned listings in the Bazaar GUI. Bypassable by holding Ctrl.")
     @ConfigEditorBoolean
     @Expose
     public boolean disableClicksOnNonSelfOwned = true;

@@ -138,7 +138,7 @@ public final class UiText {
         int scale = 1;
         Minecraft mc = Minecraft.getInstance();
         if (mc != null && mc.getWindow() != null) {
-            scale = (int) Math.round(mc.getWindow().getGuiScale());
+            scale = UiScale.guiScale();
         }
         return Math.max(1, Math.min(MAX_LEVEL, scale));
     }
@@ -201,6 +201,28 @@ public final class UiText {
 
     private static Font font() {
         return Minecraft.getInstance().font;
+    }
+
+    /**
+     * Display label of an enum constant: its {@code toString()} when that is customised, otherwise the name in
+     * Title Case with underscores as spaces ("ACTION_BAR" becomes "Action Bar"). Display only.
+     */
+    public static String enumLabel(Enum<?> constant) {
+        String text = constant.toString();
+        if (!text.equals(constant.name())) {
+            return text;
+        }
+        StringBuilder out = new StringBuilder(text.length());
+        for (String word : text.split("_")) {
+            if (word.isEmpty()) {
+                continue;
+            }
+            if (out.length() > 0) {
+                out.append(' ');
+            }
+            out.append(word.charAt(0)).append(word.substring(1).toLowerCase(java.util.Locale.ROOT));
+        }
+        return out.toString();
     }
 
     // ------------------------------------------------------------------ measuring
