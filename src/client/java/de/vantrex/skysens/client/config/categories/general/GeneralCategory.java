@@ -37,10 +37,10 @@ public class GeneralCategory {
     @Expose
     public float notificationOutOfCombatSeconds = 10f;
 
-    @ConfigOption(name = "Hold Notifications In Dungeons", desc = "Keep notifications back during a dungeon run, and show them once you left the dungeon")
+    @ConfigOption(name = "Hold Notifications In Dungeons and Kuudra", desc = "Keep notifications back during a dungeon or Kuudra run, and show them once you left it")
     @ConfigEditorBoolean
     @Expose
-    public boolean holdNotificationsInDungeons;
+    public boolean holdNotificationsInInstances;
 
     @ConfigOption(name = "Hold Notifications During Slayer Quests", desc = "Keep notifications back while a slayer quest is active, and show them once it is completed, failed or cancelled")
     @ConfigEditorBoolean

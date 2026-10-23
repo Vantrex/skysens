@@ -5,7 +5,6 @@ import de.vantrex.skysens.client.skyblock.location.LocationService;
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
-import de.vantrex.skysens.client.skyblock.location.SkyblockLocationEnum;
 import de.vantrex.skysens.client.skyblock.player.AfkTracker;
 import de.vantrex.skysens.client.skyblock.player.CombatTracker;
 import de.vantrex.skysens.client.util.ClientUtil;
@@ -86,7 +85,7 @@ public class NotificationService {
                 && !CombatTracker.getInstance().isOutOfCombatFor(config.notificationOutOfCombatSeconds)) {
             return true;
         }
-        if (config.holdNotificationsInDungeons && this.locationService.getCurrentLocation() == SkyblockLocationEnum.CATACOMBS) {
+        if (config.holdNotificationsInInstances && this.locationService.isInInstance()) {
             return true;
         }
         return config.holdNotificationsDuringSlayerQuest
