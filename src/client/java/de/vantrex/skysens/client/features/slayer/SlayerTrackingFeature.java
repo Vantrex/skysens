@@ -2,9 +2,15 @@ package de.vantrex.skysens.client.features.slayer;
 
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.config.SkysensConfig;
+import de.vantrex.skysens.client.core.event.EventListenerRegistry;
 import de.vantrex.skysens.client.core.feature.AfterTickFeature;
 import de.vantrex.skysens.client.core.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.core.feature.SkySensFeature;
+import de.vantrex.skysens.client.skyblock.event.SlayerBossCocoonEvent;
+import de.vantrex.skysens.client.skyblock.event.SlayerBossSpawnEvent;
+import de.vantrex.skysens.client.skyblock.event.SlayerQuestEndEvent;
+import de.vantrex.skysens.client.skyblock.event.SlayerQuestStartEvent;
+import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
 import de.vantrex.skysens.client.util.ScoreboardUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.KeyMapping;
@@ -15,7 +21,7 @@ import net.minecraft.network.chat.Component;
 
 import java.util.List;
 
-/** Feeds slayer related chat lines, player input and the sidebar to {@link SlayerService}. */
+/** Feeds slayer related chat lines, {@link SlayerTracker}'s quest events, player input and the sidebar to {@link SlayerService}. */
 @SkySensFeature
 public class SlayerTrackingFeature implements GameMessageListeningFeature, AfterTickFeature {
 
@@ -25,6 +31,14 @@ public class SlayerTrackingFeature implements GameMessageListeningFeature, After
     private float lastYRot = Float.NaN;
     private float lastXRot = Float.NaN;
     private int ticks;
+
+    public SlayerTrackingFeature() {
+        final SlayerService service = SlayerService.getInstance();
+        EventListenerRegistry.REGISTRY.registerListener(service::onQuestStart, SlayerQuestStartEvent.class);
+        EventListenerRegistry.REGISTRY.registerListener(service::onBossSpawn, SlayerBossSpawnEvent.class);
+        EventListenerRegistry.REGISTRY.registerListener(service::onBossCocoon, SlayerBossCocoonEvent.class);
+        EventListenerRegistry.REGISTRY.registerListener(service::onQuestEnd, SlayerQuestEndEvent.class);
+    }
 
     @Override
     public void onGameMessage(Component message, boolean overlay) {

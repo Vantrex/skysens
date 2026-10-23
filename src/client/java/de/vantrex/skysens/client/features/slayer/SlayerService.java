@@ -5,8 +5,14 @@ import de.vantrex.skysens.client.chatcommand.ChatCommandService;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.features.slayer.config.SlayerCategory;
 import de.vantrex.skysens.client.features.slayer.config.SlayerFieldsAccordion;
+import de.vantrex.skysens.client.skyblock.event.SlayerBossCocoonEvent;
+import de.vantrex.skysens.client.skyblock.event.SlayerBossSpawnEvent;
+import de.vantrex.skysens.client.skyblock.event.SlayerQuestEndEvent;
+import de.vantrex.skysens.client.skyblock.event.SlayerQuestStartEvent;
 import de.vantrex.skysens.client.skyblock.profit.ProfitService;
 import de.vantrex.skysens.client.skyblock.profit.ProfitStats;
+import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
+import de.vantrex.skysens.client.util.ChatUtil;
 import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
 import de.vantrex.skysens.client.util.TimeUtil;
@@ -27,17 +33,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /**
- * Session stats of slayer quests, read from chat: "SLAYER QUEST STARTED!", "SLAYER BOSS! The X spawned!",
- * "SLAYER QUEST COMPLETE!", "SLAYER QUEST FAILED!" and the "RNG Meter - N Stored XP" line of the completion box.
+ * Session stats of slayer quests. Quest start, boss spawn, cocoon and quest end come from {@link SlayerTracker}'s events,
+ * the "RNG Meter - N Stored XP" line of the completion box from chat.
  * Lives in memory only, so it resets with the game. Called on the client thread.
  */
 public final class SlayerService {
 
-    private static final Pattern BOSS_SPAWN = Pattern.compile("^SLAYER BOSS! The (.+) spawned!$");
     private static final Pattern SLAYER_LEVEL = Pattern.compile("^(\\w+) Slayer LVL \\d+ - .*$");
     private static final Pattern RNG_METER = Pattern.compile("^RNG Meter - ([\\d,]+) Stored XP$");
     /** The sidebar line with the quest progress before the boss spawns, e.g. "(1,200/2,400) Combat XP". */
-    private static final long QUEST_SIDEBAR_GRACE_MS = 5_000;
     private static final Pattern QUEST_PROGRESS = Pattern.compile("^\\([\\d,.kKmM]+/[\\d,.kKmM]+\\) .+$");
     /** The boss names as shown on the spawn message, mapped to the slayer's name used in the level lines. */
     private static final Map<String, String> BOSS_TO_SLAYER = Map.of(
@@ -59,12 +63,11 @@ public final class SlayerService {
     private long questStartMs;
     private long bossSpawnMs;
     private int totalKills;
-    /** Whether a quest is running, also when its start wasn't seen (then from the boss spawn on). */
-    private boolean questRunning;
-    private long questRunningSinceMs;
     /** Time of the running quest and boss fight that counts, i.e. without idle stretches. */
     private long questActiveMs;
     private long killActiveMs;
+    /** The boss was cocooned: the kill time stops, the quest time runs until the cocoon hatches. */
+    private boolean bossCocooned;
     /** Questing time of the session for profit per hour, with its own (longer) idle pause. */
     private long profitActiveMs;
     private long lastTickMs;
@@ -96,59 +99,58 @@ public final class SlayerService {
         if (!config().enabled) {
             return;
         }
-        final String text = line.trim();
-        if (this.handleQuestStarted(text) || this.handleBossSpawn(text) || this.handleQuestComplete(text)
-                || this.handleQuestFailed(text) || this.handleSlayerLevel(text)) {
-            return;
+        final String text = ChatUtil.normalize(line);
+        if (!this.handleSlayerLevel(text)) {
+            this.handleRngMeter(text);
         }
-        this.handleRngMeter(text);
     }
 
-    private boolean handleQuestStarted(String text) {
-        if (!text.equals("SLAYER QUEST STARTED!")) {
-            return false;
+    /** A quest whose start wasn't seen (noticed later by the tracker) isn't timed. */
+    public void onQuestStart(@NotNull SlayerQuestStartEvent event) {
+        if (!config().enabled) {
+            return;
         }
-        this.questStartMs = System.currentTimeMillis();
+        final long now = System.currentTimeMillis();
+        this.questStartMs = event.isStartSeen() ? now : 0;
         this.bossSpawnMs = 0;
-        this.questRunning = true;
-        this.questRunningSinceMs = this.questStartMs;
+        this.bossCocooned = false;
         this.questActiveMs = 0;
         this.killActiveMs = 0;
         this.progressLine = null;
-        this.progressChangedMs = this.questStartMs;
-        return true;
+        this.progressChangedMs = now;
     }
 
-    private boolean handleBossSpawn(String text) {
-        final Matcher spawn = BOSS_SPAWN.matcher(text);
-        if (!spawn.matches()) {
-            return false;
+    public void onBossSpawn(@NotNull SlayerBossSpawnEvent event) {
+        if (!config().enabled) {
+            return;
         }
-        this.currentBoss = spawn.group(1);
+        if (event.getBoss() != null) {
+            this.currentBoss = event.getBoss();
+        }
         this.bossSpawnMs = System.currentTimeMillis();
-        if (!this.questRunning) {
-            this.questRunning = true;
-            this.questRunningSinceMs = this.bossSpawnMs;
-        }
+        this.bossCocooned = false;
         this.killActiveMs = 0;
-        return true;
     }
 
-    private boolean handleQuestComplete(String text) {
-        if (!text.equals("SLAYER QUEST COMPLETE!")) {
-            return false;
+    public void onBossCocoon(@NotNull SlayerBossCocoonEvent event) {
+        if (!config().enabled) {
+            return;
         }
-        this.onComplete();
-        return true;
+        this.bossCocooned = true;
     }
 
-    private boolean handleQuestFailed(String text) {
-        if (!text.equals("SLAYER QUEST FAILED!")) {
-            return false;
+    public void onQuestEnd(@NotNull SlayerQuestEndEvent event) {
+        if (!config().enabled) {
+            return;
         }
-        this.stats(this.currentBoss).failed++;
-        this.endQuest();
-        return true;
+        switch (event.getReason()) {
+            case COMPLETED -> this.onComplete();
+            case FAILED -> {
+                this.stats(this.currentBoss).failed++;
+                this.endQuest();
+            }
+            case CANCELLED -> this.endQuest();
+        }
     }
 
     /** The level line comes right before the RNG meter line and tells which slayer the meter belongs to. */
@@ -195,7 +197,6 @@ public final class SlayerService {
     private void endQuest() {
         this.bossSpawnMs = 0;
         this.questStartMs = 0;
-        this.questRunning = false;
         this.questActiveMs = 0;
         this.killActiveMs = 0;
         this.progressLine = null;
@@ -220,16 +221,11 @@ public final class SlayerService {
         // a frozen or closed game doesn't count as questing
         final long delta = this.lastTickMs == 0 ? 0 : Math.max(0, Math.min(now - this.lastTickMs, 1_000));
         this.lastTickMs = now;
-        if (sidebarLines != null && this.questRunning) {
-            if (this.questGone(sidebarLines, now)) {
-                // cancelled at Maddox, or lost to a disconnect: no complete or failed message comes
-                this.endQuest();
-                return;
-            }
-            this.updateProgress(sidebarLines, now);
-        }
-        if (!this.questRunning) {
+        if (!SlayerTracker.getInstance().isQuestActive()) {
             return;
+        }
+        if (sidebarLines != null) {
+            this.updateProgress(sidebarLines, now);
         }
         final long idleMs = now - this.lastInputMs;
         if (idleMs <= config().profitIdlePauseMinutes * 60_000) {
@@ -239,22 +235,13 @@ public final class SlayerService {
             return;
         }
         if (this.bossSpawnMs > 0) {
-            this.killActiveMs += delta;
+            if (!this.bossCocooned) {
+                this.killActiveMs += delta;
+            }
             this.questActiveMs += delta;
         } else if (!this.progressStalled(now)) {
             this.questActiveMs += delta;
         }
-    }
-
-    /**
-     * Whether the sidebar no longer shows a slayer quest. An empty sidebar (server switch) and the first seconds of a
-     * quest (the sidebar may not be updated yet) don't count.
-     */
-    private boolean questGone(List<String> sidebarLines, long now) {
-        if (sidebarLines.isEmpty() || now - this.questRunningSinceMs < QUEST_SIDEBAR_GRACE_MS) {
-            return false;
-        }
-        return sidebarLines.stream().noneMatch(line -> line.startsWith("Slayer Quest"));
     }
 
     private void updateProgress(List<String> sidebarLines, long now) {

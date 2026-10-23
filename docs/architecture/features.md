@@ -35,7 +35,7 @@ hidden by the chat filter are still delivered to the other features.
 4. If no hook interface fits, add one. See [platform.md](platform.md).
 
 A feature that other code needs to reach is kept as a field on `FeatureService` (e.g. `getRewardChestFeature()`) or
-is a singleton (`DungeonRunDetector.getInstance()`, `CombatTracker`, `AfkTracker`).
+is a singleton (`DungeonRunDetector.getInstance()`, `CombatTracker`, `AfkTracker`, `SlayerTracker`).
 
 ## Events
 
