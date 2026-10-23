@@ -7,6 +7,7 @@ import de.vantrex.skysens.client.notification.NotificationDisplayTypeEnum;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 public class GeneralCategory {
@@ -25,6 +26,26 @@ public class GeneralCategory {
     @ConfigEditorBoolean
     @Expose
     public boolean holdNotificationsWhileAfk = true;
+
+    @ConfigOption(name = "Hold Notifications In Combat", desc = "Keep notifications back while you are fighting, and show them once you stopped")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean holdNotificationsInCombat;
+
+    @ConfigOption(name = "Out of Combat After (seconds)", desc = "Seconds without taking or dealing damage until held notifications are shown")
+    @ConfigEditorSlider(minValue = 3f, maxValue = 60f, minStep = 1f)
+    @Expose
+    public float notificationOutOfCombatSeconds = 10f;
+
+    @ConfigOption(name = "Hold Notifications In Dungeons", desc = "Keep notifications back during a dungeon run, and show them once you left the dungeon")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean holdNotificationsInDungeons;
+
+    @ConfigOption(name = "Hold Notifications During Slayer Quests", desc = "Keep notifications back while a slayer quest is active, and show them once it is completed, failed or cancelled")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean holdNotificationsDuringSlayerQuest;
 
     @ConfigOption(name = "Profit Tracker", desc = "Session and all-time profit of drops and reward chests, shown by !profit")
     @Accordion
