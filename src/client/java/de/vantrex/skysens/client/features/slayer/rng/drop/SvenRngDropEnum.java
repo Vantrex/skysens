@@ -5,10 +5,11 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * The drops of the Sven Packmaster RNG meter with their minimum tier, from the Hypixel SkyBlock wiki
- * (Template:RNG_Meter/UI/Slayer). Its required Slayer XP is only an estimate (the wiki marks it outdated and its pages
- * disagree), the real value is read from the RNG meter menu. The constant names are stored in the config, don't
- * rename them.
+ * The drops and minimum tiers follow the Hypixel SkyBlock wiki's RNG meter template, with Paragon Shard sourced from
+ * the boss drop page. Paragon Shard's required Slayer XP follows the wiki formula (500 * 100 / highest drop chance);
+ * other XP values are estimates (the wiki marks them outdated and its pages disagree), and the actual value is read
+ * from the RNG meter menu.
+ * The constant names are stored in the config, don't rename them.
  */
 @Getter
 @RequiredArgsConstructor
@@ -23,7 +24,8 @@ public enum SvenRngDropEnum implements SlayerRngDrop {
     RED_CLAW_EGG("Red Claw Egg", 3, 410_900L),
     COUTURE_RUNE_I("Couture Rune I", 4, 219_833L),
     OVERFLUX_CAPACITOR("Overflux Capacitor", 4, 1_232_700L),
-    GRIZZLY_SALMON("Grizzly Salmon", 4, 880_500L);
+    GRIZZLY_SALMON("Grizzly Salmon", 4, 880_500L),
+    PARAGON_SHARD("Paragon Shard", 4, 200_000L);
 
     private final String itemName;
     private final int minTier;
