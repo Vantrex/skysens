@@ -25,6 +25,7 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,15 +49,12 @@ public class SlayerRngMeterFeature implements GameMessageListeningFeature, After
         EventListenerRegistry.REGISTRY.registerListener(service::onQuestEnd, SlayerQuestEndEvent.class);
         EventListenerRegistry.REGISTRY.registerListener(event -> service.onBoss(event.getBoss()), SlayerBossSpawnEvent.class);
         HudElementRegistry.attachElementAfter(VanillaHudElements.OVERLAY_MESSAGE,
-                Identifier.fromNamespaceAndPath("skysens", "slayer_rng_meter"), this::extractProgress);
+                Identifier.fromNamespaceAndPath("skysens", "slayer_rng_meter"), this::drawProgress);
     }
 
     /** Draws the progress as its own line above the action bar, Hypixel's action bar stays as it is. */
-    private void extractProgress(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        if (!this.isActive() || !SkysensClient.getInstance().isOnSkyBlock()) {
-            return;
-        }
-        final Component progress = SlayerRngMeterService.getInstance().getActionBar();
+    private void drawProgress(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
+        final Component progress = this.extractProgress();
         if (progress == null) {
             return;
         }
@@ -65,6 +63,14 @@ public class SlayerRngMeterFeature implements GameMessageListeningFeature, After
         final int x = (client.getWindow().getGuiScaledWidth() - font.width(progress)) / 2;
         final int y = client.getWindow().getGuiScaledHeight() - ACTION_BAR_OFFSET;
         graphics.text(font, progress, x, y, 0xFFFFFFFF, true);
+    }
+
+    /** The RNG meter progress to draw, null when the feature is off, outside SkyBlock or when there is none to show. */
+    private @Nullable Component extractProgress() {
+        if (!this.isActive() || !SkysensClient.getInstance().isOnSkyBlock()) {
+            return null;
+        }
+        return SlayerRngMeterService.getInstance().getActionBar();
     }
 
     @Override

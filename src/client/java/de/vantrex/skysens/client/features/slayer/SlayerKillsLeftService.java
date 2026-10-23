@@ -6,7 +6,6 @@ import de.vantrex.skysens.client.skyblock.event.SlayerBossSpawnEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerQuestEndEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerQuestStartEvent;
 import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
-import de.vantrex.skysens.client.util.ClientUtil;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +48,7 @@ public final class SlayerKillsLeftService {
         this.clearQuestProgress();
     }
 
-    /** Reads progress when available and refreshes our action bar every tick until it expires. */
+    /** Reads the quest progress from the sidebar when it is given. */
     public void onTick(@Nullable List<String> sidebarLines) {
         final SlayerCategory category = SkysensConfig.getInstance().slayerCategory;
         if (!category.enabled || !category.killsLeft.actionBar) {
@@ -61,14 +60,17 @@ public final class SlayerKillsLeftService {
         if (sidebarLines != null && SlayerTracker.getInstance().isQuestActive() && !SlayerTracker.getInstance().isBossSpawned()) {
             this.updateProgress(sidebarLines, category);
         }
+    }
 
-        if (this.actionBarMessage != null) {
-            if (System.currentTimeMillis() >= this.actionBarUntilMs) {
-                this.clearActionBar();
-            } else {
-                ClientUtil.sendActionBar(Component.literal(this.actionBarMessage));
-            }
+    /**
+     * The estimate to show right above the action bar, null once it expired. It is drawn as its own HUD line, so
+     * Hypixel's action bar (health, defense, mana) doesn't overwrite it.
+     */
+    public @Nullable Component getActionBar() {
+        if (this.actionBarMessage != null && System.currentTimeMillis() >= this.actionBarUntilMs) {
+            this.clearActionBar();
         }
+        return this.actionBarMessage == null ? null : Component.literal(this.actionBarMessage);
     }
 
     private void updateProgress(List<String> sidebarLines, SlayerCategory category) {
