@@ -8,6 +8,7 @@ import de.vantrex.skysens.client.notification.NotificationService;
 import de.vantrex.skysens.client.notification.NotificationSound;
 import de.vantrex.skysens.client.persistence.RepositoryRegistry;
 import de.vantrex.skysens.client.skyblock.event.SlayerQuestEndEvent;
+import de.vantrex.skysens.client.skyblock.mayor.MayorService;
 import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
 import lombok.Getter;
@@ -21,6 +22,7 @@ import org.jetbrains.annotations.Nullable;
 import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -98,23 +100,29 @@ public final class SlayerRngMeterService {
     private void onStoredXp(SlayerTypeEnum type, long storedXp) {
         final SlayerRngRepository.Meter meter = RepositoryRegistry.SLAYER_RNG_REPOSITORY.meter(type);
         final Long previous = meter.storedXp;
+        boolean changed = !Objects.equals(previous, storedXp);
         // a lower value means the meter paid out a drop; more than one completion in between isn't one boss' XP
         if (previous != null && storedXp > previous && this.completionsSinceReading == 1) {
-            meter.xpPerBoss = storedXp - previous;
+            // the measured delta already contains every XP bonus, e.g. Aatrox's Slayer XP Buff
+            final long xpPerBoss = storedXp - previous;
+            changed |= !Objects.equals(meter.xpPerBoss, xpPerBoss);
+            meter.xpPerBoss = xpPerBoss;
         }
         meter.storedXp = storedXp;
         this.completionsSinceReading = 0;
 
         final SlayerRngDrop drop = type.getTrackedDrop().apply(config());
-        if (drop.isNone()) {
-            return;
+        if (!drop.isNone()) {
+            final SlayerRngMeterAccordion settings = config().rngMeter;
+            if (settings.actionBar) {
+                this.actionBar = this.progress(type, meter, drop);
+                this.actionBarUntilMs = System.currentTimeMillis() + (long) (settings.actionBarSeconds * 1000);
+            }
+            this.checkFull(type, meter, drop);
         }
-        final SlayerRngMeterAccordion settings = config().rngMeter;
-        if (settings.actionBar) {
-            this.actionBar = this.progress(type, meter, drop);
-            this.actionBarUntilMs = System.currentTimeMillis() + (long) (settings.actionBarSeconds * 1000);
+        if (changed) {
+            RepositoryRegistry.saveRepository(RepositoryRegistry.SLAYER_RNG_REPOSITORY);
         }
-        this.checkFull(type, meter, drop);
     }
 
     /** Keeps the progress in the action bar, Hypixel overwrites it with its own bar every second. */
@@ -143,6 +151,9 @@ public final class SlayerRngMeterService {
                         .withStyle(ChatFormatting.GRAY));
         out.append(separator()).append(this.bossesLeft(meter, drop, stored, required));
         out.append(separator()).append(this.selection(type, meter, drop));
+        if (MayorService.getInstance().isSlayerXpBuffActive()) {
+            out.append(separator()).append(Component.literal("Aatrox +25%").withStyle(ChatFormatting.GOLD));
+        }
         return out;
     }
 
@@ -160,7 +171,8 @@ public final class SlayerRngMeterService {
         if (meter.xpPerBoss == null || meter.xpPerBoss <= 0) {
             return Component.literal("? bosses left").withStyle(ChatFormatting.YELLOW);
         }
-        final long left = (required - stored + meter.xpPerBoss - 1) / meter.xpPerBoss;
+        final long xpPerBoss = meter.xpPerBoss;
+        final long left = (required - stored + xpPerBoss - 1) / xpPerBoss;
         return Component.literal("~" + left + (left == 1 ? " boss" : " bosses") + " left").withStyle(ChatFormatting.YELLOW);
     }
 
@@ -225,6 +237,7 @@ public final class SlayerRngMeterService {
         }
         final SlayerRngRepository.Meter meter = RepositoryRegistry.SLAYER_RNG_REPOSITORY.meter(type);
         boolean anyDrop = false;
+        boolean changed = false;
         String selected = "";
         for (final MenuItem item : items) {
             int minTier = 0;
@@ -233,7 +246,11 @@ public final class SlayerRngMeterService {
             for (final String line : item.lore()) {
                 final Matcher stored = MENU_STORED_XP.matcher(line);
                 if (stored.matches()) {
-                    meter.storedXp = parseXp(stored.group(1));
+                    final long storedXp = parseXp(stored.group(1));
+                    if (!Objects.equals(meter.storedXp, storedXp)) {
+                        meter.storedXp = storedXp;
+                        changed = true;
+                    }
                 }
                 final Matcher minimum = MENU_MINIMUM.matcher(line);
                 if (minimum.matches()) {
@@ -251,14 +268,31 @@ public final class SlayerRngMeterService {
                 continue;
             }
             anyDrop = true;
-            meter.requiredXp.put(((Enum<?>) drop).name(), required);
+            final String dropKey = ((Enum<?>) drop).name();
+            if (!Objects.equals(meter.requiredXp.put(dropKey, required), required)) {
+                changed = true;
+            }
             if (isSelected) {
                 selected = ((Enum<?>) drop).name();
             }
         }
         // only a loaded menu with its drops tells that nothing is selected
         if (anyDrop) {
-            meter.selectedDrop = selected;
+            if (!Objects.equals(meter.selectedDrop, selected)) {
+                meter.selectedDrop = selected;
+                changed = true;
+            }
+            if (!selected.isEmpty()) {
+                final SlayerRngDrop selectedDrop = type.dropByKey(selected);
+                final SlayerCategory slayerConfig = config();
+                if (selectedDrop != null && type.getTrackedDrop().apply(slayerConfig) != selectedDrop) {
+                    type.getTrackedDropSetter().accept(slayerConfig, selectedDrop);
+                    SkysensConfig.getConfig().saveToFile();
+                }
+            }
+        }
+        if (changed) {
+            RepositoryRegistry.saveRepository(RepositoryRegistry.SLAYER_RNG_REPOSITORY);
         }
     }
 

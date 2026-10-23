@@ -5,10 +5,11 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * The drops of the Revenant Horror RNG meter with their minimum tier, from the Hypixel SkyBlock wiki
- * (Template:RNG_Meter/UI/Slayer). Its required Slayer XP is only an estimate (the wiki marks it outdated and its pages
- * disagree), the real value is read from the RNG meter menu. The constant names are stored in the config, don't
- * rename them.
+ * The drops and minimum tiers follow the Hypixel SkyBlock wiki's RNG meter template, with Paragon Shard sourced from
+ * the boss drop page. Paragon Shard's required Slayer XP follows the wiki formula (500 * 100 / highest drop chance);
+ * other XP values are estimates (the wiki marks them outdated and its pages disagree), and the actual value is read
+ * from the RNG meter menu.
+ * The constant names are stored in the config, don't rename them.
  */
 @Getter
 @RequiredArgsConstructor
@@ -29,7 +30,8 @@ public enum RevenantRngDropEnum implements SlayerRngDrop {
     SCYTHE_BLADE("Scythe Blade", 4, 489_900L),
     SEVERED_HAND("Severed Hand", 5, 1_049_785L),
     SHREDDED_SINEW("Shredded Sinew", 5, 918_562L),
-    WARDEN_HEART("Warden Heart", 5, 3_674_250L);
+    WARDEN_HEART("Warden Heart", 5, 3_674_250L),
+    PARAGON_SHARD("Paragon Shard", 4, 100_000L);
 
     private final String itemName;
     private final int minTier;

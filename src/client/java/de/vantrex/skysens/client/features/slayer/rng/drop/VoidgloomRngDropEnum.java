@@ -5,10 +5,11 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 /**
- * The drops of the Voidgloom Seraph RNG meter with their minimum tier, from the Hypixel SkyBlock wiki
- * (Template:RNG_Meter/UI/Slayer). Its required Slayer XP is only an estimate (the wiki marks it outdated and its pages
- * disagree), the real value is read from the RNG meter menu. The constant names are stored in the config, don't
- * rename them.
+ * The drops and minimum tiers follow the Hypixel SkyBlock wiki's RNG meter template, with Paragon Shard sourced from
+ * the boss drop page. Paragon Shard's required Slayer XP follows the wiki formula (500 * 100 / highest drop chance);
+ * other XP values are estimates (the wiki marks them outdated and its pages disagree), and the actual value is read
+ * from the RNG meter menu.
+ * The constant names are stored in the config, don't rename them.
  */
 @Getter
 @RequiredArgsConstructor
@@ -33,7 +34,8 @@ public enum VoidgloomRngDropEnum implements SlayerRngDrop {
     ETHERWARP_MERGER("Etherwarp Merger", 4, 118_075L),
     JUDGEMENT_CORE("Judgement Core", 4, 885_562L),
     ENCHANT_RUNE_I("Enchant Rune I", 4, 1_078_642L),
-    END_STONE_IDOL("End Stone Idol", 4, 3_542_250L);
+    END_STONE_IDOL("End Stone Idol", 4, 3_542_250L),
+    PARAGON_SHARD("Paragon Shard", 4, 200_000L);
 
     private final String itemName;
     private final int minTier;
