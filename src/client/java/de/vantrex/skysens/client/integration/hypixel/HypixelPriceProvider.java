@@ -18,10 +18,12 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalDouble;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
@@ -47,6 +49,8 @@ public final class HypixelPriceProvider implements ItemPriceProvider {
     private final HttpClient http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
     private final AtomicBoolean refreshing = new AtomicBoolean();
     private volatile Map<String, String> idByName = Map.of();
+    /** Ids of items that can't be traded, e.g. Carnival Tickets. */
+    private volatile Set<String> soulboundIds = Set.of();
     private volatile Map<String, Double> bazaarPrices = Map.of();
     private volatile Map<String, Double> lowestBins = Map.of();
     private volatile long nextRefreshAt;
@@ -77,7 +81,7 @@ public final class HypixelPriceProvider implements ItemPriceProvider {
             boolean failed = false;
             try {
                 if (this.idByName.isEmpty()) {
-                    this.idByName = this.loadItemIds();
+                    this.loadItems();
                 }
                 this.bazaarPrices = this.loadBazaar();
                 this.lowestBins = this.loadLowestBins();
@@ -114,7 +118,13 @@ public final class HypixelPriceProvider implements ItemPriceProvider {
             return OptionalDouble.of(bin);
         }
         // a bazaar item without buy orders (e.g. Scorched Books) can't be insta-sold, it's worth nothing right now
-        return bazaar != null ? OptionalDouble.of(0) : OptionalDouble.empty();
+        if (bazaar != null) {
+            return OptionalDouble.of(0);
+        }
+        // a soulbound item can't be sold at all; a few are on the market anyway, so only once the prices are loaded
+        return !this.bazaarPrices.isEmpty() && !this.lowestBins.isEmpty() && this.soulboundIds.contains(id)
+                ? OptionalDouble.of(0)
+                : OptionalDouble.empty();
     }
 
     private @Nullable String toId(String itemName) {
@@ -141,16 +151,24 @@ public final class HypixelPriceProvider implements ItemPriceProvider {
         return (stripped == null ? name : stripped).trim().toLowerCase(Locale.ROOT);
     }
 
-    private Map<String, String> loadItemIds() throws Exception {
+    /** Item names to ids and the soulbound ids, from Hypixel's item list. */
+    private void loadItems() throws Exception {
         final Map<String, String> ids = new HashMap<>();
+        final Set<String> soulbound = new HashSet<>();
         for (final JsonElement element : this.getJson(ITEMS_URL).getAsJsonArray("items")) {
             final JsonObject item = element.getAsJsonObject();
             if (item.has("name") && item.has("id")) {
+                final String id = item.get("id").getAsString();
                 // first one wins, so a rare duplicate name doesn't replace the common item
-                ids.putIfAbsent(normalize(item.get("name").getAsString()), item.get("id").getAsString());
+                ids.putIfAbsent(normalize(item.get("name").getAsString()), id);
+                if (item.has("soulbound")) {
+                    soulbound.add(id);
+                }
             }
         }
-        return ids;
+        // ids last, it's what marks the item list as loaded
+        this.soulboundIds = soulbound;
+        this.idByName = ids;
     }
 
     private Map<String, Double> loadBazaar() throws Exception {
