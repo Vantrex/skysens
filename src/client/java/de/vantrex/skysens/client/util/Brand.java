@@ -32,13 +32,22 @@ public class Brand {
 
     /** {@code text} with every character coloured along the brand gradient, on top of {@code base}. */
     public @NotNull MutableComponent gradient(final String text, final Style base) {
+        return gradient(text, base, 0f);
+    }
+
+    /**
+     * Like {@link #gradient(String, Style)}, but with the gradient shifted by {@code phase}. The gradient runs
+     * there and back again (period 2), so increasing the phase over time makes the colours flow through the text
+     * without a hard seam. Phase 0 is the plain gradient.
+     */
+    public @NotNull MutableComponent gradient(final String text, final Style base, final float phase) {
         final MutableComponent result = Component.empty();
         final int length = text.codePointCount(0, text.length());
         int index = 0;
         for (int i = 0; i < text.length(); ) {
             final int codePoint = text.codePointAt(i);
             final float t = length <= 1 ? 0f : (float) index / (length - 1);
-            result.append(Component.literal(Character.toString(codePoint)).setStyle(base.withColor(colourAt(t))));
+            result.append(Component.literal(Character.toString(codePoint)).setStyle(base.withColor(colourAt(pingPong(t - phase)))));
             i += Character.charCount(codePoint);
             index++;
         }
@@ -55,6 +64,12 @@ public class Brand {
         return lerp(from >> 16 & 0xFF, to >> 16 & 0xFF, f) << 16
                 | lerp(from >> 8 & 0xFF, to >> 8 & 0xFF, f) << 8
                 | lerp(from & 0xFF, to & 0xFF, f);
+    }
+
+    /** Folds {@code t} onto 0..1..0 with period 2. */
+    private float pingPong(final float t) {
+        final float u = t - 2f * (float) Math.floor(t / 2f);
+        return u > 1f ? 2f - u : u;
     }
 
     private int lerp(final int from, final int to, final float f) {
