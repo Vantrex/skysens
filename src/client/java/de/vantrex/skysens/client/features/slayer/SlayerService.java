@@ -224,6 +224,11 @@ public final class SlayerService {
         if (!SlayerTracker.getInstance().isQuestActive()) {
             return;
         }
+        // the boss may only be known from the sidebar after the spawn event, e.g. for a quest running before joining
+        final String boss = SlayerTracker.getInstance().getBoss();
+        if (boss != null) {
+            this.currentBoss = boss;
+        }
         if (sidebarLines != null) {
             this.updateProgress(sidebarLines, now);
         }
