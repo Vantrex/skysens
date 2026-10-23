@@ -1,13 +1,13 @@
 name: Beta
 
-# Every merge/push to development publishes a beta version to Modrinth.
+# Every merge/push to beta publishes a beta version to Modrinth.
 # The version is the next release version (same rules as release.yml) plus a beta suffix,
 # e.g. 1.0.4-beta.12, where the number is this workflow's run number.
 # No git tag or GitHub release is created, so betas never affect the release version numbering.
 
 on:
   push:
-    branches: [development]
+    branches: [beta]
     paths-ignore: ["**.md", ".idea/**"]
   workflow_dispatch:
 
@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   beta:
-    if: github.ref == 'refs/heads/development'
+    if: github.ref == 'refs/heads/beta'
     runs-on: ubuntu-latest
     environment: modrinth
     steps:
