@@ -45,4 +45,39 @@ public class SlayerCategory {
     @Expose
     public SlayerFieldsAccordion fields = new SlayerFieldsAccordion();
 
+    @ConfigOption(name = "RNG Meter", desc = "Progress of a tracked RNG drop after every boss, and a notification once the meter is full. The tracked drop is chosen in each slayer's section")
+    @Accordion
+    @Expose
+    public SlayerRngMeterAccordion rngMeter = new SlayerRngMeterAccordion();
+
+    @ConfigOption(name = "Revenant Horror", desc = "Settings for the Revenant Horror (Zombie Slayer)")
+    @Accordion
+    @Expose
+    public RevenantHorrorAccordion revenantHorror = new RevenantHorrorAccordion();
+
+    @ConfigOption(name = "Tarantula Broodfather", desc = "Settings for the Tarantula Broodfather (Spider Slayer)")
+    @Accordion
+    @Expose
+    public TarantulaBroodfatherAccordion tarantulaBroodfather = new TarantulaBroodfatherAccordion();
+
+    @ConfigOption(name = "Sven Packmaster", desc = "Settings for the Sven Packmaster (Wolf Slayer)")
+    @Accordion
+    @Expose
+    public SvenPackmasterAccordion svenPackmaster = new SvenPackmasterAccordion();
+
+    @ConfigOption(name = "Voidgloom Seraph", desc = "Settings for the Voidgloom Seraph (Enderman Slayer)")
+    @Accordion
+    @Expose
+    public VoidgloomSeraphAccordion voidgloomSeraph = new VoidgloomSeraphAccordion();
+
+    @ConfigOption(name = "Inferno Demonlord", desc = "Settings for the Inferno Demonlord (Blaze Slayer)")
+    @Accordion
+    @Expose
+    public InfernoDemonlordAccordion infernoDemonlord = new InfernoDemonlordAccordion();
+
+    @ConfigOption(name = "Riftstalker Bloodfiend", desc = "Settings for the Riftstalker Bloodfiend (Vampire Slayer)")
+    @Accordion
+    @Expose
+    public RiftstalkerBloodfiendAccordion riftstalkerBloodfiend = new RiftstalkerBloodfiendAccordion();
+
 }

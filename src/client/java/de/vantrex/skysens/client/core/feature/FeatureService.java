@@ -28,6 +28,7 @@ import de.vantrex.skysens.client.features.sensitivity.LocationBasedSensitivityFe
 import de.vantrex.skysens.client.features.sensitivity.ZoneBasedSensitivityFeature;
 import de.vantrex.skysens.client.features.bazaar.BazaarOrderTrackingFeature;
 import de.vantrex.skysens.client.features.slayer.SlayerTrackingFeature;
+import de.vantrex.skysens.client.features.slayer.rng.SlayerRngMeterFeature;
 import lombok.Getter;
 
 @Getter
@@ -70,6 +71,7 @@ public class FeatureService {
         this.featureRegistry.register(DungeonRunDetector.getInstance());
         this.featureRegistry.register(new DungeonRunStatsFeature());
         this.featureRegistry.register(new SlayerTrackingFeature());
+        this.featureRegistry.register(new SlayerRngMeterFeature());
         this.featureRegistry.register(new de.vantrex.skysens.client.features.dungeon.KismetAdvisorFeature());
         this.featureRegistry.register(new DungeonNpcProfitFeature());
         this.featureRegistry.register(new de.vantrex.skysens.client.features.chatfilter.ChatSpamFilterFeature());

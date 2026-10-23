@@ -2,6 +2,7 @@ package de.vantrex.skysens.client.persistence;
 
 import de.vantrex.skysens.client.features.bazaar.BazaarOrderRepository;
 import de.vantrex.skysens.client.features.dungeon.DungeonRunRepository;
+import de.vantrex.skysens.client.features.slayer.rng.SlayerRngRepository;
 import de.vantrex.skysens.client.features.warp.CoopRepository;
 import de.vantrex.skysens.client.skyblock.profit.ProfitRepository;
 
@@ -23,6 +24,7 @@ public final class RepositoryRegistry {
     public static CoopRepository COOP_REPOSITORY;
     public static BazaarOrderRepository BAZAAR_ORDER_REPOSITORY;
     public static DungeonRunRepository DUNGEON_RUN_REPOSITORY;
+    public static SlayerRngRepository SLAYER_RNG_REPOSITORY;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path BASE_DIR = FabricLoader.getInstance().getConfigDir().resolve("skysens/repositories");
@@ -34,6 +36,7 @@ public final class RepositoryRegistry {
         COOP_REPOSITORY = loadRepository(CoopRepository.class);
         BAZAAR_ORDER_REPOSITORY = loadRepository(BazaarOrderRepository.class);
         DUNGEON_RUN_REPOSITORY = loadRepository(DungeonRunRepository.class);
+        SLAYER_RNG_REPOSITORY = loadRepository(SlayerRngRepository.class);
     }
 
     private static <T> T loadRepository(Class<T> clazz) {
@@ -60,6 +63,7 @@ public final class RepositoryRegistry {
         saveRepository(COOP_REPOSITORY);
         saveRepository(BAZAAR_ORDER_REPOSITORY);
         saveRepository(DUNGEON_RUN_REPOSITORY);
+        saveRepository(SLAYER_RNG_REPOSITORY);
     }
 
     private static void saveRepository(Object repository) {

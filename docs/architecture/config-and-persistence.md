@@ -6,7 +6,7 @@ Everything is stored under `<minecraft>/config/skysens/`:
 |---|---|---|
 | `config.json` | `SkysensConfig` (MoulConfig `ManagedConfig`) | All options |
 | `sensitivity.json` | `SensitivityService` | Per-location/zone mouse sensitivity |
-| `repositories/<ClassName>.json` | `RepositoryRegistry` | `SimpleKeyValueRepository`, `ProfitRepository`, `CoopRepository`, `BazaarOrderRepository`, `DungeonRunRepository` |
+| `repositories/<ClassName>.json` | `RepositoryRegistry` | `SimpleKeyValueRepository`, `ProfitRepository`, `CoopRepository`, `BazaarOrderRepository`, `DungeonRunRepository`, `SlayerRngRepository` |
 | `repositories/ActivityTracker.json` | `ActivityTracker` | Activity timeline (saved by the tracker itself) |
 
 ## Options (MoulConfig)

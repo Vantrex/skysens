@@ -43,4 +43,9 @@ public class NotificationLevelsAccordion {
     @Expose
     public NotificationLevelEnum powderPumpkin = NotificationLevelEnum.NORMAL;
 
+    @ConfigOption(name = "Slayer: RNG Meter Full", desc = "Level of the notification that the RNG meter is full for the tracked drop." + LEVELS)
+    @ConfigEditorDropdown
+    @Expose
+    public NotificationLevelEnum slayerRngMeterFull = NotificationLevelEnum.IMPORTANT;
+
 }
