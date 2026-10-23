@@ -35,6 +35,7 @@ public enum DwarvenMinesZoneEnum implements ZoneEnum<DwarvenMinesZoneEnum> {
     THE_LIFT("The Lift", "⏣ The Lift"),
     THE_MIST("The Mist", "⏣ The Mist"),
     UPPER_MINES("Upper Mines", "⏣ Upper Mines"),
+    LAVA_SPRINGS("Lava Springs", "⏣ Lava Springs"),
 
     ;
 

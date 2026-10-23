@@ -22,7 +22,9 @@ Code that several features need and that is about SkyBlock itself, not about one
   `ZoneChangeEvent` when it changes. An island change resets it to null first.
   Unknown zones are reported once through `ClientUtil.sendDebug` ("Unknown zone on …"). Add them to the island's
   `*ZoneEnum` with the exact sidebar text.
-- A new island needs a `SkyblockLocationEnum` constant (Mod API map name) and, if it has zones, a `ZoneEnum`.
+- A new island needs a `SkyblockLocationEnum` constant and, if it has zones, a `ZoneEnum`. Islands are matched by the
+  Mod API `mode` (e.g. `foraging_2`), which survives island renames; the `map` name and the constant name are fallbacks.
+  Never rename or remove a constant, the sensitivity config is keyed by it.
 
 ## Provider chains
 

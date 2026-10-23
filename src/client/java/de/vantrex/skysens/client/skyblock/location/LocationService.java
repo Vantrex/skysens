@@ -114,13 +114,12 @@ public class LocationService {
         return null;
     }
 
-    public void handleLocationUpdate(@Nullable String map) {
-        if (map == null) {
+    public void handleLocationUpdate(@Nullable String map, @Nullable String mode) {
+        if (map == null && mode == null) {
             this.currentLocation = null;
             return;
         }
-        map = map.replace(" ", "_");
-        SkyblockLocationEnum skyblockLocationEnum = getLocationFromMode(map);
+        SkyblockLocationEnum skyblockLocationEnum = SkyblockLocationEnum.fromHypixel(map, mode);
         if (this.currentLocation != skyblockLocationEnum) {
             final var oldLocation = this.currentLocation;
             this.currentLocation = skyblockLocationEnum;
@@ -151,18 +150,6 @@ public class LocationService {
 
     public static String getZoneName(@Nullable Zone<?> zone) {
         return zone == null ? "Unknown" : zone.getZoneEnum().getDisplayName();
-    }
-
-    private static SkyblockLocationEnum getLocationFromMode(String mode) {
-        // Hypixel calls the dungeon map "Dungeon"; the enum keeps CATACOMBS since sensitivity settings are saved by name
-        if (mode.equalsIgnoreCase("DUNGEON")) {
-            return SkyblockLocationEnum.CATACOMBS;
-        }
-        try {
-            return SkyblockLocationEnum.valueOf(mode.toUpperCase());
-        } catch (Exception ignored) {
-            return null;
-        }
     }
 
 }

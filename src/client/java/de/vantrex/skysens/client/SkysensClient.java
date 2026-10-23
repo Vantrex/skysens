@@ -108,7 +108,7 @@ public class SkysensClient implements ClientModInitializer {
             var mode = packet.getMode().orElse(null);
             var map = packet.getMap().orElse(null);
             ClientUtil.sendDebug("Server: " + this.serverName + " | Lobby: " + lobbyName + " | Map: " + map + " | Mode: " + mode);
-            this.locationService.handleLocationUpdate(map);
+            this.locationService.handleLocationUpdate(map, mode);
         });
         ClientPlayConnectionEvents.DISCONNECT.register((listener, client) -> {
             if (this.isOnSkyBlock) {
@@ -170,7 +170,7 @@ public class SkysensClient implements ClientModInitializer {
                                 if (location.equals("null")) {
                                     location = null;
                                 }
-                                this.locationService.handleLocationUpdate(location);
+                                this.locationService.handleLocationUpdate(location, null);
                                 return 1;
                             })));
         });

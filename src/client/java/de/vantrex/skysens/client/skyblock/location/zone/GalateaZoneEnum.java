@@ -45,6 +45,9 @@ public enum GalateaZoneEnum implements ZoneEnum<GalateaZoneEnum> {
     WYRMGROVE_TOMB("Wyrmgrove Tomb", "⏣ Wyrmgrove Tomb"),
     TORRHUS_CANYON("Torrhus Canyon", "⏣ Torrhus Canyon"),
     LUNARISE("Lunarise", "⏣ Lunarise"),
+    SOUTHERN_REACHES("Southern Reaches", "⏣ Southern Reaches"),
+    SQUID_CAVE("Squid Cave", "⏣ Squid Cave"),
+    DRAGONS_LAIR("Dragon's Lair", "⏣ Dragon's Lair"),
     ;
 
     private final String displayName;

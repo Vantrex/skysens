@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.ChatFormatting;
 
+import java.text.Normalizer;
 import java.util.Locale;
 
 @RequiredArgsConstructor
@@ -32,11 +33,11 @@ public class Zone<E extends Enum<E>> {
 
     /**
      * The sidebar line without color codes, the zone symbol ("⏣", "ф") and other symbols Hypixel adds, lower case.
-     * "§7⏣ §bRoyal Mines" -> "royal mines".
+     * "§7⏣ §bRoyal Mines" -> "royal mines". Accents are dropped from their letter, "Château" -> "chateau".
      */
     private static String normalize(String text) {
         final String stripped = ChatFormatting.stripFormatting(text);
-        return (stripped == null ? text : stripped)
+        return Normalizer.normalize(stripped == null ? text : stripped, Normalizer.Form.NFD)
                 .replaceAll("[^\\x20-\\x7E]", "")
                 .replaceAll("\\s+", " ")
                 .trim()
