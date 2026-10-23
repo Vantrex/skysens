@@ -179,7 +179,8 @@ public class SkysensClient implements ClientModInitializer {
                                 if (location.equals("null")) {
                                     location = null;
                                 }
-                                this.locationService.handleLocationUpdate(location, null);
+                                // matches either a mode (mining_3) or a map name ("Dwarven Mines")
+                                this.locationService.handleLocationUpdate(location, location);
                                 return 1;
                             })));
         });

@@ -6,6 +6,8 @@ import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Predicate;
+
 /**
  * SkyBlock islands. Constant names are saved in the sensitivity config, so never rename or remove one;
  * islands Hypixel dropped keep their constant without a mode.
@@ -82,22 +84,16 @@ public enum SkyblockLocationEnum {
 
     /**
      * The island for a Mod API location packet. The mode is checked first since Hypixel keeps it when an island is
-     * renamed; the map name (or constant name, for {@code /mocklocation}) is the fallback.
+     * renamed; the map name is the fallback. Islands without a mode are never matched.
      */
     public static @Nullable SkyblockLocationEnum fromHypixel(final @Nullable String map, final @Nullable String mode) {
-        if (mode != null) {
-            for (SkyblockLocationEnum location : values()) {
-                if (mode.equalsIgnoreCase(location.getMode())) {
-                    return location;
-                }
-            }
-        }
-        if (map == null) {
-            return null;
-        }
+        final SkyblockLocationEnum byMode = find(location -> location.mode.equalsIgnoreCase(mode));
+        return byMode != null ? byMode : find(location -> location.mapName.equalsIgnoreCase(map));
+    }
+
+    private static @Nullable SkyblockLocationEnum find(final Predicate<SkyblockLocationEnum> matches) {
         for (SkyblockLocationEnum location : values()) {
-            if (location.getMode() != null
-                    && (map.equalsIgnoreCase(location.getMapName()) || map.replace(' ', '_').equalsIgnoreCase(location.name()))) {
+            if (location.mode != null && matches.test(location)) {
                 return location;
             }
         }
