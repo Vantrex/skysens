@@ -7,7 +7,7 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 public class SvenPackmasterAccordion {
 
-    @ConfigOption(name = "Tracked RNG Drop", desc = "The Sven Packmaster drop to track on the RNG meter: after every boss the action bar shows how many bosses are left until the meter is full for it, and whether it is selected in /rng. It doesn't have to be selected in /rng, but only a selected drop is guaranteed once the meter is full")
+    @ConfigOption(name = "Tracked RNG Drop", desc = "The Sven Packmaster drop to track on the RNG meter: after every boss the action bar shows how many bosses are left until the meter is full for it, and whether it is selected in /rng. It doesn't have to be selected in /rng, but only a selected drop is guaranteed once the meter is full. Opening /rng for this slayer syncs the selected drop to this setting")
     @ConfigEditorDropdown
     @Expose
     public SvenRngDropEnum rngDrop = SvenRngDropEnum.NONE;

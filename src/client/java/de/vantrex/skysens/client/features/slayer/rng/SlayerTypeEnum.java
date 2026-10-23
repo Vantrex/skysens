@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 
 /** The slayers with an RNG meter. The constant names are keys in {@link SlayerRngRepository}, don't rename them. */
@@ -19,12 +20,18 @@ import java.util.function.Function;
 @RequiredArgsConstructor
 public enum SlayerTypeEnum {
 
-    REVENANT("Revenant Horror", "Zombie", RevenantRngDropEnum.values(), config -> config.revenantHorror.rngDrop),
-    TARANTULA("Tarantula Broodfather", "Spider", TarantulaRngDropEnum.values(), config -> config.tarantulaBroodfather.rngDrop),
-    SVEN("Sven Packmaster", "Wolf", SvenRngDropEnum.values(), config -> config.svenPackmaster.rngDrop),
-    VOIDGLOOM("Voidgloom Seraph", "Enderman", VoidgloomRngDropEnum.values(), config -> config.voidgloomSeraph.rngDrop),
-    INFERNO("Inferno Demonlord", "Blaze", InfernoRngDropEnum.values(), config -> config.infernoDemonlord.rngDrop),
-    RIFTSTALKER("Riftstalker Bloodfiend", "Vampire", RiftstalkerRngDropEnum.values(), config -> config.riftstalkerBloodfiend.rngDrop);
+    REVENANT("Revenant Horror", "Zombie", RevenantRngDropEnum.values(), config -> config.revenantHorror.rngDrop,
+            (config, drop) -> config.revenantHorror.rngDrop = (RevenantRngDropEnum) drop),
+    TARANTULA("Tarantula Broodfather", "Spider", TarantulaRngDropEnum.values(), config -> config.tarantulaBroodfather.rngDrop,
+            (config, drop) -> config.tarantulaBroodfather.rngDrop = (TarantulaRngDropEnum) drop),
+    SVEN("Sven Packmaster", "Wolf", SvenRngDropEnum.values(), config -> config.svenPackmaster.rngDrop,
+            (config, drop) -> config.svenPackmaster.rngDrop = (SvenRngDropEnum) drop),
+    VOIDGLOOM("Voidgloom Seraph", "Enderman", VoidgloomRngDropEnum.values(), config -> config.voidgloomSeraph.rngDrop,
+            (config, drop) -> config.voidgloomSeraph.rngDrop = (VoidgloomRngDropEnum) drop),
+    INFERNO("Inferno Demonlord", "Blaze", InfernoRngDropEnum.values(), config -> config.infernoDemonlord.rngDrop,
+            (config, drop) -> config.infernoDemonlord.rngDrop = (InfernoRngDropEnum) drop),
+    RIFTSTALKER("Riftstalker Bloodfiend", "Vampire", RiftstalkerRngDropEnum.values(), config -> config.riftstalkerBloodfiend.rngDrop,
+            (config, drop) -> config.riftstalkerBloodfiend.rngDrop = (RiftstalkerRngDropEnum) drop);
 
     /** The boss name, also the start of its RNG meter menu title ("Revenant Horror RNG Meter"). */
     private final String bossName;
@@ -32,6 +39,7 @@ public enum SlayerTypeEnum {
     private final String slayerName;
     private final SlayerRngDrop[] drops;
     private final Function<SlayerCategory, SlayerRngDrop> trackedDrop;
+    private final BiConsumer<SlayerCategory, SlayerRngDrop> trackedDropSetter;
 
     public static @Nullable SlayerTypeEnum bySlayerName(@NotNull String slayerName) {
         for (final SlayerTypeEnum type : values()) {

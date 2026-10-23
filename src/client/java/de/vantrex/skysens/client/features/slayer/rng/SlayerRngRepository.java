@@ -24,6 +24,8 @@ public class SlayerRngRepository {
         public @Nullable Long storedXp;
         /** The meter XP of the last boss, measured between two completion messages. Null while unknown. */
         public @Nullable Long xpPerBoss;
+        /** Whether xpPerBoss was measured with Aatrox's Slayer XP Buff active. Null for older measurements. */
+        public @Nullable Boolean xpPerBossBuffed;
         /** Drop constant name selected in /rng, "" for no drop, null while the RNG meter menu wasn't read yet. */
         public @Nullable String selectedDrop;
         /** Slayer XP needed per drop constant name, as read from the RNG meter menu. Missing drops use the wiki value. */

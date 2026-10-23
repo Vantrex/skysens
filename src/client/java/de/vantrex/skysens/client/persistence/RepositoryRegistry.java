@@ -66,7 +66,8 @@ public final class RepositoryRegistry {
         saveRepository(SLAYER_RNG_REPOSITORY);
     }
 
-    private static void saveRepository(Object repository) {
+    public static void saveRepository(Object repository) {
+        initBaseDir();
         final String fileName = repository.getClass().getSimpleName() + ".json";
         final File file = BASE_DIR.resolve(fileName).toFile();
         try {

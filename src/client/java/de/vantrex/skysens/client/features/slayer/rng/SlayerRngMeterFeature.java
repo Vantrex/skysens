@@ -8,6 +8,7 @@ import de.vantrex.skysens.client.core.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.core.feature.SkySensFeature;
 import de.vantrex.skysens.client.skyblock.event.SlayerBossSpawnEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerQuestEndEvent;
+import de.vantrex.skysens.client.skyblock.mayor.MayorService;
 import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
 import de.vantrex.skysens.client.util.ChatUtil;
 import net.minecraft.ChatFormatting;
@@ -56,6 +57,7 @@ public class SlayerRngMeterFeature implements GameMessageListeningFeature, After
         if (!this.isActive()) {
             return;
         }
+        MayorService.getInstance().refreshIfNeeded();
         final SlayerRngMeterService service = SlayerRngMeterService.getInstance();
         service.onBoss(SlayerTracker.getInstance().getBoss());
         service.onTick();
