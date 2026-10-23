@@ -53,6 +53,7 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
         this.warningReceived = false;
         notificationService.sendNotification(Notification.builder()
                 .text(this.buildTitle())
+                .level(SkysensConfig.getInstance().generalCategory.notificationLevels.powderPumpkin)
                 .subtitle(Component.literal("You will be notified once the buff is about to expire!").withStyle(Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.WHITE))))
                 .build());
     }
@@ -87,6 +88,7 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
                 .sendNotification(
                         Notification.builder()
                                 .text(this.buildTitle())
+                                .level(SkysensConfig.getInstance().generalCategory.notificationLevels.powderPumpkin)
                                 .subtitle(Component.literal("Your Powder Pumpkin buff is about to expire!").withStyle(
                                         Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.YELLOW))
                                 ))
@@ -100,6 +102,7 @@ public class PowderPumpkinBuffNotificationFeature implements ItemRightClickFeatu
                 .sendNotification(
                         Notification.builder()
                                 .text(this.buildTitle())
+                                .level(SkysensConfig.getInstance().generalCategory.notificationLevels.powderPumpkin)
                                 .subtitle(Component.literal("Your Powder Pumpkin buff has expired!").withStyle(
                                         Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.RED))
                                 ))

@@ -55,6 +55,7 @@ public class FiletOFortuneNotificationFeature implements ItemRightClickFeature, 
         this.warningReceived = false;
         notificationService.sendNotification(Notification.builder()
                 .text(this.buildTitle())
+                .level(SkysensConfig.getInstance().generalCategory.notificationLevels.filetOFortune)
                 .subtitle(Component.literal("You will be notified once the buff is about to expire!").withStyle(Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.WHITE))))
                 .build());
     }
@@ -89,6 +90,7 @@ public class FiletOFortuneNotificationFeature implements ItemRightClickFeature, 
                 .sendNotification(
                         Notification.builder()
                                 .text(this.buildTitle())
+                                .level(SkysensConfig.getInstance().generalCategory.notificationLevels.filetOFortune)
                                 .subtitle(Component.literal("Your Filet O' Fortune buff is about to expire!").withStyle(
                                         Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.YELLOW))
                                 ))
@@ -102,6 +104,7 @@ public class FiletOFortuneNotificationFeature implements ItemRightClickFeature, 
                 .sendNotification(
                         Notification.builder()
                                 .text(this.buildTitle())
+                                .level(SkysensConfig.getInstance().generalCategory.notificationLevels.filetOFortune)
                                 .subtitle(Component.literal("Your Filet O' Fortune buff has expired!").withStyle(
                                         Style.EMPTY.withColor(TextColor.fromLegacyFormat(ChatFormatting.RED))
                                 ))

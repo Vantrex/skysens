@@ -1,5 +1,7 @@
 package de.vantrex.skysens.client.features.bazaar;
 
+import de.vantrex.skysens.client.config.categories.general.NotificationLevelsAccordion;
+import de.vantrex.skysens.client.notification.NotificationLevelEnum;
 import de.vantrex.skysens.client.notification.NotificationService;
 import de.vantrex.skysens.client.skyblock.location.LocationService;
 
@@ -187,7 +189,7 @@ public class BazaarOrderService {
         this.alert(Component.literal(type + " filled!").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD),
                 Component.literal(detail + " - ready to claim").withStyle(ChatFormatting.YELLOW),
                 Component.literal("[Bazaar] " + type + " filled: " + detail + " - ready to claim").withStyle(ChatFormatting.GREEN),
-                true);
+                true, levels().bazaarFilled);
     }
 
     private void pollSafely() {
@@ -294,7 +296,12 @@ public class BazaarOrderService {
                 Component.literal(title + "!").withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
                 Component.literal(detail).withStyle(ChatFormatting.YELLOW),
                 Component.literal("[Bazaar] " + title + ": " + detail).withStyle(ChatFormatting.RED),
-                false);
+                false, priceAlertLevel(order));
+    }
+
+    /** Outbid alerts belong to buy orders, undercut alerts to sell offers. */
+    private static NotificationLevelEnum priceAlertLevel(Order order) {
+        return order.buy ? levels().bazaarOutbid : levels().bazaarUndercut;
     }
 
     /** {@code coins} as percent of the order's price. */
@@ -312,22 +319,28 @@ public class BazaarOrderService {
 
     /**
      * Shows the held back outbid/undercut alerts once the player is out of combat, not AFK and not in a dungeon or Kuudra run
-     * (each condition configurable). Alerts of orders that were filled or removed meanwhile are dropped. Client thread.
+     * (each condition configurable). Important alerts don't wait. Alerts of orders that were filled or removed meanwhile
+     * are dropped. Client thread.
      */
     public void deliverPendingAlerts() {
         final OrderAlerts config = this.config();
         final List<Runnable> alerts;
         synchronized (this.lock) {
-            if (this.pendingPriceAlerts.isEmpty() || !canShowPriceAlerts(config)) {
+            if (this.pendingPriceAlerts.isEmpty()) {
                 return;
             }
+            final boolean canShow = canShowPriceAlerts(config);
             alerts = new ArrayList<>();
-            this.pendingPriceAlerts.forEach((order, alert) -> {
-                if (!order.complete && this.orders().contains(order)) {
-                    alerts.add(alert);
+            this.pendingPriceAlerts.entrySet().removeIf(entry -> {
+                final Order order = entry.getKey();
+                if (!canShow && priceAlertLevel(order) != NotificationLevelEnum.IMPORTANT) {
+                    return false;
                 }
+                if (!order.complete && this.orders().contains(order)) {
+                    alerts.add(entry.getValue());
+                }
+                return true;
             });
-            this.pendingPriceAlerts.clear();
         }
         alerts.forEach(Runnable::run);
     }
@@ -343,7 +356,7 @@ public class BazaarOrderService {
     }
 
     /** Client thread. {@code chatLine} is used where only chat can show it (type CHAT, or off SkyBlock). */
-    private void alert(Component title, Component subtitle, Component chatLine, boolean filled) {
+    private void alert(Component title, Component subtitle, Component chatLine, boolean filled, NotificationLevelEnum level) {
         final OrderAlerts config = this.config();
         final NotificationSound sound = !config.playSound ? null : filled
                 ? new NotificationSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 1.5F)
@@ -362,11 +375,16 @@ public class BazaarOrderService {
                 .displayType(config.displayType)
                 .displayTime(Duration.ofSeconds(4))
                 .sound(sound)
+                .level(level)
                 .build());
     }
 
     private OrderAlerts config() {
         return SkysensConfig.getInstance().bazaarCategory.orderAlerts;
+    }
+
+    private static NotificationLevelsAccordion levels() {
+        return SkysensConfig.getInstance().generalCategory.notificationLevels;
     }
 
 }

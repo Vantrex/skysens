@@ -23,10 +23,14 @@ public final class Notification implements Comparable<Notification> {
     private @Nullable Duration displayTime;
     /** Played once the notification is displayed, not when it is queued. */
     private final @Nullable NotificationSound sound;
+    @Builder.Default
+    private final @NotNull NotificationLevelEnum level = NotificationLevelEnum.NORMAL;
 
+    /** Important notifications first, then oldest first. */
     @Override
     public int compareTo(@NotNull Notification o) {
-        return creationTime.compareTo(o.creationTime);
+        final int byLevel = o.level.compareTo(level);
+        return byLevel != 0 ? byLevel : creationTime.compareTo(o.creationTime);
     }
 
 }

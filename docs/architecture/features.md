@@ -61,4 +61,9 @@ package (like `DungeonRunCompleteEvent`).
 
 To tell the player something, use `NotificationService.getInstance().sendNotification(...)` (title, chat
 or action bar, depending on the user's General settings; held back while AFK if configured), or `ClientUtil.sendPrefixed(...)` for
-plain chat output. `ClientUtil.sendDebug(...)` only prints when Dev → Debug Mode is on.
+plain chat output.
+
+Every notification has a `NotificationLevelEnum` (`.level(...)` on the builder, default `NORMAL`). `NORMAL` ones wait
+while notifications are held (AFK, combat, dungeons/Kuudra, slayer quests); `IMPORTANT` ones ignore those holds and are
+shown before queued normal ones. The user picks the level of each notification in General → Notification Levels
+(`NotificationLevelsAccordion`), so a new notification gets a field there and passes it to `.level(...)`. `ClientUtil.sendDebug(...)` only prints when Dev → Debug Mode is on.
