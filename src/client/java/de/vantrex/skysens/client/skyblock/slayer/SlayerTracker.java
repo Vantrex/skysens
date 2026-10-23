@@ -35,6 +35,8 @@ public class SlayerTracker implements GameMessageListeningFeature, AfterTickFeat
 
     private static final Pattern BOSS_SPAWN = Pattern.compile("^SLAYER BOSS! The (.+) spawned!$");
     private static final String SIDEBAR_QUEST = "Slayer Quest";
+    /** The boss line below "Slayer Quest", a name and its tier, e.g. "Inferno Demonlord IV". */
+    private static final Pattern SIDEBAR_BOSS = Pattern.compile("^[A-Za-z' ]+ [IVX]+$");
     private static final String SIDEBAR_BOSS_SPAWNED = "Slay the boss!";
     /** The sidebar is read once a second, the quest state doesn't need more. */
     private static final int SIDEBAR_INTERVAL_TICKS = 20;
@@ -138,7 +140,10 @@ public class SlayerTracker implements GameMessageListeningFeature, AfterTickFeat
             this.startQuest(false);
         }
         if (questLine + 1 < sidebar.size()) {
-            this.boss = sidebar.get(questLine + 1).trim();
+            final String bossLine = sidebar.get(questLine + 1).trim();
+            if (SIDEBAR_BOSS.matcher(bossLine).matches()) {
+                this.boss = bossLine;
+            }
         }
         if (!this.bossSpawned && sidebar.stream().anyMatch(line -> line.startsWith(SIDEBAR_BOSS_SPAWNED))) {
             this.bossSpawned();
