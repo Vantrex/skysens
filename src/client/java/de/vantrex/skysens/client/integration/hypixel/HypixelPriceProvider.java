@@ -158,10 +158,11 @@ public final class HypixelPriceProvider implements ItemPriceProvider {
         for (final JsonElement element : this.getJson(ITEMS_URL).getAsJsonArray("items")) {
             final JsonObject item = element.getAsJsonObject();
             if (item.has("name") && item.has("id")) {
+                final String id = item.get("id").getAsString();
                 // first one wins, so a rare duplicate name doesn't replace the common item
-                ids.putIfAbsent(normalize(item.get("name").getAsString()), item.get("id").getAsString());
+                ids.putIfAbsent(normalize(item.get("name").getAsString()), id);
                 if (item.has("soulbound")) {
-                    soulbound.add(item.get("id").getAsString());
+                    soulbound.add(id);
                 }
             }
         }
