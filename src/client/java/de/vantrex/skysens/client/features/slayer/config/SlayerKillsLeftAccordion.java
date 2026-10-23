@@ -12,7 +12,7 @@ public class SlayerKillsLeftAccordion {
     @Expose
     public boolean actionBar = true;
 
-    @ConfigOption(name = "Action Bar Duration (seconds)", desc = "How long the kills-left estimate stays in the action bar")
+    @ConfigOption(name = "Action Bar Duration (seconds)", desc = "How long the kills-left estimate stays above the action bar")
     @ConfigEditorSlider(minValue = 1f, maxValue = 10f, minStep = 1f)
     @Expose
     public float actionBarSeconds = 3f;

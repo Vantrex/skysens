@@ -6,18 +6,25 @@ import de.vantrex.skysens.client.core.event.EventListenerRegistry;
 import de.vantrex.skysens.client.core.feature.AfterTickFeature;
 import de.vantrex.skysens.client.core.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.core.feature.SkySensFeature;
+import de.vantrex.skysens.client.features.slayer.rng.SlayerRngMeterService;
 import de.vantrex.skysens.client.skyblock.event.SlayerBossCocoonEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerBossSpawnEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerQuestEndEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerQuestStartEvent;
 import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
 import de.vantrex.skysens.client.util.ScoreboardUtil;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Options;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 
 import java.util.List;
 
@@ -27,6 +34,10 @@ public class SlayerTrackingFeature implements GameMessageListeningFeature, After
 
     /** The sidebar is read once a second, quest progress doesn't need more. */
     private static final int SIDEBAR_INTERVAL_TICKS = 20;
+    /** Vanilla draws the action bar around 68 pixels above the bottom, the estimate goes one line above it. */
+    private static final int ACTION_BAR_OFFSET = 68 + 16;
+    /** Moves the estimate up a line while the RNG meter progress takes the line right above the action bar. */
+    private static final int LINE_HEIGHT = 12;
 
     private float lastYRot = Float.NaN;
     private float lastXRot = Float.NaN;
@@ -42,6 +53,27 @@ public class SlayerTrackingFeature implements GameMessageListeningFeature, After
         EventListenerRegistry.REGISTRY.registerListener(killsLeftService::onQuestStart, SlayerQuestStartEvent.class);
         EventListenerRegistry.REGISTRY.registerListener(killsLeftService::onBossSpawn, SlayerBossSpawnEvent.class);
         EventListenerRegistry.REGISTRY.registerListener(killsLeftService::onQuestEnd, SlayerQuestEndEvent.class);
+        HudElementRegistry.attachElementAfter(VanillaHudElements.OVERLAY_MESSAGE,
+                Identifier.fromNamespaceAndPath("skysens", "slayer_kills_left"), this::extractKillsLeft);
+    }
+
+    /** Draws the kills-left estimate as its own line above the action bar, Hypixel's action bar stays as it is. */
+    private void extractKillsLeft(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
+        if (!this.isActive() || !SkysensClient.getInstance().isOnSkyBlock()) {
+            return;
+        }
+        final Component killsLeft = SlayerKillsLeftService.getInstance().getActionBar();
+        if (killsLeft == null) {
+            return;
+        }
+        final Minecraft client = Minecraft.getInstance();
+        final Font font = client.font;
+        final int offset = SlayerRngMeterService.getInstance().getActionBar() == null
+                ? ACTION_BAR_OFFSET
+                : ACTION_BAR_OFFSET + LINE_HEIGHT;
+        final int x = (client.getWindow().getGuiScaledWidth() - font.width(killsLeft)) / 2;
+        final int y = client.getWindow().getGuiScaledHeight() - offset;
+        graphics.text(font, killsLeft, x, y, 0xFFFFFFFF, true);
     }
 
     @Override
