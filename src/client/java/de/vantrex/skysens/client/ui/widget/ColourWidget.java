@@ -4,9 +4,9 @@ import de.vantrex.skysens.client.ui.model.OptionNode;
 import de.vantrex.skysens.client.ui.render.Animated;
 import de.vantrex.skysens.client.ui.render.RenderUtil;
 import de.vantrex.skysens.client.ui.render.Theme;
+import de.vantrex.skysens.client.ui.render.UiScale;
 import de.vantrex.skysens.client.ui.render.UiText;
 import io.github.notenoughupdates.moulconfig.ChromaColour;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.KeyEvent;
 
@@ -77,9 +77,8 @@ public class ColourWidget extends CardWidget {
 
     /** Popover origin {x, y}, flipped/clamped to stay on screen. */
     private int[] popOrigin() {
-        var window = Minecraft.getInstance().getWindow();
-        int sw = window.getGuiScaledWidth();
-        int sh = window.getGuiScaledHeight();
+        int sw = UiScale.width();
+        int sh = UiScale.height();
         int px = Math.max(4, Math.min(controlX() + controlWidth() - POP_W, sw - POP_W - 4));
         int py = controlY() + SWATCH_H + 2;
         if (py + POP_H > sh - 4) {
@@ -129,6 +128,7 @@ public class ColourWidget extends CardWidget {
 
     @Override
     public void renderOverlay(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        super.renderOverlay(g, mouseX, mouseY, partialTick);
         if (!open) {
             return;
         }
@@ -208,16 +208,17 @@ public class ColourWidget extends CardWidget {
 
     @Override
     public boolean hasOverlay() {
-        return open;
+        return open || super.hasOverlay();
     }
 
     @Override
     public boolean overlayContains(double mx, double my) {
-        return open && inPopover(mx, my);
+        return super.overlayContains(mx, my) || open && inPopover(mx, my);
     }
 
     @Override
     public void closeOverlay() {
+        super.closeOverlay();
         open = false;
         drag = Drag.NONE;
     }
@@ -233,7 +234,12 @@ public class ColourWidget extends CardWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    protected void onReset() {
+        drag = Drag.NONE;
+    }
+
+    @Override
+    protected boolean onMouseClicked(double mx, double my, int button) {
         if (open) {
             if (inPopover(mx, my)) {
                 if (button == 0) {

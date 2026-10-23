@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.ui.widget;
 
+import de.vantrex.skysens.client.ui.model.OptionKind;
 import de.vantrex.skysens.client.ui.model.OptionNode;
 import de.vantrex.skysens.client.ui.render.Animated;
 import de.vantrex.skysens.client.ui.render.RenderUtil;
@@ -11,6 +12,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.util.FormattedCharSequence;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -24,6 +26,9 @@ public class AccordionWidget extends OptionWidget {
 
     private static final Set<String> EXPANDED = new HashSet<>();
     private static final int CHEVRON_SLOT = 14;
+    private static final int BADGE_PAD = 5;
+    private static final int BADGE_GAP = 6;
+    private static final float DIM_ALPHA = 0.55f;
 
     private final List<OptionWidget> children = new ArrayList<>();
     private final String key;
@@ -61,6 +66,32 @@ public class AccordionWidget extends OptionWidget {
                 aw.setNested(!nested);
             }
         }
+    }
+
+    /** Header badge text: On/Off for a master toggle, otherwise "x/y on" for two or more booleans, else null. */
+    private String badgeText() {
+        OptionNode master = null;
+        int toggles = 0;
+        int on = 0;
+        for (OptionNode child : node.children()) {
+            if (child.isMasterToggle()) {
+                master = child;
+            }
+            if (child.kind() == OptionKind.TOGGLE) {
+                toggles++;
+                if (Boolean.TRUE.equals(child.get())) {
+                    on++;
+                }
+            }
+        }
+        if (master != null) {
+            return Boolean.TRUE.equals(master.get()) ? "On" : "Off";
+        }
+        return toggles >= 2 ? on + "/" + toggles + " on" : null;
+    }
+
+    private static int badgeWidth(String text) {
+        return UiText.width(text, UiText.Weight.SEMIBOLD) + 2 * BADGE_PAD;
     }
 
     private int textWidth() {
@@ -148,7 +179,15 @@ public class AccordionWidget extends OptionWidget {
     }
 
     private void toggle() {
-        expanded = !expanded;
+        setExpanded(!expanded);
+    }
+
+    /** Opens or closes the section (animated) and remembers the state across screen openings. */
+    public void setExpanded(boolean value) {
+        if (expanded == value) {
+            return;
+        }
+        expanded = value;
         progress.target(expanded ? 1f : 0f);
         if (expanded) {
             EXPANDED.add(key);
@@ -156,6 +195,30 @@ public class AccordionWidget extends OptionWidget {
             EXPANDED.remove(key);
             closeOverlay();
         }
+    }
+
+    /** Target state: true when open or opening. */
+    public boolean isExpanded() {
+        return expanded;
+    }
+
+    /** True while this accordion or a nested one is still animating its height. */
+    public boolean isAnimating() {
+        progress.value();
+        if (progress.isAnimating()) {
+            return true;
+        }
+        for (OptionWidget c : children) {
+            if (c instanceof AccordionWidget a && a.isAnimating()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Child widgets in order (read-only view). */
+    public List<OptionWidget> children() {
+        return Collections.unmodifiableList(children);
     }
 
     @Override
@@ -192,12 +255,23 @@ public class AccordionWidget extends OptionWidget {
         int lh = UiText.lineHeight();
         int ty = y + (hh - textBlockHeight()) / 2;
         int tx = x + Theme.CARD_PADDING_X;
-        UiText.draw(g, UiText.ellipsize(node.name(), textWidth(), UiText.Weight.SEMIBOLD), tx, ty, Theme.TEXT,
+        String badge = badgeText();
+        int titleWidth = badge == null ? textWidth() : textWidth() - badgeWidth(badge) - BADGE_GAP;
+        UiText.draw(g, UiText.ellipsize(node.name(), titleWidth, UiText.Weight.SEMIBOLD), tx, ty, Theme.TEXT,
                 UiText.Weight.SEMIBOLD);
+        if (badge != null) {
+            drawBadge(g, badge, x + width - Theme.CARD_PADDING_X - CHEVRON_SLOT - BADGE_GAP, ty - 1);
+        }
         ty += lh + 3;
         for (FormattedCharSequence line : descriptionLines()) {
             UiText.drawLine(g, line, tx, ty, Theme.TEXT_MUTED);
             ty += lh + 1;
+        }
+
+        if (node.isDimmed()) {
+            int veil = RenderUtil.withAlpha(base, DIM_ALPHA);
+            RenderUtil.roundedRect(g, x, y, width, hh, style.cards() ? Theme.CARD_RADIUS : 0, veil,
+                    true, true, h <= hh, h <= hh);
         }
 
         float p = progress.value();
@@ -210,6 +284,18 @@ public class AccordionWidget extends OptionWidget {
             }
             RenderUtil.unscissor(g);
         }
+        renderFlash(g, hh);
+    }
+
+    /** Small pill ending at {@code rightX}: accent for "On" and counts, muted for "Off". */
+    private static void drawBadge(GuiGraphicsExtractor g, String text, int rightX, int top) {
+        boolean off = text.equals("Off");
+        int w = badgeWidth(text);
+        int h = UiText.lineHeight() + 2;
+        int bx = rightX - w;
+        RenderUtil.roundedRect(g, bx, top, w, h, h / 2, off ? Theme.TRACK : Theme.ACCENT_SOFT);
+        UiText.draw(g, text, bx + BADGE_PAD, top + 2, off ? Theme.TEXT_MUTED : Theme.ACCENT,
+                UiText.Weight.SEMIBOLD);
     }
 
     /** Chevron pointing right at p=0 and down at p=1, drawn with small fills. */
@@ -262,6 +348,13 @@ public class AccordionWidget extends OptionWidget {
             }
         }
         return false;
+    }
+
+    @Override
+    public void notifyReset() {
+        for (OptionWidget c : children) {
+            c.notifyReset();
+        }
     }
 
     @Override

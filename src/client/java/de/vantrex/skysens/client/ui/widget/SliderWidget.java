@@ -143,7 +143,7 @@ public class SliderWidget extends CardWidget {
     }
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    protected boolean onMouseClicked(double mx, double my, int button) {
         if (button == 0 && overSlider(mx, my)) {
             trackX = controlX();
             dragging = true;
@@ -151,6 +151,11 @@ public class SliderWidget extends CardWidget {
             return true;
         }
         return false;
+    }
+
+    @Override
+    protected void onReset() {
+        dragging = false;
     }
 
     @Override

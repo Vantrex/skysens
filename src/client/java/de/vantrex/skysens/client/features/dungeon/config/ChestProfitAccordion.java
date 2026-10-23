@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.dungeon.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
@@ -8,6 +9,7 @@ public class ChestProfitAccordion {
 
     @ConfigOption(name = "Enabled", desc = "Track revenue, cost and profit of every reward chest you open. See /skysens dungeon profit")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean enabled = true;
 

@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.chatfilter.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
@@ -13,6 +14,7 @@ public class ChatFilterCategory {
 
     @ConfigOption(name = "Enabled", desc = "Master switch. Messages are only hidden while this is on and their own option is on")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean enabled = true;
 

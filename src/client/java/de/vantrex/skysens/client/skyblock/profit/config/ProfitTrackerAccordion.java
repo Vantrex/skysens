@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.skyblock.profit.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.skyblock.profit.ProfitSourceEnum;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
@@ -11,6 +12,7 @@ public class ProfitTrackerAccordion {
 
     @ConfigOption(name = "Enabled", desc = "Track the value of your rare drops and reward chests, overall and per activity (shown by !profit). See \"Tracker\" for which numbers are used.")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean enabled = true;
 

@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.bazaar.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.ChromaColour;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
@@ -12,6 +13,7 @@ public class HighlightOwnSellOrder {
 
     @ConfigOption(name = "Highlight own Sell Orders", desc = "Highlight your own sell orders in the Bazaar GUI")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean highlightOwnSellOrders = true;
 

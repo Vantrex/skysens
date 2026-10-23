@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.slayer.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
@@ -10,6 +11,7 @@ public class SlayerCategory {
 
     @ConfigOption(name = "Track Slayers", desc = "Track bosses killed, failed quests and kill times per boss this session (shown by !slayer, which also needs its toggle in Chat Commands)")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean enabled = true;
 

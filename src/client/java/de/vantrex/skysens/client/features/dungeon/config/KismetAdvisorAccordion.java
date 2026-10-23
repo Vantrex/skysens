@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.dungeon.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
@@ -9,6 +10,7 @@ public class KismetAdvisorAccordion {
 
     @ConfigOption(name = "Enabled", desc = "In a reward chest, tell you whether rerolling it with a Kismet Feather is worth it")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean enabled = false;
 

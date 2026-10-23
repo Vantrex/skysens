@@ -42,15 +42,15 @@ public class SkysensConfig extends Config {
     private static final Logger LOGGER = LoggerFactory.getLogger("skysens");
     private static ManagedConfig<SkysensConfig> CONFIG;
 
-    @Category(name = "General", desc = "General Options")
+    @Category(name = "General", desc = "Notifications and the profit tracker")
     @Expose
     public GeneralCategory generalCategory = new GeneralCategory();
 
-    @Category(name = "Bazaar", desc = "Bazaar Options")
+    @Category(name = "Bazaar", desc = "Order highlights, alerts and click protection")
     @Expose
     public BazaarCategory bazaarCategory = new BazaarCategory();
 
-    @Category(name = "QOL", desc = "Quality of Life Options")
+    @Category(name = "Quality of Life", desc = "Sensitivity per location and junk highlighting")
     @Expose
     public QolCategory qolCategory = new QolCategory();
 
@@ -58,7 +58,7 @@ public class SkysensConfig extends Config {
     @Expose
     public VisualsCategory visualsCategory = new VisualsCategory();
 
-    @Category(name = "Mining", desc = "Mining Options")
+    @Category(name = "Mining", desc = "Mining notifications")
     @Expose
     public MiningCategory miningCategory = new MiningCategory();
 
@@ -66,18 +66,18 @@ public class SkysensConfig extends Config {
     @Expose
     public DungeonCategory dungeonCategory = new DungeonCategory();
 
-    @Category(name = "Chat Commands", desc = "Commands others can use in co-op and party chat, like !ping and !tps")
+    @Category(name = "Chat Commands", desc = "Commands others can use in co-op and party chat")
     @Expose
     public ChatCommandsCategory chatCommandsCategory = new ChatCommandsCategory();
 
     @Category(name = "Slayer", desc = "Slayer session stats, shown by !slayer")
     @Expose
     public SlayerCategory slayerCategory = new SlayerCategory();
-    @Category(name = "Chat Filter", desc = "Hide spammy chat messages, one option per message")
+    @Category(name = "Chat Filter", desc = "Hide spammy chat messages one by one")
     @Expose
     public de.vantrex.skysens.client.features.chatfilter.config.ChatFilterCategory chatFilterCategory = new de.vantrex.skysens.client.features.chatfilter.config.ChatFilterCategory();
 
-    @Category(name = "Dev", desc = "Dev Options")
+    @Category(name = "Dev", desc = "Debugging and diagnostics")
     @Expose
     public DevCategory devCategory = new DevCategory();
 
@@ -92,6 +92,10 @@ public class SkysensConfig extends Config {
     /** Selected config GUI font: a FontFamily id (default INTER, unknown values fall back to INTER). Same persistence approach as {@link #guiTheme}. */
     @Expose
     public String guiFont = "INTER";
+
+    /** Config GUI scale mode: "AUTO" (default, a smaller effective scale when the game's is too large) or "GAME" (the game's GUI scale). Same persistence approach as {@link #guiTheme}. */
+    @Expose
+    public String guiScaleMode = "AUTO";
 
     @Override
     public void saveNow() {

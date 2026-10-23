@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.dungeon.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
@@ -8,6 +9,7 @@ public class RunStatsAccordion {
 
     @ConfigOption(name = "Enabled", desc = "Track the completed dungeon runs per floor (time, score, deaths and, with Chest Profit enabled, reward chest profit) for this session, today and all time. See the !runs chat command")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean enabled = true;
 
