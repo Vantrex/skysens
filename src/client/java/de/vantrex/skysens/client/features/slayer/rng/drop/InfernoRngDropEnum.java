@@ -6,7 +6,8 @@ import lombok.RequiredArgsConstructor;
 
 /**
  * The drops and minimum tiers follow the Inferno Demonlord boss page on the Hypixel SkyBlock wiki. Required Slayer XP
- * estimates use the wiki formula (500 * 100 / highest drop chance); the actual value is read from the RNG meter menu.
+ * values are estimates from its rounded drop chances, except High Class Archfiend Dice, which is confirmed in-game.
+ * The actual value is read from the RNG meter menu.
  * The constant names are stored in the config, don't rename them.
  */
 @Getter
@@ -30,7 +31,7 @@ public enum InfernoRngDropEnum implements SlayerRngDrop {
     FIERY_BURST_RUNE_I("Fiery Burst Rune I", 4, 238_095L),
     FLAWED_OPAL_GEMSTONE("Flawed Opal Gemstone", 4, 17_241L),
     ENCHANTED_BOOK_DUPLEX_I("Enchanted Book (Duplex I)", 4, 27_174L),
-    HIGH_CLASS_ARCHFIEND_DICE("High Class Archfiend Dice", 4, 192_308L),
+    HIGH_CLASS_ARCHFIEND_DICE("High Class Archfiend Dice", 4, 188_100L),
     WILSONS_ENGINEERING_PLANS("Wilson's Engineering Plans", 4, 555_556L),
     SUBZERO_INVERTER("Subzero Inverter", 4, 555_556L),
     PARAGON_SHARD("Paragon Shard", 4, 200_000L);
