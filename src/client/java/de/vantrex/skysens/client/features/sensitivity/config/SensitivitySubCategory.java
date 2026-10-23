@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.sensitivity.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.config.annotation.ConfigEditorDynamicZoneDropdown;
 import de.vantrex.skysens.client.skyblock.location.SkyblockLocationEnum;
@@ -9,8 +10,9 @@ import io.github.notenoughupdates.moulconfig.observer.Property;
 
 public class SensitivitySubCategory {
 
-    @ConfigOption(name = "Sensitivities per location", desc = "Completely disables this feature")
+    @ConfigOption(name = "Sensitivities per location", desc = "Switch your mouse sensitivity automatically depending on the SkyBlock location and zone you are in. Off means your normal sensitivity is always used")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean enablePerLocation = false;
 
@@ -22,12 +24,12 @@ public class SensitivitySubCategory {
     @ConfigEditorBoolean
     public transient Property<Boolean> enableForLocation = Property.of(false);
 
-    @ConfigOption(name = "Location Sensitivity", desc = "The sensitivity for the zone")
+    @ConfigOption(name = "Location Sensitivity", desc = "The sensitivity for the selected location")
     @ConfigEditorSlider(minValue = 1F, maxValue = 100.0F, minStep = 1F)
     public transient Property<Float> locationSensitivity = Property.of(100F);
 
 
-    @ConfigOption(name = "Zones", desc = "The zones to apply the sensitivity to")
+    @ConfigOption(name = "Zones", desc = "The zone of the selected location to set a sensitivity for")
     @ConfigEditorDynamicZoneDropdown(fieldName = "zones")
     public transient Property<Integer> zones = Property.of(HubZoneEnum.VILLAGE.ordinal());
 

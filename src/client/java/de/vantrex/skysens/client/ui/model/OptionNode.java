@@ -1,20 +1,33 @@
 package de.vantrex.skysens.client.ui.model;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
+import io.github.notenoughupdates.moulconfig.ChromaColour;
+import io.github.notenoughupdates.moulconfig.observer.Property;
 import io.github.notenoughupdates.moulconfig.processor.ProcessedOption;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A single config option wrapping a MoulConfig {@link ProcessedOption}.
  * Never cache values read from {@link #get()}; re-read them every frame.
  */
 public final class OptionNode {
+
+    /** Fresh instance per config class, the source of default values; {@link #UNAVAILABLE} marks a class that cannot be built. */
+    private static final Map<Class<?>, Object> DEFAULT_INSTANCES = new HashMap<>();
+    private static final Object UNAVAILABLE = new Object();
+    private static final double FLOAT_EPSILON = 1e-6;
 
     private final ProcessedOption option;
     private final Field field;
@@ -129,5 +142,84 @@ public final class OptionNode {
         }
         return name.toLowerCase(Locale.ROOT).contains(lowerQuery)
                 || description.toLowerCase(Locale.ROOT).contains(lowerQuery);
+    }
+
+    /** Whether this boolean switches its container (category or accordion) on or off. */
+    public boolean isMasterToggle() {
+        return kind == OptionKind.TOGGLE && annotation(ConfigMasterToggle.class) != null;
+    }
+
+    /**
+     * Whether a master toggle of this option's container, or of any enclosing accordion, is currently off.
+     * The master toggle itself is not affected by its own container's switch.
+     */
+    public boolean isDimmed() {
+        List<OptionNode> siblings = parent != null ? parent.children : category != null ? category.options() : List.of();
+        for (OptionNode sibling : siblings) {
+            if (sibling != this && sibling.isMasterToggle() && !Boolean.TRUE.equals(sibling.get())) {
+                return true;
+            }
+        }
+        return parent != null && parent.isDimmed();
+    }
+
+    /**
+     * The value of the backing field on a fresh instance of its declaring class, if known. Empty for accordions,
+     * transient fields (UI state) and {@code Property} fields, and when the class cannot be instantiated.
+     */
+    public Optional<Object> defaultValue() {
+        if (field == null || kind == OptionKind.ACCORDION || Modifier.isTransient(field.getModifiers())
+                || Property.class.isAssignableFrom(field.getType())) {
+            return Optional.empty();
+        }
+        Object instance = DEFAULT_INSTANCES.computeIfAbsent(field.getDeclaringClass(), OptionNode::instantiate);
+        if (instance == UNAVAILABLE) {
+            return Optional.empty();
+        }
+        try {
+            field.setAccessible(true);
+            return Optional.ofNullable(field.get(instance));
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return Optional.empty();
+        }
+    }
+
+    /** Sets the default value if the current one differs. Returns whether the value changed. */
+    public boolean resetToDefault() {
+        Optional<Object> def = defaultValue();
+        if (def.isEmpty() || isDefault()) {
+            return false;
+        }
+        set(def.get());
+        return true;
+    }
+
+    private static Object instantiate(Class<?> type) {
+        try {
+            var constructor = type.getDeclaredConstructor();
+            constructor.setAccessible(true);
+            return constructor.newInstance();
+        } catch (ReflectiveOperationException | RuntimeException e) {
+            return UNAVAILABLE;
+        }
+    }
+
+    /** Whether the current value equals the default (also true when no default is known). */
+    public boolean isDefault() {
+        Optional<Object> def = defaultValue();
+        return def.isEmpty() || sameValue(def.get(), get());
+    }
+
+    private static boolean sameValue(Object a, Object b) {
+        if (a instanceof Float x && b instanceof Float y) {
+            return Math.abs(x - y) <= FLOAT_EPSILON;
+        }
+        if (a instanceof Double x && b instanceof Double y) {
+            return Math.abs(x - y) <= FLOAT_EPSILON;
+        }
+        if (a instanceof ChromaColour x && b instanceof ChromaColour y) {
+            return x.toLegacyString().equals(y.toLegacyString());
+        }
+        return Objects.equals(a, b);
     }
 }

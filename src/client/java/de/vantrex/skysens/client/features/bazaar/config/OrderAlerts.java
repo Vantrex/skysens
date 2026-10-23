@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.bazaar.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.notification.NotificationDisplayTypeEnum;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
@@ -11,6 +12,7 @@ public class OrderAlerts {
 
     @ConfigOption(name = "Order Alerts", desc = "Track your open bazaar orders and get alerted when they are outbid, undercut or filled")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean enabled = true;
 

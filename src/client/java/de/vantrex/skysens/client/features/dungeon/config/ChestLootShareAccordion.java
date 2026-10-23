@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.dungeon.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.chatcommand.ShareChannelEnum;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
@@ -11,6 +12,7 @@ public class ChestLootShareAccordion {
 
     @ConfigOption(name = "Share chest loot", desc = "Post the loot of opened reward chests, e.g. \"Bedrock Chest: Recombobulator 3000, Wisdom II - 12.3M profit\"")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean enabled = false;
 

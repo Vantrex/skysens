@@ -137,6 +137,15 @@ public class SkysensClient implements ClientModInitializer {
                         });
                         return 1;
                     })
+                    .then(ClientCommands.literal("dev")
+                            .executes(context -> {
+                                Minecraft client = Minecraft.getInstance();
+                                client.execute(() -> {
+                                    Screen parent = client.gui.screen() instanceof ChatScreen ? null : client.gui.screen();
+                                    client.gui.setScreen(new SkysensConfigScreen(parent, true));
+                                });
+                                return 1;
+                            }))
                     .then(ClientCommands.literal("scale")
                             .then(ClientCommands.literal("export")
                                     .executes(context -> VisualsSettingsTransfer.export()))

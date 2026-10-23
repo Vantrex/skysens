@@ -59,6 +59,12 @@ public enum SkyblockLocationEnum {
         this(displayName, scoreboardName, zoneEnum, false);
     }
 
+    /** The display name, as shown in the config dropdown. */
+    @Override
+    public String toString() {
+        return displayName;
+    }
+
     public static @Nullable SkyblockLocationEnum fromMode(final String scoreboardName) {
         for (SkyblockLocationEnum location : values()) {
             if (location.getScoreboardName().equals(scoreboardName)) {

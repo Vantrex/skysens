@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.visuals.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
@@ -9,6 +10,7 @@ public class PlayerScaleAccordion {
 
     @ConfigOption(name = "Enabled", desc = "Enables player scaling")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean enabled = false;
 

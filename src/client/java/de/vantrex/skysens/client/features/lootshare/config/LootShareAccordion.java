@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.lootshare.config;
 
+import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.features.lootshare.DropTierEnum;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
@@ -11,6 +12,7 @@ public class LootShareAccordion {
 
     @ConfigOption(name = "Share rare drops", desc = "Post your rare drops (RARE DROP!, CRAZY RARE DROP!, ...) to co-op chat")
     @ConfigEditorBoolean
+    @ConfigMasterToggle
     @Expose
     public boolean enabled = false;
 

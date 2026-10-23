@@ -5,10 +5,10 @@ import de.vantrex.skysens.client.ui.model.OptionKind;
 import de.vantrex.skysens.client.ui.model.OptionNode;
 import de.vantrex.skysens.client.ui.render.RenderUtil;
 import de.vantrex.skysens.client.ui.render.Theme;
+import de.vantrex.skysens.client.ui.render.UiScale;
 import de.vantrex.skysens.client.ui.render.UiText;
 import de.vantrex.skysens.client.skyblock.location.SkyblockLocationEnum;
 import de.vantrex.skysens.client.skyblock.location.zone.ZoneEnum;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.input.KeyEvent;
 
@@ -66,7 +66,7 @@ public class DropdownWidget extends CardWidget {
             Object[] cs = node.valueType().getEnumConstants();
             if (cs != null) {
                 for (Object c : cs) {
-                    out.add(new Entry(c.toString(), c));
+                    out.add(new Entry(c instanceof Enum<?> en ? UiText.enumLabel(en) : c.toString(), c));
                 }
             }
         }
@@ -113,9 +113,8 @@ public class DropdownWidget extends CardWidget {
 
     /** Popover bounds as {x, y, w, h}. */
     private int[] popover(List<Entry> es) {
-        var window = Minecraft.getInstance().getWindow();
-        int sw = window.getGuiScaledWidth();
-        int sh = window.getGuiScaledHeight();
+        int sw = UiScale.width();
+        int sh = UiScale.height();
         int maxLabel = 0;
         for (Entry e : es) {
             maxLabel = Math.max(maxLabel, UiText.width(e.label(), UiText.Weight.SEMIBOLD));
@@ -177,6 +176,7 @@ public class DropdownWidget extends CardWidget {
 
     @Override
     public void renderOverlay(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
+        super.renderOverlay(g, mouseX, mouseY, partialTick);
         if (!open) {
             return;
         }
@@ -226,11 +226,14 @@ public class DropdownWidget extends CardWidget {
 
     @Override
     public boolean hasOverlay() {
-        return open;
+        return open || super.hasOverlay();
     }
 
     @Override
     public boolean overlayContains(double mx, double my) {
+        if (super.overlayContains(mx, my)) {
+            return true;
+        }
         if (!open) {
             return false;
         }
@@ -244,13 +247,14 @@ public class DropdownWidget extends CardWidget {
 
     @Override
     public void closeOverlay() {
+        super.closeOverlay();
         open = false;
     }
 
     // ------------------------------------------------------------------ input
 
     @Override
-    public boolean mouseClicked(double mx, double my, int button) {
+    protected boolean onMouseClicked(double mx, double my, int button) {
         if (open) {
             List<Entry> es = entries();
             if (!es.isEmpty()) {
