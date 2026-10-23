@@ -10,6 +10,7 @@ import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Util;
 
 import java.util.HashMap;
 import java.util.List;
@@ -59,6 +60,8 @@ public final class UiText {
     private static final int CACHE_LIMIT = 2048;
 
     private static final String FONT_NAMESPACE = "skysens";
+    /** How long the brand gradient takes to flow through once and back. */
+    private static final long BRAND_CYCLE_MS = 4000L;
 
     private static FontFamily family = FontFamily.DEFAULT;
     private static boolean loaded;
@@ -315,12 +318,16 @@ public final class UiText {
         g.text(font(), entry(text, weight).component(), x, y, argb, false);
     }
 
-    /** Draws text in the SkySens brand gradient (see {@link Brand}). Uncached; only for a handful of strings per frame. */
+    /**
+     * Draws text in the SkySens brand gradient (see {@link Brand}), with the colours slowly flowing through it.
+     * Uncached; only for a handful of strings per frame.
+     */
     public static void drawBrand(GuiGraphicsExtractor g, String text, int x, int y, Weight weight) {
         if (text == null || text.isEmpty()) {
             return;
         }
-        Component c = Brand.gradient(text, style(weight));
+        float phase = (Util.getMillis() % BRAND_CYCLE_MS) / (float) BRAND_CYCLE_MS * 2f;
+        Component c = Brand.gradient(text, style(weight), phase);
         if (weight == Weight.DISPLAY) {
             if (!family.vanilla()) {
                 g.text(font(), c, x, y + DISPLAY_Y_OFFSET, 0xFFFFFFFF, false);
