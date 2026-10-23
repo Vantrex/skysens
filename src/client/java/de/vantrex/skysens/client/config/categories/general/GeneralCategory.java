@@ -47,6 +47,11 @@ public class GeneralCategory {
     @Expose
     public boolean holdNotificationsDuringSlayerQuest;
 
+    @ConfigOption(name = "Notification Levels", desc = "How urgent each notification is. Important notifications ignore the holds above and are shown first")
+    @Accordion
+    @Expose
+    public NotificationLevelsAccordion notificationLevels = new NotificationLevelsAccordion();
+
     @ConfigOption(name = "Profit Tracker", desc = "Session and all-time profit of drops and reward chests, shown by !profit")
     @Accordion
     @Expose

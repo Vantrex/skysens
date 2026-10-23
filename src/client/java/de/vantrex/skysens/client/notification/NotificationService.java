@@ -48,6 +48,12 @@ public class NotificationService {
     }
 
 
+    /** The queue head: the oldest important notification, else the oldest normal one. */
+    @Synchronized
+    private @Nullable Notification peekNextNotification() {
+        return this.notificationQueue.peek();
+    }
+
     @Synchronized
     private @Nullable Notification getNextNotification() {
         return this.notificationQueue.poll();
@@ -63,7 +69,8 @@ public class NotificationService {
         if (this.handleCurrentNotification()) {
             return;
         }
-        if (!this.hasNextNotification() || this.isOnHold()) {
+        final Notification peeked = this.peekNextNotification();
+        if (peeked == null || (peeked.getLevel() != NotificationLevelEnum.IMPORTANT && this.isOnHold())) {
             return;
         }
         final Notification nextNotification = this.getNextNotification();
@@ -75,7 +82,10 @@ public class NotificationService {
         this.displayNotification(nextNotification, true);
     }
 
-    /** Whether queued notifications wait, e.g. while the player is AFK or fighting. They are shown once it is over. */
+    /**
+     * Whether queued normal notifications wait, e.g. while the player is AFK or fighting. They are shown once it is
+     * over. Important notifications don't wait.
+     */
     private boolean isOnHold() {
         final GeneralCategory config = SkysensConfig.getInstance().generalCategory;
         if (config.holdNotificationsWhileAfk && AfkTracker.getInstance().isAfk()) {
