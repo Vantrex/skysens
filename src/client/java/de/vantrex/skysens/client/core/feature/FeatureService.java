@@ -4,6 +4,7 @@ import de.vantrex.skysens.client.features.activity.ActivityTrackingFeature;
 import de.vantrex.skysens.client.features.bazaar.BazaarDisableClickFeature;
 import de.vantrex.skysens.client.skyblock.player.AfkTracker;
 import de.vantrex.skysens.client.skyblock.player.CombatTracker;
+import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
 import de.vantrex.skysens.client.features.bazaar.BazaarHighlightFeature;
 import de.vantrex.skysens.client.chatcommand.ChatCommandFeature;
 import de.vantrex.skysens.client.features.lootshare.LootShareFeature;
@@ -75,6 +76,7 @@ public class FeatureService {
         this.featureRegistry.register(new JunkHighlightFeature());
         this.featureRegistry.register(CombatTracker.getInstance());
         this.featureRegistry.register(AfkTracker.getInstance());
+        this.featureRegistry.register(SlayerTracker.getInstance());
 
     }
 

@@ -7,8 +7,8 @@ import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
 import de.vantrex.skysens.client.skyblock.player.AfkTracker;
 import de.vantrex.skysens.client.skyblock.player.CombatTracker;
+import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
 import de.vantrex.skysens.client.util.ClientUtil;
-import de.vantrex.skysens.client.util.ScoreboardUtil;
 import lombok.Getter;
 import lombok.Synchronized;
 import net.minecraft.client.Minecraft;
@@ -88,8 +88,7 @@ public class NotificationService {
         if (config.holdNotificationsInInstances && this.locationService.isInInstance()) {
             return true;
         }
-        return config.holdNotificationsDuringSlayerQuest
-                && ScoreboardUtil.getSidebarLines().stream().anyMatch(line -> line.startsWith("Slayer Quest"));
+        return config.holdNotificationsDuringSlayerQuest && SlayerTracker.getInstance().isQuestActive();
     }
 
     private long getDisplayTime(final Notification notification) {
