@@ -11,11 +11,17 @@ import de.vantrex.skysens.client.skyblock.event.SlayerQuestEndEvent;
 import de.vantrex.skysens.client.skyblock.mayor.MayorService;
 import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
 import de.vantrex.skysens.client.util.ChatUtil;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemLore;
@@ -32,6 +38,8 @@ public class SlayerRngMeterFeature implements GameMessageListeningFeature, After
 
     /** The RNG meter menu is read twice a second while it is open, so a drop (de)selected in it is noticed. */
     private static final int MENU_INTERVAL_TICKS = 10;
+    /** Vanilla draws the action bar around 68 pixels above the bottom, the progress goes one line above it. */
+    private static final int ACTION_BAR_OFFSET = 68 + 16;
 
     private int ticks;
 
@@ -39,6 +47,24 @@ public class SlayerRngMeterFeature implements GameMessageListeningFeature, After
         final SlayerRngMeterService service = SlayerRngMeterService.getInstance();
         EventListenerRegistry.REGISTRY.registerListener(service::onQuestEnd, SlayerQuestEndEvent.class);
         EventListenerRegistry.REGISTRY.registerListener(event -> service.onBoss(event.getBoss()), SlayerBossSpawnEvent.class);
+        HudElementRegistry.attachElementAfter(VanillaHudElements.OVERLAY_MESSAGE,
+                Identifier.fromNamespaceAndPath("skysens", "slayer_rng_meter"), this::extractProgress);
+    }
+
+    /** Draws the progress as its own line above the action bar, Hypixel's action bar stays as it is. */
+    private void extractProgress(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
+        if (!this.isActive() || !SkysensClient.getInstance().isOnSkyBlock()) {
+            return;
+        }
+        final Component progress = SlayerRngMeterService.getInstance().getActionBar();
+        if (progress == null) {
+            return;
+        }
+        final Minecraft client = Minecraft.getInstance();
+        final Font font = client.font;
+        final int x = (client.getWindow().getGuiScaledWidth() - font.width(progress)) / 2;
+        final int y = client.getWindow().getGuiScaledHeight() - ACTION_BAR_OFFSET;
+        graphics.text(font, progress, x, y, 0xFFFFFFFF, true);
     }
 
     @Override
@@ -60,7 +86,6 @@ public class SlayerRngMeterFeature implements GameMessageListeningFeature, After
         MayorService.getInstance().refreshIfNeeded();
         final SlayerRngMeterService service = SlayerRngMeterService.getInstance();
         service.onBoss(SlayerTracker.getInstance().getBoss());
-        service.onTick();
         if (++this.ticks % MENU_INTERVAL_TICKS == 0
                 && Minecraft.getInstance().gui.screen() instanceof AbstractContainerScreen<?> screen) {
             final String title = screen.getTitle().getString();
