@@ -103,11 +103,10 @@ public final class SlayerRngMeterService {
         boolean changed = !Objects.equals(previous, storedXp);
         // a lower value means the meter paid out a drop; more than one completion in between isn't one boss' XP
         if (previous != null && storedXp > previous && this.completionsSinceReading == 1) {
+            // the measured delta already contains every XP bonus, e.g. Aatrox's Slayer XP Buff
             final long xpPerBoss = storedXp - previous;
-            final boolean buffed = MayorService.getInstance().isSlayerXpBuffActive();
-            changed |= !Objects.equals(meter.xpPerBoss, xpPerBoss) || !Objects.equals(meter.xpPerBossBuffed, buffed);
+            changed |= !Objects.equals(meter.xpPerBoss, xpPerBoss);
             meter.xpPerBoss = xpPerBoss;
-            meter.xpPerBossBuffed = buffed;
         }
         meter.storedXp = storedXp;
         this.completionsSinceReading = 0;
@@ -172,12 +171,7 @@ public final class SlayerRngMeterService {
         if (meter.xpPerBoss == null || meter.xpPerBoss <= 0) {
             return Component.literal("? bosses left").withStyle(ChatFormatting.YELLOW);
         }
-        long xpPerBoss = meter.xpPerBoss;
-        if (meter.xpPerBossBuffed != null) {
-            final double measuredMultiplier = meter.xpPerBossBuffed ? 1.25 : 1.0;
-            final double currentMultiplier = MayorService.getInstance().isSlayerXpBuffActive() ? 1.25 : 1.0;
-            xpPerBoss = Math.max(1, Math.round(xpPerBoss * currentMultiplier / measuredMultiplier));
-        }
+        final long xpPerBoss = meter.xpPerBoss;
         final long left = (required - stored + xpPerBoss - 1) / xpPerBoss;
         return Component.literal("~" + left + (left == 1 ? " boss" : " bosses") + " left").withStyle(ChatFormatting.YELLOW);
     }
