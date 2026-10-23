@@ -50,6 +50,11 @@ public class SlayerCategory {
     @Expose
     public SlayerRngMeterAccordion rngMeter = new SlayerRngMeterAccordion();
 
+    @ConfigOption(name = "Kills Left", desc = "Estimate how many miniboss kills remain before the slayer boss spawns")
+    @Accordion
+    @Expose
+    public SlayerKillsLeftAccordion killsLeft = new SlayerKillsLeftAccordion();
+
     @ConfigOption(name = "Revenant Horror", desc = "Settings for the Revenant Horror (Zombie Slayer)")
     @Accordion
     @Expose
