@@ -58,6 +58,8 @@ public enum RiftZoneEnum implements ZoneEnum<RiftZoneEnum> {
     WIZARD_TOWER("Wizard Tower", "ф Wizard Tower"),
     WYLD_WOODS("Wyld Woods", "ф Wyld Woods"),
     YOUR_ISLAND("Your Island", "ф \"Your\" Island"),
+    MOUNTAINTOP("Mountaintop", "ф Mountaintop"),
+    FAIRYLOSOPHER_TOWER("Fairylosopher Tower", "ф Fairylosopher Tower"),
     ;
 
     private final String displayName;

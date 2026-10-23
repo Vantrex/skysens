@@ -46,6 +46,17 @@ public enum HubZoneEnum implements ZoneEnum<HubZoneEnum> {
     BLACKSMITHS_HOUSE("Blacksmith's House", "⏣ Blacksmith's House"),
     CARNIVAL("Carnival", "⏣ Carnival"),
     BARN("Barn", "⏣ Barn"),
+    BLACKSMITH("Blacksmith", "⏣ Blacksmith"),
+    COMBAT_SETTLEMENT("Combat Settlement", "⏣ Combat Settlement"),
+    FORAGING_CAMP("Foraging Camp", "⏣ Foraging Camp"),
+    HEXATORUM("Hexatorum", "⏣ Hexatorum"),
+    MINING_DISTRICT("Mining District", "⏣ Mining District"),
+    PET_CARE("Pet Care", "⏣ Pet Care"),
+    REVENANT_CAVE("Revenant Cave", "⏣ Revenant Cave"),
+    SECURITY_HALL("Security Hall", "⏣ Security Hall"),
+    SEWER("Sewer", "⏣ Sewer"),
+    TAYLORS_SHOP("Taylor's Shop", "⏣ Taylor's Shop"),
+    WEATHER_STATION("Weather Station", "⏣ Weather Station"),
 
     ;
 

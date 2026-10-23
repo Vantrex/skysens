@@ -108,7 +108,7 @@ public class SkysensClient implements ClientModInitializer {
             var mode = packet.getMode().orElse(null);
             var map = packet.getMap().orElse(null);
             ClientUtil.sendDebug("Server: " + this.serverName + " | Lobby: " + lobbyName + " | Map: " + map + " | Mode: " + mode);
-            this.locationService.handleLocationUpdate(map);
+            this.locationService.handleLocationUpdate(map, mode);
         });
         ClientPlayConnectionEvents.DISCONNECT.register((listener, client) -> {
             if (this.isOnSkyBlock) {
@@ -179,7 +179,8 @@ public class SkysensClient implements ClientModInitializer {
                                 if (location.equals("null")) {
                                     location = null;
                                 }
-                                this.locationService.handleLocationUpdate(location);
+                                // matches either a mode (mining_3) or a map name ("Dwarven Mines")
+                                this.locationService.handleLocationUpdate(location, location);
                                 return 1;
                             })));
         });

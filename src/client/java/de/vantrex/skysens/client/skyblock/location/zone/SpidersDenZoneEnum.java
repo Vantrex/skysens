@@ -13,6 +13,7 @@ public enum SpidersDenZoneEnum implements ZoneEnum<SpidersDenZoneEnum> {
     GRANDMAS_HOUSE("Grandma's House", "⏣ Grandma's House"),
     GRAVEL_MINES("Gravel Mines", "⏣ Gravel Mines"),
     SPIDER_MOUND("Spider Mound", "⏣ Spider Mound"),
+    MICHAELS_CRIB("Michael's Crib", "⏣ Michael's Crib"),
 
     ;
 
