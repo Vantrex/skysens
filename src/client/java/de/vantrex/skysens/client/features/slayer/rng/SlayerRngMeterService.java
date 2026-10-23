@@ -30,7 +30,7 @@ import java.util.regex.Pattern;
  * Tracks the slayer RNG meters for the drop chosen per slayer in the config, whether or not it is selected in /rng.
  * The stored XP comes from the "RNG Meter - N Stored XP" line of the completion message (the slayer is the one of the
  * level line right before it), the XP each drop needs and the drop selected in /rng from the RNG meter menu. Shows the
- * progress in the action bar after every boss and notifies once the meter is full. Client thread.
+ * progress above the action bar after every boss and notifies once the meter is full. Client thread.
  */
 public final class SlayerRngMeterService {
 
@@ -125,16 +125,15 @@ public final class SlayerRngMeterService {
         }
     }
 
-    /** Keeps the progress in the action bar, Hypixel overwrites it with its own bar every second. */
-    public void onTick() {
-        if (this.actionBar == null) {
-            return;
-        }
-        if (System.currentTimeMillis() > this.actionBarUntilMs) {
+    /**
+     * The progress to show right above the action bar, null once it expired. It is drawn as its own HUD line, so
+     * Hypixel's action bar (health, defense, mana) stays visible and the two don't take turns in the same spot.
+     */
+    public @Nullable Component getActionBar() {
+        if (this.actionBar != null && System.currentTimeMillis() > this.actionBarUntilMs) {
             this.actionBar = null;
-            return;
         }
-        ClientUtil.sendActionBar(this.actionBar);
+        return this.actionBar;
     }
 
     /**
