@@ -53,8 +53,6 @@ public final class SlayerRngMeterService {
     private @Nullable String lastBoss;
     /** Completed quests since the last stored XP reading; the XP difference is one boss' XP only if this is 1. */
     private int completionsSinceReading;
-    private @Nullable Component actionBar;
-    private long actionBarUntilMs;
 
     private SlayerRngMeterService() {
     }
@@ -115,25 +113,15 @@ public final class SlayerRngMeterService {
         if (!drop.isNone()) {
             final SlayerRngMeterAccordion settings = config().rngMeter;
             if (settings.actionBar) {
-                this.actionBar = this.progress(type, meter, drop);
-                this.actionBarUntilMs = System.currentTimeMillis() + (long) (settings.actionBarSeconds * 1000);
+                // waits while e.g. a kills-left estimate is shown
+                ClientUtil.sendSecondaryActionBar(this.progress(type, meter, drop),
+                        (long) (settings.actionBarSeconds * 1000));
             }
             this.checkFull(type, meter, drop);
         }
         if (changed) {
             RepositoryRegistry.saveRepository(RepositoryRegistry.SLAYER_RNG_REPOSITORY);
         }
-    }
-
-    /**
-     * The progress to show right above the action bar, null once it expired. It is drawn as its own HUD line, so
-     * Hypixel's action bar (health, defense, mana) stays visible and the two don't take turns in the same spot.
-     */
-    public @Nullable Component getActionBar() {
-        if (this.actionBar != null && System.currentTimeMillis() > this.actionBarUntilMs) {
-            this.actionBar = null;
-        }
-        return this.actionBar;
     }
 
     /**
@@ -323,11 +311,7 @@ public final class SlayerRngMeterService {
 
     /** "3,093", "12.5k" or "3.5M" as a number. */
     private static long parseXp(String text) {
-        final String plain = text.replace(",", "");
-        final char unit = Character.toLowerCase(plain.charAt(plain.length() - 1));
-        final double factor = unit == 'k' ? 1_000 : unit == 'm' ? 1_000_000 : 1;
-        final String number = factor == 1 ? plain : plain.substring(0, plain.length() - 1);
-        return Math.round(Double.parseDouble(number) * factor);
+        return Math.round(NumberUtil.parseAbbreviated(text));
     }
 
     private static String formatXp(long xp) {

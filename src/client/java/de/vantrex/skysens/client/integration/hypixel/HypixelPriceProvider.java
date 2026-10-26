@@ -6,7 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import de.vantrex.skysens.client.SkysensClient;
-import net.minecraft.ChatFormatting;
+import de.vantrex.skysens.client.util.ChatUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
@@ -147,8 +147,7 @@ public final class HypixelPriceProvider implements ItemPriceProvider {
     }
 
     private static String normalize(String name) {
-        final String stripped = ChatFormatting.stripFormatting(name);
-        return (stripped == null ? name : stripped).trim().toLowerCase(Locale.ROOT);
+        return ChatUtil.strip(name).toLowerCase(Locale.ROOT);
     }
 
     /** Item names to ids and the soulbound ids, from Hypixel's item list. */

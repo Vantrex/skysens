@@ -6,19 +6,18 @@ import de.vantrex.skysens.client.core.feature.AfterTickFeature;
 import de.vantrex.skysens.client.core.feature.HandledScreenFeature;
 import de.vantrex.skysens.client.core.feature.SkySensFeature;
 import de.vantrex.skysens.client.skyblock.price.ItemPriceService;
+import de.vantrex.skysens.client.util.ChatUtil;
 import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.ItemUtil;
 import de.vantrex.skysens.client.skyblock.item.ItemIdUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemLore;
 import org.jetbrains.annotations.Nullable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -95,7 +94,7 @@ public class KismetAdvisorFeature implements HandledScreenFeature, AfterTickFeat
         // the Reroll button only exists while a reroll is still possible
         int rerollSlot = -1;
         for (int i = 0; i < slots.size(); i++) {
-            if (strip(slots.get(i).getItem().getHoverName().getString()).equals(REROLL_BUTTON)) {
+            if (ChatUtil.strip(slots.get(i).getItem().getHoverName().getString()).equals(REROLL_BUTTON)) {
                 rerollSlot = i;
                 break;
             }
@@ -165,17 +164,12 @@ public class KismetAdvisorFeature implements HandledScreenFeature, AfterTickFeat
 
     /** Coins and key price from the lore of the open button, or null if it has no cost (yet). */
     private static @Nullable Double readCost(ItemStack button, ItemPriceService prices) {
-        final ItemLore lore = button.get(DataComponents.LORE);
-        if (lore == null) {
-            return null;
-        }
         boolean found = false;
         double cost = 0;
-        for (final Component line : lore.lines()) {
-            final String text = strip(line.getString());
+        for (final String text : ItemUtil.strippedLore(button)) {
             final Matcher coins = COINS.matcher(text);
             if (coins.matches()) {
-                cost += parseNumber(coins.group(1));
+                cost += NumberUtil.parseNumber(coins.group(1));
                 found = true;
             } else if (text.equals("FREE")) {
                 found = true;
@@ -192,16 +186,16 @@ public class KismetAdvisorFeature implements HandledScreenFeature, AfterTickFeat
         if (stack.isEmpty()) {
             return 0;
         }
-        String name = strip(stack.getHoverName().getString());
+        String name = ChatUtil.strip(stack.getHoverName().getString());
         long amount = stack.getCount();
         final Matcher times = AMOUNT.matcher(name);
         if (times.matches()) {
             name = times.group(1);
-            amount = Math.max(amount, (long) parseNumber(times.group(2)));
+            amount = Math.max(amount, (long) NumberUtil.parseNumber(times.group(2)));
         }
         final Matcher coins = COINS.matcher(name);
         if (coins.matches()) {
-            return parseNumber(coins.group(1));
+            return NumberUtil.parseNumber(coins.group(1));
         }
         final Matcher essence = ESSENCE.matcher(name);
         if (essence.matches()) {
@@ -209,9 +203,9 @@ public class KismetAdvisorFeature implements HandledScreenFeature, AfterTickFeat
         }
         if (name.equals("Enchanted Book")) {
             // the enchant is the first line of the lore: "Wisdom II"
-            final ItemLore lore = stack.get(DataComponents.LORE);
-            if (lore != null && !lore.lines().isEmpty()) {
-                final Matcher book = BOOK_LORE.matcher(strip(lore.lines().getFirst().getString()));
+            final List<String> lore = ItemUtil.strippedLore(stack);
+            if (!lore.isEmpty()) {
+                final Matcher book = BOOK_LORE.matcher(lore.getFirst());
                 if (book.matches()) {
                     return prices.getBookPrice(book.group(1), ItemIdUtil.romanToInt(book.group(2))).orElse(0);
                 }
@@ -220,14 +214,4 @@ public class KismetAdvisorFeature implements HandledScreenFeature, AfterTickFeat
         }
         return prices.getPrice(name).orElse(0) * amount;
     }
-
-    private static String strip(String text) {
-        final String stripped = ChatFormatting.stripFormatting(text);
-        return (stripped == null ? text : stripped).trim();
-    }
-
-    private static double parseNumber(String number) {
-        return Double.parseDouble(number.replace(",", ""));
-    }
-
 }
