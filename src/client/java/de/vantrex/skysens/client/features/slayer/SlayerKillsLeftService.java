@@ -102,7 +102,8 @@ public final class SlayerKillsLeftService {
         final String remaining = killsLeft < 0 ? "?" : Long.toString(killsLeft);
         final Component estimate = Component.literal("Slayer: " + formatXp(progress.current) + "/"
                 + formatXp(progress.required) + " " + progress.label + " | ~" + remaining + " kills left");
-        // replaces the previous estimate, but not another message such as the RNG meter progress
+        // replaces the previous estimate, shown or still waiting; another message such as the RNG meter progress
+        // is shown first
         this.clearActionBar();
         ClientUtil.sendSecondaryActionBar(estimate, (long) (category.killsLeft.actionBarSeconds * 1_000));
         this.shownEstimate = estimate;

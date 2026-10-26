@@ -113,9 +113,9 @@ public final class SlayerRngMeterService {
         if (!drop.isNone()) {
             final SlayerRngMeterAccordion settings = config().rngMeter;
             if (settings.actionBar) {
-                // a fresh boss result replaces whatever is shown, e.g. a kills-left estimate
+                // waits while e.g. a kills-left estimate is shown
                 ClientUtil.sendSecondaryActionBar(this.progress(type, meter, drop),
-                        (long) (settings.actionBarSeconds * 1000), true);
+                        (long) (settings.actionBarSeconds * 1000));
             }
             this.checkFull(type, meter, drop);
         }
