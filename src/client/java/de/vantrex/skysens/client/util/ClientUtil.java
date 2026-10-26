@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.util;
 
 import de.vantrex.skysens.client.config.SkysensConfig;
+import de.vantrex.skysens.client.notification.SecondaryActionBar;
 import lombok.Getter;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
@@ -101,5 +102,18 @@ public class ClientUtil {
         if (CLIENT.player == null) return;
         if (CLIENT.gui == null) return;
         CLIENT.gui.hud.setOverlayMessage(text, false);
+    }
+
+    /** Shows the text in the line above the action bar, unless another message is still shown there. */
+    public void sendSecondaryActionBar(@NotNull Component text, long durationMs) {
+        sendSecondaryActionBar(text, durationMs, false);
+    }
+
+    /**
+     * Shows the text in the line above the action bar for the given time. It is drawn on its own line, so Hypixel's
+     * action bar (health, defense, mana) doesn't overwrite it. With override it replaces a message that is still shown.
+     */
+    public void sendSecondaryActionBar(@NotNull Component text, long durationMs, boolean override) {
+        SecondaryActionBar.getInstance().show(text, durationMs, override);
     }
 }

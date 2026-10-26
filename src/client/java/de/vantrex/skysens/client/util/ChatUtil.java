@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.util;
 
 import lombok.experimental.UtilityClass;
+import net.minecraft.ChatFormatting;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -14,6 +15,12 @@ public class ChatUtil {
     /** The line without leading/trailing spaces and without a compacting counter, ready for exact matching. */
     public @NotNull String normalize(@NotNull String line) {
         return STACK_COUNTER.matcher(line.trim()).replaceFirst("");
+    }
+
+    /** The text without formatting codes and surrounding spaces. */
+    public @NotNull String strip(@NotNull String text) {
+        final String stripped = ChatFormatting.stripFormatting(text);
+        return (stripped == null ? text : stripped).trim();
     }
 
 }

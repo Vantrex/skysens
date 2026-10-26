@@ -6,6 +6,7 @@ import de.vantrex.skysens.client.core.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.core.feature.SkySensFeature;
 import de.vantrex.skysens.client.features.bazaar.BazaarOrderRepository.Order;
 import de.vantrex.skysens.client.skyblock.player.PlayerService;
+import de.vantrex.skysens.client.util.NumberUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -71,7 +72,7 @@ public class BazaarOrderTrackingFeature implements GameMessageListeningFeature, 
         final BazaarOrderService service = BazaarOrderService.getInstance();
         Matcher m = SETUP.matcher(text);
         if (m.matches()) {
-            service.orderPlaced(isBuy(m.group(1)), number(m.group(2)), m.group(3), decimal(m.group(4)));
+            service.orderPlaced(isBuy(m.group(1)), number(m.group(2)), m.group(3), NumberUtil.parseNumber(m.group(4)));
             return;
         }
         m = FILLED.matcher(text);
@@ -98,7 +99,7 @@ public class BazaarOrderTrackingFeature implements GameMessageListeningFeature, 
         }
         m = CANCEL_BUY.matcher(text);
         if (m.matches()) {
-            service.buyOrderCancelled(decimal(m.group(1)));
+            service.buyOrderCancelled(NumberUtil.parseNumber(m.group(1)));
         }
     }
 
@@ -158,17 +159,17 @@ public class BazaarOrderTrackingFeature implements GameMessageListeningFeature, 
             }
             Matcher m = AMOUNT_LINE.matcher(text);
             if (m.matches()) {
-                amount = (long) abbreviated(m.group(1));
+                amount = (long) NumberUtil.parseAbbreviated(m.group(1));
             }
             m = PRICE_LINE.matcher(text);
             if (m.matches()) {
-                price = decimal(m.group(1));
+                price = NumberUtil.parseNumber(m.group(1));
             }
             m = FILLED_LINE.matcher(text);
             if (m.find()) {
-                filled = (long) abbreviated(m.group(1));
+                filled = (long) NumberUtil.parseAbbreviated(m.group(1));
                 if (amount <= 0) {
-                    amount = (long) abbreviated(m.group(2));
+                    amount = (long) NumberUtil.parseAbbreviated(m.group(2));
                 }
             } else if (text.startsWith("Filled:")) {
                 final Matcher p = PERCENT.matcher(text);
@@ -211,23 +212,6 @@ public class BazaarOrderTrackingFeature implements GameMessageListeningFeature, 
 
     private static long number(String text) {
         return Long.parseLong(text.replace(",", ""));
-    }
-
-    private static double decimal(String text) {
-        return Double.parseDouble(text.replace(",", ""));
-    }
-
-    /** "1,234", "1.5k", "2M". */
-    private static double abbreviated(String text) {
-        final String clean = text.replace(",", "");
-        final char last = Character.toLowerCase(clean.charAt(clean.length() - 1));
-        if (last == 'k') {
-            return Double.parseDouble(clean.substring(0, clean.length() - 1)) * 1_000;
-        }
-        if (last == 'm') {
-            return Double.parseDouble(clean.substring(0, clean.length() - 1)) * 1_000_000;
-        }
-        return Double.parseDouble(clean);
     }
 
     @Override

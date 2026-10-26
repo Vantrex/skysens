@@ -5,7 +5,10 @@ import de.vantrex.skysens.client.features.slayer.config.SlayerCategory;
 import de.vantrex.skysens.client.skyblock.event.SlayerBossSpawnEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerQuestEndEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerQuestStartEvent;
+import de.vantrex.skysens.client.notification.SecondaryActionBar;
 import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
+import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.NumberUtil;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +29,8 @@ public final class SlayerKillsLeftService {
     /** The smallest observed progress increase per kill for each boss and tier. */
     private final Map<String, Double> xpPerKill = new HashMap<>();
     private @Nullable Progress previousProgress;
-    private @Nullable String actionBarMessage;
-    private long actionBarUntilMs;
+    /** The estimate last sent to the secondary action bar, so it replaces or hides only its own message. */
+    private @Nullable Component shownEstimate;
 
     private SlayerKillsLeftService() {
     }
@@ -60,17 +63,6 @@ public final class SlayerKillsLeftService {
         if (sidebarLines != null && SlayerTracker.getInstance().isQuestActive() && !SlayerTracker.getInstance().isBossSpawned()) {
             this.updateProgress(sidebarLines, category);
         }
-    }
-
-    /**
-     * The estimate to show right above the action bar, null once it expired. It is drawn as its own HUD line, so
-     * Hypixel's action bar (health, defense, mana) doesn't overwrite it.
-     */
-    public @Nullable Component getActionBar() {
-        if (this.actionBarMessage != null && System.currentTimeMillis() >= this.actionBarUntilMs) {
-            this.clearActionBar();
-        }
-        return this.actionBarMessage == null ? null : Component.literal(this.actionBarMessage);
     }
 
     private void updateProgress(List<String> sidebarLines, SlayerCategory category) {
@@ -108,9 +100,12 @@ public final class SlayerKillsLeftService {
                 ? -1
                 : (long) Math.ceil(Math.max(0, progress.required - progress.current) / knownXpPerKill);
         final String remaining = killsLeft < 0 ? "?" : Long.toString(killsLeft);
-        this.actionBarMessage = "Slayer: " + formatXp(progress.current) + "/" + formatXp(progress.required) + " " + progress.label
-                + " | ~" + remaining + " kills left";
-        this.actionBarUntilMs = System.currentTimeMillis() + (long) (category.killsLeft.actionBarSeconds * 1_000);
+        final Component estimate = Component.literal("Slayer: " + formatXp(progress.current) + "/"
+                + formatXp(progress.required) + " " + progress.label + " | ~" + remaining + " kills left");
+        // replaces the previous estimate, but not another message such as the RNG meter progress
+        this.clearActionBar();
+        ClientUtil.sendSecondaryActionBar(estimate, (long) (category.killsLeft.actionBarSeconds * 1_000));
+        this.shownEstimate = estimate;
     }
 
     private static @Nullable Progress parseProgress(String line) {
@@ -119,22 +114,11 @@ public final class SlayerKillsLeftService {
             return null;
         }
         try {
-            return new Progress(parseXp(matcher.group(1)), parseXp(matcher.group(2)), matcher.group(3));
+            return new Progress(NumberUtil.parseAbbreviated(matcher.group(1)), NumberUtil.parseAbbreviated(matcher.group(2)),
+                    matcher.group(3));
         } catch (NumberFormatException ignored) {
             return null;
         }
-    }
-
-    private static double parseXp(String value) {
-        final String normalized = value.replace(",", "");
-        final char suffix = Character.toLowerCase(normalized.charAt(normalized.length() - 1));
-        final double multiplier = switch (suffix) {
-            case 'k' -> 1_000;
-            case 'm' -> 1_000_000;
-            default -> 1;
-        };
-        final String number = multiplier == 1 ? normalized : normalized.substring(0, normalized.length() - 1);
-        return Double.parseDouble(number) * multiplier;
     }
 
     private static String formatXp(double xp) {
@@ -147,8 +131,8 @@ public final class SlayerKillsLeftService {
     }
 
     private void clearActionBar() {
-        this.actionBarMessage = null;
-        this.actionBarUntilMs = 0;
+        SecondaryActionBar.getInstance().clear(this.shownEstimate);
+        this.shownEstimate = null;
     }
 
     private record Progress(double current, double required, String label) {
