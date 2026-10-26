@@ -88,6 +88,7 @@ tasks.shadowJar {
     from(sourceSets.main.get().output)
     from(sourceSets.named("client").get().output)
     from("LICENSE.txt") { rename { "${it}_${archives_base_name}" } }
+    from("licenses") { into("META-INF/licenses/${archives_base_name}") }
     archiveClassifier.set("")
 }
 
