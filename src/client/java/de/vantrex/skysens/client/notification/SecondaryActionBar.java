@@ -10,8 +10,8 @@ import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.LinkedList;
+import java.util.ListIterator;
 
 /**
  * A second action bar, drawn as its own line right above the vanilla one, so Hypixel's action bar (health, defense,
@@ -27,7 +27,7 @@ public final class SecondaryActionBar {
     @Getter
     private static final SecondaryActionBar instance = new SecondaryActionBar();
 
-    private final Deque<Pending> waiting = new ArrayDeque<>();
+    private final LinkedList<Pending> waiting = new LinkedList<>();
     private @Nullable Component message;
     private long untilMs;
 
@@ -44,6 +44,27 @@ public final class SecondaryActionBar {
             return;
         }
         this.display(message, durationMs);
+    }
+
+    /**
+     * Puts the message in place of the previous one, whether that is shown (its time starts over) or still waiting.
+     * Without a previous message it is shown like {@link #show} without override. For messages that update
+     * themselves, e.g. a counter.
+     */
+    public void replace(@Nullable Component previous, @NotNull Component message, long durationMs) {
+        if (previous != null && this.current() == previous) {
+            this.display(message, durationMs);
+            return;
+        }
+        if (previous != null) {
+            for (final ListIterator<Pending> it = this.waiting.listIterator(); it.hasNext(); ) {
+                if (it.next().message() == previous) {
+                    it.set(new Pending(message, durationMs));
+                    return;
+                }
+            }
+        }
+        this.show(message, durationMs, false);
     }
 
     /**

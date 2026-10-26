@@ -7,7 +7,6 @@ import de.vantrex.skysens.client.skyblock.event.SlayerQuestEndEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerQuestStartEvent;
 import de.vantrex.skysens.client.notification.SecondaryActionBar;
 import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
-import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.Nullable;
@@ -102,10 +101,10 @@ public final class SlayerKillsLeftService {
         final String remaining = killsLeft < 0 ? "?" : Long.toString(killsLeft);
         final Component estimate = Component.literal("Slayer: " + formatXp(progress.current) + "/"
                 + formatXp(progress.required) + " " + progress.label + " | ~" + remaining + " kills left");
-        // replaces the previous estimate, shown or still waiting; another message such as the RNG meter progress
-        // is shown first
-        this.clearActionBar();
-        ClientUtil.sendSecondaryActionBar(estimate, (long) (category.killsLeft.actionBarSeconds * 1_000));
+        // overrides the previous estimate in place, shown or still waiting; other messages such as the RNG meter
+        // progress still wait on it, and it waits on them
+        SecondaryActionBar.getInstance().replace(this.shownEstimate, estimate,
+                (long) (category.killsLeft.actionBarSeconds * 1_000));
         this.shownEstimate = estimate;
     }
 
