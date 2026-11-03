@@ -19,6 +19,7 @@
     "HudMixin",
     "ServerStatsMixin",
     "PlayerTabOverlayAccessor",
+    "AbstractContainerScreenAccessor",
     "ChatComponentMixin",
     "InventoryHudKeyActionMixin"
   ],
