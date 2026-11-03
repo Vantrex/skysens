@@ -4,7 +4,7 @@ import de.vantrex.skysens.client.features.bazaar.BazaarOrderRepository;
 import de.vantrex.skysens.client.features.dungeon.DungeonRunRepository;
 import de.vantrex.skysens.client.features.fishing.trophyfrog.TrophyFrogRepository;
 import de.vantrex.skysens.client.features.slayer.rng.SlayerRngRepository;
-import de.vantrex.skysens.client.features.warp.CoopRepository;
+import de.vantrex.skysens.client.skyblock.coop.CoopRepository;
 import de.vantrex.skysens.client.skyblock.profit.ProfitRepository;
 
 import com.google.gson.Gson;

@@ -55,6 +55,8 @@ Listeners are matched by exact event class (no inheritance) and run on the firin
 | `LocationChangeEvent`, `ZoneChangeEvent` | `LocationService` |
 | `DungeonRunCompleteEvent` | `DungeonRunDetector` |
 | `ProfileChangeEvent` | `ProfileService` (profile name from chat, or once from the tab list after joining) |
+| `CoopMemberJoinEvent`, `CoopMemberQuitEvent` | `CoopMemberTracker` ("<name> joined/left SkyBlock." in chat) |
+| `CoopMembersUpdateEvent` | `CoopMemberTracker` (co-op widget in the tab list on the private island changed) |
 
 Domain events go in `skyblock/event/`. An event that only matters inside one feature stays in that feature's
 package (like `DungeonRunCompleteEvent`).
