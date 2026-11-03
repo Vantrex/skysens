@@ -14,7 +14,6 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 public class GeneralCategory {
 
-    /** Not saved (no {@code @Expose}), only a button. */
     @ConfigOption(name = "Edit HUD Positions", desc = "Move and scale every SkySens HUD: drag to move, Ctrl + scroll to scale, right click to reset. Also /skysens hud")
     @ConfigEditorButton(buttonText = "Edit HUD")
     public Runnable editHudPositions = HudEditorScreen::open;

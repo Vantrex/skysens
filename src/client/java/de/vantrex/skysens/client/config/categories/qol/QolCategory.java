@@ -30,7 +30,6 @@ public class QolCategory {
     @Expose
     public boolean moveActionBarAboveInventoryHud = true;
 
-    /** Where SkySens' own action bar is, moved in the HUD editor (/skysens hud); no config screen option. */
     @Expose
     public HudPosition secondaryActionBarPosition = new HudPosition();
 }

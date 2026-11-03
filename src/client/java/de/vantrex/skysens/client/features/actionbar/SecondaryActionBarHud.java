@@ -30,6 +30,7 @@ public final class SecondaryActionBarHud implements MovableHud {
     private SecondaryActionBarHud() {
     }
 
+    /** Saved in the config, but only the HUD editor changes it: there is no option for it in the config screen. */
     private static HudPosition position() {
         return SkysensConfig.getInstance().qolCategory.secondaryActionBarPosition;
     }
