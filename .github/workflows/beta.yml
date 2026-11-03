@@ -17,6 +17,7 @@ concurrency:
 
 permissions:
   contents: read
+  pull-requests: read
 
 jobs:
   beta:
@@ -49,6 +50,18 @@ jobs:
           echo "Publishing beta $VERSION"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
+      - name: Changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash .github/scripts/changelog.sh > changelog.md
+          cat changelog.md
+          {
+            echo "CHANGELOG<<CHANGELOG_EOF"
+            cat changelog.md
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_ENV"
+
       - name: Build
         run: |
           chmod +x gradlew
@@ -60,4 +73,3 @@ jobs:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
           MODRINTH_VERSION_TYPE: beta
-          CHANGELOG: ${{ github.event.head_commit.message }}
