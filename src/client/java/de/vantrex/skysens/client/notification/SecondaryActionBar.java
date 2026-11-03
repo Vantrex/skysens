@@ -1,11 +1,6 @@
 package de.vantrex.skysens.client.notification;
 
-import de.vantrex.skysens.client.SkysensClient;
 import lombok.Getter;
-import net.minecraft.client.DeltaTracker;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,12 +12,10 @@ import java.util.ListIterator;
  * A second action bar, drawn as its own line right above the vanilla one, so Hypixel's action bar (health, defense,
  * mana) stays visible. Like the vanilla action bar it shows one message at a time; messages sent while another one is
  * shown wait their turn. Send through {@link de.vantrex.skysens.client.util.ClientUtil#sendSecondaryActionBar}.
- * Client thread.
+ * Drawn by {@link de.vantrex.skysens.client.features.actionbar.SecondaryActionBarHud}, which can be moved in the HUD
+ * editor. Client thread.
  */
 public final class SecondaryActionBar {
-
-    /** Vanilla draws the action bar around 68 pixels above the bottom, this one goes one line above it. */
-    private static final int OFFSET = 68 + 16;
 
     @Getter
     private static final SecondaryActionBar instance = new SecondaryActionBar();
@@ -92,18 +85,6 @@ public final class SecondaryActionBar {
             this.display(next.message(), next.durationMs());
         }
         return this.message;
-    }
-
-    public void draw(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        final Component text = this.current();
-        if (text == null || !SkysensClient.getInstance().isOnSkyBlock()) {
-            return;
-        }
-        final Minecraft client = Minecraft.getInstance();
-        final Font font = client.font;
-        final int x = (client.getWindow().getGuiScaledWidth() - font.width(text)) / 2;
-        final int y = client.getWindow().getGuiScaledHeight() - OFFSET;
-        graphics.text(font, text, x, y, 0xFFFFFFFF, true);
     }
 
     private void display(Component message, long durationMs) {

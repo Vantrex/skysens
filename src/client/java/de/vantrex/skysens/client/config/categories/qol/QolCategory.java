@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.config.categories.qol;
 
 import com.google.gson.annotations.Expose;
+import de.vantrex.skysens.client.core.hud.HudPosition;
 import de.vantrex.skysens.client.features.junkhighlight.config.JunkHighlightSubCategory;
 import de.vantrex.skysens.client.features.sensitivity.config.SensitivitySubCategory;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;
@@ -28,4 +29,7 @@ public class QolCategory {
     @ConfigEditorBoolean
     @Expose
     public boolean moveActionBarAboveInventoryHud = true;
+
+    @Expose
+    public HudPosition secondaryActionBarPosition = new HudPosition();
 }

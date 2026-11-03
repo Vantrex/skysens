@@ -4,8 +4,9 @@ import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.core.feature.FeatureRegistry;
 import de.vantrex.skysens.client.core.feature.FeatureService;
 import de.vantrex.skysens.client.core.feature.HudRenderFeature;
+import de.vantrex.skysens.client.core.hud.HudRegistry;
 import de.vantrex.skysens.client.features.actionbar.ActionBarLayout;
-import de.vantrex.skysens.client.notification.SecondaryActionBar;
+import de.vantrex.skysens.client.features.actionbar.SecondaryActionBarHud;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElement;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
@@ -24,7 +25,8 @@ public class HudHandlers {
         HudElementRegistry.replaceElement(VanillaHudElements.OVERLAY_MESSAGE, HudHandlers::lifted);
         HudElementRegistry.attachElementAfter(VanillaHudElements.OVERLAY_MESSAGE,
                 Identifier.fromNamespaceAndPath("skysens", "secondary_action_bar"),
-                lifted(SecondaryActionBar.getInstance()::draw));
+                SecondaryActionBarHud.getInstance()::draw);
+        HudRegistry.getInstance().register(SecondaryActionBarHud.getInstance());
         HudElementRegistry.addLast(Identifier.fromNamespaceAndPath("skysens", "features"), HudHandlers::renderFeatures);
 
         // Inventory HUD+ changes its position in its config screens, so look again once one closes
@@ -36,8 +38,9 @@ public class HudHandlers {
     }
 
     private static void renderFeatures(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        // hidden with F1
-        if (!SkysensClient.getInstance().isOnSkyBlock() || Minecraft.getInstance().gui.hud.isHidden()) {
+        // hidden with F1; the HUD editor draws its own previews
+        if (!SkysensClient.getInstance().isOnSkyBlock() || Minecraft.getInstance().gui.hud.isHidden()
+                || HudRegistry.getInstance().isEditing()) {
             return;
         }
         for (final HudRenderFeature feature : FEATURE_REGISTRY.getHudRenderFeature()) {
@@ -47,7 +50,10 @@ public class HudHandlers {
         }
     }
 
-    /** Draws the element moved up by {@link ActionBarLayout#lift}, so it isn't covered by Inventory HUD+. */
+    /**
+     * Draws the vanilla action bar moved up by {@link ActionBarLayout#lift}, so it isn't covered by Inventory HUD+.
+     * SkySens' own action bar applies the lift itself, see {@link SecondaryActionBarHud}.
+     */
     private static HudElement lifted(HudElement element) {
         return (graphics, deltaTracker) -> {
             final int lift = ActionBarLayout.getInstance().lift(graphics.guiWidth(), graphics.guiHeight());

@@ -6,6 +6,7 @@ import de.vantrex.skysens.client.core.feature.AfterTickFeature;
 import de.vantrex.skysens.client.core.feature.GameMessageListeningFeature;
 import de.vantrex.skysens.client.core.feature.HudRenderFeature;
 import de.vantrex.skysens.client.core.feature.SkySensFeature;
+import de.vantrex.skysens.client.core.hud.MovableHud;
 import de.vantrex.skysens.client.features.fishing.config.TrophyFrogAccordion;
 import de.vantrex.skysens.client.skyblock.location.LocationService;
 import de.vantrex.skysens.client.skyblock.location.SkyblockLocationEnum;
@@ -33,6 +34,7 @@ public class TrophyFrogFeature implements GameMessageListeningFeature, AfterTick
     private static final int MENU_INTERVAL_TICKS = 10;
 
     private final TrophyFrogHud hud = new TrophyFrogHud();
+    private final List<MovableHud> movableHuds = List.of(new Movable());
     private int ticks;
 
     @Override
@@ -67,6 +69,11 @@ public class TrophyFrogFeature implements GameMessageListeningFeature, AfterTick
         this.hud.draw(graphics, config);
     }
 
+    @Override
+    public List<MovableHud> movableHuds() {
+        return this.movableHuds;
+    }
+
     private static List<TrophyFrogService.MenuItem> menuItems(AbstractContainerMenu menu) {
         final List<TrophyFrogService.MenuItem> items = new ArrayList<>();
         // the last 36 slots are the player's inventory
@@ -88,6 +95,78 @@ public class TrophyFrogFeature implements GameMessageListeningFeature, AfterTick
     @Override
     public boolean isActive() {
         return config().enabled;
+    }
+
+    /** The table in the HUD editor, stored in the existing position and scale options. */
+    private final class Movable implements MovableHud {
+
+        @Override
+        public String name() {
+            return "Trophy Frogs";
+        }
+
+        @Override
+        public boolean isEnabled() {
+            return TrophyFrogFeature.this.isActive();
+        }
+
+        /** {@link #afterTick} doesn't build the lines while the feature is switched off. */
+        private TrophyFrogHud hud() {
+            if (TrophyFrogFeature.this.hud.isEmpty()) {
+                TrophyFrogFeature.this.hud.update(TrophyFrogService.getInstance().current(), config());
+            }
+            return TrophyFrogFeature.this.hud;
+        }
+
+        @Override
+        public int width() {
+            return this.hud().width();
+        }
+
+        @Override
+        public int height() {
+            return this.hud().height();
+        }
+
+        @Override
+        public float scale() {
+            return config().scale;
+        }
+
+        @Override
+        public void setScale(float scale) {
+            config().scale = scale;
+        }
+
+        @Override
+        public float left(int screenWidth, int screenHeight) {
+            return screenWidth * config().x / 100f;
+        }
+
+        @Override
+        public float top(int screenWidth, int screenHeight) {
+            return screenHeight * config().y / 100f;
+        }
+
+        @Override
+        public void moveTo(float left, float top, int screenWidth, int screenHeight) {
+            config().x = Math.clamp(left * 100f / screenWidth, 0f, 100f);
+            config().y = Math.clamp(top * 100f / screenHeight, 0f, 100f);
+        }
+
+        @Override
+        public void renderPreview(GuiGraphicsExtractor graphics) {
+            this.hud().drawContent(graphics);
+        }
+
+        @Override
+        public void reset() {
+            final TrophyFrogAccordion defaults = new TrophyFrogAccordion();
+            config().x = defaults.x;
+            config().y = defaults.y;
+            config().scale = defaults.scale;
+        }
+
     }
 
 }

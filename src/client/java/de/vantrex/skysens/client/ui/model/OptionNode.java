@@ -165,10 +165,10 @@ public final class OptionNode {
 
     /**
      * The value of the backing field on a fresh instance of its declaring class, if known. Empty for accordions,
-     * transient fields (UI state) and {@code Property} fields, and when the class cannot be instantiated.
+     * buttons, transient fields (UI state) and {@code Property} fields, and when the class cannot be instantiated.
      */
     public Optional<Object> defaultValue() {
-        if (field == null || kind == OptionKind.ACCORDION || Modifier.isTransient(field.getModifiers())
+        if (field == null || kind == OptionKind.ACCORDION || kind == OptionKind.BUTTON || Modifier.isTransient(field.getModifiers())
                 || Property.class.isAssignableFrom(field.getType())) {
             return Optional.empty();
         }

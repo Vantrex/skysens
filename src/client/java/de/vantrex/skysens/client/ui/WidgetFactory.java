@@ -2,6 +2,7 @@ package de.vantrex.skysens.client.ui;
 
 import de.vantrex.skysens.client.ui.model.OptionNode;
 import de.vantrex.skysens.client.ui.widget.AccordionWidget;
+import de.vantrex.skysens.client.ui.widget.ButtonWidget;
 import de.vantrex.skysens.client.ui.widget.ColourWidget;
 import de.vantrex.skysens.client.ui.widget.DropdownWidget;
 import de.vantrex.skysens.client.ui.widget.OptionWidget;
@@ -23,6 +24,7 @@ public final class WidgetFactory {
             case DROPDOWN, ZONE_DROPDOWN -> new DropdownWidget(node);
             case COLOUR -> new ColourWidget(node);
             case TEXT -> new TextWidget(node);
+            case BUTTON -> new ButtonWidget(node);
             case ACCORDION -> new AccordionWidget(node, WidgetFactory::create);
             case UNSUPPORTED -> new UnsupportedWidget(node);
         };

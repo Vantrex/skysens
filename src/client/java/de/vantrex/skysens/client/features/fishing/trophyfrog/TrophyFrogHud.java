@@ -87,9 +87,14 @@ final class TrophyFrogHud {
         return row;
     }
 
-    void draw(@NotNull GuiGraphicsExtractor graphics, @NotNull TrophyFrogAccordion config) {
-        final Minecraft client = Minecraft.getInstance();
-        final Font font = client.font;
+    /** Whether {@link #update} hasn't run yet, e.g. because the feature is switched off. */
+    boolean isEmpty() {
+        return this.header.isEmpty() && this.rows.isEmpty();
+    }
+
+    /** Width of the background, before scaling. */
+    int width() {
+        final Font font = Minecraft.getInstance().font;
         final int[] columnWidths = this.columnWidths(font);
         int tableWidth = 0;
         for (final int width : columnWidths) {
@@ -100,15 +105,31 @@ final class TrophyFrogHud {
         for (final Component line : this.header) {
             width = Math.max(width, font.width(line));
         }
-        final int height = (this.header.size() + this.rows.size()) * LINE_HEIGHT;
+        return width + 2 * PADDING;
+    }
 
+    /** Height of the background, before scaling. */
+    int height() {
+        return (this.header.size() + this.rows.size()) * LINE_HEIGHT + 2 * PADDING - 2;
+    }
+
+    void draw(@NotNull GuiGraphicsExtractor graphics, @NotNull TrophyFrogAccordion config) {
+        final Minecraft client = Minecraft.getInstance();
         final float scale = config.scale;
         final float x = client.getWindow().getGuiScaledWidth() * config.x / 100f;
         final float y = client.getWindow().getGuiScaledHeight() * config.y / 100f;
         graphics.pose().pushMatrix();
         graphics.pose().translate(x, y);
         graphics.pose().scale(scale, scale);
-        graphics.fill(0, 0, width + 2 * PADDING, height + 2 * PADDING - 2, BACKGROUND);
+        this.drawContent(graphics);
+        graphics.pose().popMatrix();
+    }
+
+    /** Draws the table with its top left corner at 0, 0, unscaled. */
+    void drawContent(@NotNull GuiGraphicsExtractor graphics) {
+        final Font font = Minecraft.getInstance().font;
+        final int[] columnWidths = this.columnWidths(font);
+        graphics.fill(0, 0, this.width(), this.height(), BACKGROUND);
 
         int lineY = PADDING;
         for (final Component line : this.header) {
@@ -126,7 +147,6 @@ final class TrophyFrogHud {
             }
             lineY += LINE_HEIGHT;
         }
-        graphics.pose().popMatrix();
     }
 
     private int[] columnWidths(Font font) {
