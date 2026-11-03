@@ -54,6 +54,7 @@ Listeners are matched by exact event class (no inheritance) and run on the firin
 | `SkyblockJoinEvent`, `SkyblockQuitEvent` | `SkysensClient` (Hypixel Mod API location packet, disconnect) |
 | `LocationChangeEvent`, `ZoneChangeEvent` | `LocationService` |
 | `DungeonRunCompleteEvent` | `DungeonRunDetector` |
+| `ProfileChangeEvent` | `ProfileService` (profile name from chat, or once from the tab list after joining) |
 
 Domain events go in `skyblock/event/`. An event that only matters inside one feature stays in that feature's
 package (like `DungeonRunCompleteEvent`).

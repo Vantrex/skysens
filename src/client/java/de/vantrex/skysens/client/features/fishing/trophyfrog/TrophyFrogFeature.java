@@ -31,8 +31,6 @@ public class TrophyFrogFeature implements GameMessageListeningFeature, AfterTick
 
     /** The menu is read twice a second while it is open. */
     private static final int MENU_INTERVAL_TICKS = 10;
-    /** The profile name is read from the tab list once a second. */
-    private static final int PROFILE_INTERVAL_TICKS = 20;
 
     private final TrophyFrogHud hud = new TrophyFrogHud();
     private int ticks;
@@ -51,14 +49,9 @@ public class TrophyFrogFeature implements GameMessageListeningFeature, AfterTick
             return;
         }
         final TrophyFrogService service = TrophyFrogService.getInstance();
-        this.ticks++;
-        if (this.ticks % PROFILE_INTERVAL_TICKS == 0) {
-            service.refreshProfile();
-        }
-        if (this.ticks % MENU_INTERVAL_TICKS == 0
+        if (++this.ticks % MENU_INTERVAL_TICKS == 0
                 && Minecraft.getInstance().gui.screen() instanceof AbstractContainerScreen<?> screen
                 && screen.getTitle().getString().trim().equals(TrophyFrogService.MENU_TITLE)) {
-            service.refreshProfile();
             service.onMenu(menuItems(screen.getMenu()));
         }
         this.hud.update(service.current(), config());

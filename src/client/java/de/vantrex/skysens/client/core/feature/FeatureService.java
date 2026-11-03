@@ -5,6 +5,7 @@ import de.vantrex.skysens.client.features.bazaar.BazaarDisableClickFeature;
 import de.vantrex.skysens.client.features.fishing.trophyfrog.TrophyFrogFeature;
 import de.vantrex.skysens.client.skyblock.player.AfkTracker;
 import de.vantrex.skysens.client.skyblock.player.CombatTracker;
+import de.vantrex.skysens.client.skyblock.player.ProfileService;
 import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
 import de.vantrex.skysens.client.features.bazaar.BazaarHighlightFeature;
 import de.vantrex.skysens.client.chatcommand.ChatCommandFeature;
@@ -80,6 +81,7 @@ public class FeatureService {
         this.featureRegistry.register(new TrophyFrogFeature());
         this.featureRegistry.register(CombatTracker.getInstance());
         this.featureRegistry.register(AfkTracker.getInstance());
+        this.featureRegistry.register(ProfileService.getInstance());
         this.featureRegistry.register(SlayerTracker.getInstance());
 
     }

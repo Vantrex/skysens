@@ -1,7 +1,7 @@
 package de.vantrex.skysens.client.features.fishing.trophyfrog;
 
 import de.vantrex.skysens.client.persistence.RepositoryRegistry;
-import de.vantrex.skysens.client.skyblock.player.ProfileUtil;
+import de.vantrex.skysens.client.skyblock.player.ProfileService;
 import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
 import lombok.Getter;
@@ -35,7 +35,6 @@ public final class TrophyFrogService {
             "TROPHY FROG! You caught(?: an?)? (?<name>.+?) (?<tier>BRONZE|SILVER|GOLD|DIAMOND)(?: x(?<amount>[\\d,]+))?!$");
     /** A tier line in a frog's lore: "Gold ✔ (16)" when caught, "Diamond ✖" when not. */
     private static final Pattern TIER_LINE_PATTERN = Pattern.compile("^(?<tier>Bronze|Silver|Gold|Diamond) \\S+(?: \\((?<amount>[\\d,]+)\\))?$");
-    private static final String UNKNOWN_PROFILE = "unknown";
     /** How long a caught tier is highlighted in the HUD. */
     private static final long HIGHLIGHT_MS = 5_000;
 
@@ -58,28 +57,24 @@ public final class TrophyFrogService {
     record Catch(@NotNull String frog, @NotNull TrophyFrogTier tier, int amount) {
     }
 
-    /** Re-reads the profile name from the tab list, so the counts of the right profile are shown and counted. */
-    public void refreshProfile() {
-        final String profile = ProfileUtil.currentProfile();
-        if (profile != null) {
-            account().lastProfile = profile;
+    /**
+     * The counts of the current profile of the logged in account (by UUID, profiles of different accounts can share a
+     * name). Null while the profile is unknown, then nothing is counted.
+     */
+    public @Nullable TrophyFrogRepository.Profile current() {
+        final String profile = ProfileService.getInstance().getCurrentProfile();
+        if (profile == null) {
+            return null;
         }
-    }
-
-    /** The counts of the current profile of the logged in account. */
-    public @NotNull TrophyFrogRepository.Profile current() {
-        final TrophyFrogRepository.Account account = account();
-        return account.profile(account.lastProfile == null ? UNKNOWN_PROFILE : account.lastProfile);
-    }
-
-    /** The logged in Minecraft account, by UUID: profiles of different accounts can share a name. */
-    private static TrophyFrogRepository.Account account() {
-        return repository().account(Minecraft.getInstance().getUser().getProfileId().toString());
+        return repository().account(Minecraft.getInstance().getUser().getProfileId().toString()).profile(profile);
     }
 
     /** Takes the counts from the open Trophy Frogs menu. Items without tier lines (buttons, panes) are skipped. */
     public void onMenu(@NotNull List<MenuItem> items) {
         final TrophyFrogRepository.Profile profile = this.current();
+        if (profile == null) {
+            return;
+        }
         boolean changed = false;
         // rebuilt in menu order, frogs only seen in chat so far go to the end
         final Map<String, Map<TrophyFrogTier, Integer>> ordered = new LinkedHashMap<>();
@@ -124,7 +119,12 @@ public final class TrophyFrogService {
             }
             return;
         }
-        this.current().frog(caught.frog()).merge(caught.tier(), caught.amount(), Integer::sum);
+        final TrophyFrogRepository.Profile profile = this.current();
+        if (profile == null) {
+            ClientUtil.sendDebug("Trophy Frogs: profile unknown, catch not counted: " + line);
+            return;
+        }
+        profile.frog(caught.frog()).merge(caught.tier(), caught.amount(), Integer::sum);
         this.highlightedFrog = caught.frog();
         this.highlightedTier = caught.tier();
         this.highlightUntilMs = System.currentTimeMillis() + HIGHLIGHT_MS;

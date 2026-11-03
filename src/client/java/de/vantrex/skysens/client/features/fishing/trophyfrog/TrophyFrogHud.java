@@ -6,6 +6,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +29,16 @@ final class TrophyFrogHud {
     /** Table cells, the first column is left aligned and the others right aligned. */
     private List<List<Component>> rows = List.of();
 
-    void update(@NotNull TrophyFrogRepository.Profile profile, @NotNull TrophyFrogAccordion config) {
+    /** Rebuilds the lines for the profile, null while the profile is unknown. */
+    void update(@Nullable TrophyFrogRepository.Profile profile, @NotNull TrophyFrogAccordion config) {
         final List<Component> header = new ArrayList<>();
         header.add(Component.literal(TITLE));
+        if (profile == null) {
+            header.add(Component.literal("§7Waiting for your SkyBlock profile..."));
+            this.header = header;
+            this.rows = List.of();
+            return;
+        }
         if (!profile.menuRead) {
             header.add(Component.literal("§cOpen the Trophy Frogs menu at"));
             header.add(Component.literal("§cResearcher Ribery to load your counts."));

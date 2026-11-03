@@ -3,7 +3,8 @@ package de.vantrex.skysens.client.features.warp;
 import de.vantrex.skysens.client.features.warp.CoopRepository.Coop;
 import de.vantrex.skysens.client.features.warp.CoopRepository.Member;
 import de.vantrex.skysens.client.persistence.RepositoryRegistry;
-import de.vantrex.skysens.client.skyblock.player.ProfileUtil;
+import de.vantrex.skysens.client.skyblock.player.ProfileService;
+import de.vantrex.skysens.client.util.TabListUtil;
 import lombok.Getter;
 import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ public final class CoopMemberTracker {
     // optional SkyBlock level, the name, then e.g. a symbol or "(Offline 12d)"
     private static final Pattern MEMBER_PATTERN = Pattern.compile("^(?:\\[\\d+] )?(\\w{1,16})(.*)$");
     private static final Pattern OFFLINE_PATTERN = Pattern.compile("\\(Offline(?: ([^)]*))?\\)");
-    /** Used when the tab list shows no profile name. */
+    /** Used while the profile name is unknown. */
     private static final String UNKNOWN_PROFILE = "unknown";
 
     @Getter
@@ -49,9 +50,9 @@ public final class CoopMemberTracker {
         if (client.getConnection() == null || client.player == null) {
             return;
         }
-        final List<String> lines = ProfileUtil.tabListLines();
+        final List<String> lines = TabListUtil.lines();
         final CoopRepository repository = RepositoryRegistry.COOP_REPOSITORY;
-        final String profile = ProfileUtil.parseProfile(lines);
+        final String profile = ProfileService.getInstance().getCurrentProfile();
         if (profile != null) {
             repository.lastProfile = profile;
         }

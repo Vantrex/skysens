@@ -1,7 +1,6 @@
 package de.vantrex.skysens.client.features.fishing.trophyfrog;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -23,9 +22,7 @@ public class TrophyFrogRepository {
     }
 
     public static class Account {
-        /** The SkyBlock profile this account was on last, e.g. "Lemon". Null until the tab list showed one. */
-        public @Nullable String lastProfile;
-        /** Profile name to its catches. */
+        /** SkyBlock profile name ("Lemon") to its catches. */
         public Map<String, Profile> profiles = new HashMap<>();
 
         public @NotNull Profile profile(@NotNull String name) {
