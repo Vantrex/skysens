@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.features.fishing.trophyfrog;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
 import java.util.HashMap;
@@ -22,15 +23,35 @@ public class TrophyFrogRepository {
     }
 
     public static class Account {
-        /** SkyBlock profile name ("Lemon") to its catches. */
+        /** SkyBlock profile id to its catches; keyed by the profile name ("Lemon") while the id isn't known. */
         public Map<String, Profile> profiles = new HashMap<>();
 
-        public @NotNull Profile profile(@NotNull String name) {
-            return this.profiles.computeIfAbsent(name, key -> new Profile());
+        /**
+         * The profile by its id, or by its name while the id is unknown. Once the id is known, a profile stored under
+         * the name is moved to the id.
+         */
+        public @NotNull Profile profile(@Nullable String id, @NotNull String name) {
+            if (id == null) {
+                return this.named(this.profiles.computeIfAbsent(name, key -> new Profile()), name);
+            }
+            Profile profile = this.profiles.get(id);
+            if (profile == null) {
+                final Profile byName = this.profiles.remove(name);
+                profile = byName != null ? byName : new Profile();
+                this.profiles.put(id, profile);
+            }
+            return this.named(profile, name);
+        }
+
+        private Profile named(Profile profile, String name) {
+            profile.name = name;
+            return profile;
         }
     }
 
     public static class Profile {
+        /** The profile name ("Lemon") it was last seen with, to tell profiles apart in the file. */
+        public @Nullable String name;
         /**
          * True once the Trophy Frogs menu was read on this profile. Until then the counts only hold the catches seen
          * in chat, so they are too low.

@@ -59,14 +59,17 @@ public final class TrophyFrogService {
 
     /**
      * The counts of the current profile of the logged in account (by UUID, profiles of different accounts can share a
-     * name). Null while the profile is unknown, then nothing is counted.
+     * name), by profile id or by name while the id is unknown. Null while the profile is unknown, then nothing is
+     * counted.
      */
     public @Nullable TrophyFrogRepository.Profile current() {
-        final String profile = ProfileService.getInstance().getCurrentProfile();
-        if (profile == null) {
+        final ProfileService profiles = ProfileService.getInstance();
+        final String name = profiles.getCurrentProfile();
+        if (name == null) {
             return null;
         }
-        return repository().account(Minecraft.getInstance().getUser().getProfileId().toString()).profile(profile);
+        return repository().account(Minecraft.getInstance().getUser().getProfileId().toString())
+                .profile(profiles.getCurrentProfileId(), name);
     }
 
     /** Takes the counts from the open Trophy Frogs menu. Items without tier lines (buttons, panes) are skipped. */

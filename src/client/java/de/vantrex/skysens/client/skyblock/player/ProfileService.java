@@ -22,12 +22,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Knows the current SkyBlock profile name ("Lemon") and fires a {@link ProfileChangeEvent} when it changes.
+ * Knows the current SkyBlock profile name ("Lemon") and, once Hypixel sent it, its id, and fires a
+ * {@link ProfileChangeEvent} when the name changes.
  * <p>
  * Hypixel names the profile in chat when joining SkyBlock ("You are playing on profile: Lemon (Co-op)") and when
- * switching ("Your profile was changed to: Lemon"). In case the join message was missed, the "Profile: Lemon" line of
- * the tab list is read once after joining; it may take a few ticks to show up, so it is retried for a short while.
- * Client thread.
+ * switching ("Your profile was changed to: Lemon"). Right after the join message it sends the id ("Profile ID:
+ * 691d6a3b-..."). Unlike the name it isn't reused when a profile is deleted and a new one gets its name, so prefer
+ * it for storing data per profile. In case the join message was missed, the "Profile: Lemon" line of the tab list is
+ * read once after joining; it may take a few ticks to show up, so it is retried for a short while. The tab list has
+ * no id. Client thread.
  */
 public final class ProfileService implements GameMessageListeningFeature, AfterTickFeature {
 
@@ -36,6 +39,7 @@ public final class ProfileService implements GameMessageListeningFeature, AfterT
 
     private static final Pattern CHAT_PATTERN = Pattern.compile(
             "^(?:You are playing on profile|Your profile was changed to): (\\w+)");
+    private static final Pattern ID_PATTERN = Pattern.compile("^Profile ID: ([0-9a-fA-F-]{36})$");
     private static final Pattern TAB_PATTERN = Pattern.compile("^Profile: (\\w+)");
     /** How long after joining SkyBlock the tab list is looked at for the profile name. */
     private static final int TAB_CHECK_TICKS = 100;
@@ -43,6 +47,9 @@ public final class ProfileService implements GameMessageListeningFeature, AfterT
     /** The current profile name, null while unknown. */
     @Getter
     private @Nullable String currentProfile;
+    /** The id of the current profile, null until Hypixel sent it for this profile. */
+    @Getter
+    private @Nullable String currentProfileId;
     /** Ticks left to find the profile in the tab list after joining, 0 if not looking. */
     private int tabCheckTicks;
 
@@ -59,11 +66,18 @@ public final class ProfileService implements GameMessageListeningFeature, AfterT
         if (overlay) {
             return;
         }
-        final Matcher matcher = CHAT_PATTERN.matcher(ChatUtil.strip(message.getString()));
+        final String text = ChatUtil.strip(message.getString());
+        final Matcher matcher = CHAT_PATTERN.matcher(text);
         // a co-op profile is followed by " (Co-op)"
         if (matcher.find()) {
             this.tabCheckTicks = 0;
             this.setProfile(matcher.group(1));
+            return;
+        }
+        final Matcher id = ID_PATTERN.matcher(text);
+        if (id.matches() && !id.group(1).equals(this.currentProfileId)) {
+            this.currentProfileId = id.group(1);
+            ClientUtil.sendDebug("Profile ID: " + this.currentProfileId);
         }
     }
 
@@ -94,6 +108,8 @@ public final class ProfileService implements GameMessageListeningFeature, AfterT
         }
         final String old = this.currentProfile;
         this.currentProfile = profile;
+        // the id belonged to the old profile, the new one's follows in chat
+        this.currentProfileId = null;
         ClientUtil.sendDebug("Profile: " + old + " -> " + profile);
         EventListenerRegistry.REGISTRY.fireEvent(new ProfileChangeEvent(old, profile));
     }
