@@ -10,6 +10,10 @@ import de.vantrex.skysens.client.config.annotation.ConfigEditorDynamicZoneDropdo
 import de.vantrex.skysens.client.config.categories.dev.DevCategory;
 import de.vantrex.skysens.client.features.dungeon.config.DungeonCategory;
 import de.vantrex.skysens.client.features.bazaar.config.BazaarCategory;
+import de.vantrex.skysens.client.features.bazaar.config.OrderAlerts;
+import de.vantrex.skysens.client.features.mining.config.MiningNotificationAccordion;
+import de.vantrex.skysens.client.features.slayer.config.SlayerRngMeterAccordion;
+import de.vantrex.skysens.client.notification.NotificationLevelEnum;
 import de.vantrex.skysens.client.features.fishing.config.FishingCategory;
 import de.vantrex.skysens.client.chatcommand.config.ChatCommandsCategory;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
@@ -120,6 +124,7 @@ public class SkysensConfig extends Config {
     public static ManagedConfig<SkysensConfig> getConfig() {
         if (CONFIG == null) {
             final JsonObject legacySwing = readLegacySwingSettings();
+            final JsonObject legacyLevels = readLegacyNotificationLevels();
             CONFIG = ManagedConfig.create(
                     new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json"),
                     SkysensConfig.class,
@@ -149,8 +154,55 @@ public class SkysensConfig extends Config {
             if (legacySwing != null) {
                 migrateLegacySwingSettings(legacySwing);
             }
+            if (legacyLevels != null) {
+                migrateLegacyNotificationLevels(legacyLevels);
+            }
         }
         return CONFIG;
+    }
+
+    /** Returns the pre-move generalCategory.notificationLevels object if the file still has it. */
+    private static JsonObject readLegacyNotificationLevels() {
+        final File file = new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json");
+        if (!file.isFile()) {
+            return null;
+        }
+        try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
+            final JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+            if (root.get("generalCategory") instanceof JsonObject general
+                    && general.get("notificationLevels") instanceof JsonObject levels) {
+                return levels;
+            }
+        } catch (Exception e) {
+            LOGGER.warn("Could not inspect config for legacy notification levels", e);
+        }
+        return null;
+    }
+
+    /** Moves the levels of the old General > Notification Levels group next to their features' options. */
+    private static void migrateLegacyNotificationLevels(JsonObject levels) {
+        final SkysensConfig config = CONFIG.getInstance();
+        final OrderAlerts orderAlerts = config.bazaarCategory.orderAlerts;
+        orderAlerts.outbidLevel = legacyLevel(levels, "bazaarOutbid", orderAlerts.outbidLevel);
+        orderAlerts.undercutLevel = legacyLevel(levels, "bazaarUndercut", orderAlerts.undercutLevel);
+        orderAlerts.filledLevel = legacyLevel(levels, "bazaarFilled", orderAlerts.filledLevel);
+        final MiningNotificationAccordion mining = config.miningCategory.notifications;
+        mining.pickaxeAbilityLevel = legacyLevel(levels, "pickaxeAbility", mining.pickaxeAbilityLevel);
+        mining.consumableBuffs.filetOFortuneLevel = legacyLevel(levels, "filetOFortune", mining.consumableBuffs.filetOFortuneLevel);
+        mining.consumableBuffs.powderPumpkinLevel = legacyLevel(levels, "powderPumpkin", mining.consumableBuffs.powderPumpkinLevel);
+        final SlayerRngMeterAccordion rngMeter = config.slayerCategory.rngMeter;
+        rngMeter.notifyWhenFullLevel = legacyLevel(levels, "slayerRngMeterFull", rngMeter.notifyWhenFullLevel);
+        CONFIG.saveToFile();
+        LOGGER.info("Migrated notification levels from General to their features");
+    }
+
+    private static NotificationLevelEnum legacyLevel(JsonObject levels, String key, NotificationLevelEnum fallback) {
+        try {
+            return levels.has(key) ? NotificationLevelEnum.valueOf(levels.get(key).getAsString()) : fallback;
+        } catch (Exception e) {
+            LOGGER.warn("Could not migrate notification level {}", key, e);
+            return fallback;
+        }
     }
 
     /** Returns the pre-move qolCategory.swingAnimation object if the file still has it and no visuals swing group yet. */

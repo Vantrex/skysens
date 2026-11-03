@@ -37,7 +37,7 @@ public class PickaxeAbilityResetNotificationFeature implements GameMessageListen
         if (MINING_ABILITY_PATTERN.matcher(messageAsString).matches()) {
             notificationService.sendNotification(Notification.builder()
                     .text(this.buildTitle())
-                    .level(SkysensConfig.getInstance().generalCategory.notificationLevels.pickaxeAbility)
+                    .level(SkysensConfig.getInstance().miningCategory.notifications.pickaxeAbilityLevel)
                     .build());
         }
     }

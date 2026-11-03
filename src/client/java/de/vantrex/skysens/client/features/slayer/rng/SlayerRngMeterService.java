@@ -205,7 +205,7 @@ public final class SlayerRngMeterService {
                 .subtitle(Component.literal(subtitle).withStyle(ChatFormatting.GOLD))
                 .displayTime(Duration.ofSeconds(4))
                 .sound(new NotificationSound(SoundEvents.NOTE_BLOCK_PLING.value(), 1.0F, 2.0F))
-                .level(SkysensConfig.getInstance().generalCategory.notificationLevels.slayerRngMeterFull)
+                .level(SkysensConfig.getInstance().slayerCategory.rngMeter.notifyWhenFullLevel)
                 .build());
     }
 

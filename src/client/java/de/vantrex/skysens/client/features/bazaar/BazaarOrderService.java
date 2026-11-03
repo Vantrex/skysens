@@ -1,6 +1,5 @@
 package de.vantrex.skysens.client.features.bazaar;
 
-import de.vantrex.skysens.client.config.categories.general.NotificationLevelsAccordion;
 import de.vantrex.skysens.client.notification.NotificationLevelEnum;
 import de.vantrex.skysens.client.notification.NotificationService;
 import de.vantrex.skysens.client.skyblock.location.LocationService;
@@ -189,7 +188,7 @@ public class BazaarOrderService {
         this.alert(Component.literal(type + " filled!").withStyle(ChatFormatting.GREEN, ChatFormatting.BOLD),
                 Component.literal(detail + " - ready to claim").withStyle(ChatFormatting.YELLOW),
                 Component.literal("[Bazaar] " + type + " filled: " + detail + " - ready to claim").withStyle(ChatFormatting.GREEN),
-                true, levels().bazaarFilled);
+                true, config.filledLevel);
     }
 
     private void pollSafely() {
@@ -301,7 +300,8 @@ public class BazaarOrderService {
 
     /** Outbid alerts belong to buy orders, undercut alerts to sell offers. */
     private static NotificationLevelEnum priceAlertLevel(Order order) {
-        return order.buy ? levels().bazaarOutbid : levels().bazaarUndercut;
+        final OrderAlerts config = SkysensConfig.getInstance().bazaarCategory.orderAlerts;
+        return order.buy ? config.outbidLevel : config.undercutLevel;
     }
 
     /** {@code coins} as percent of the order's price. */
@@ -381,10 +381,6 @@ public class BazaarOrderService {
 
     private OrderAlerts config() {
         return SkysensConfig.getInstance().bazaarCategory.orderAlerts;
-    }
-
-    private static NotificationLevelsAccordion levels() {
-        return SkysensConfig.getInstance().generalCategory.notificationLevels;
     }
 
 }

@@ -1,7 +1,9 @@
 package de.vantrex.skysens.client.features.slayer.config;
 
 import com.google.gson.annotations.Expose;
+import de.vantrex.skysens.client.notification.NotificationLevelEnum;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
@@ -18,9 +20,14 @@ public class SlayerRngMeterAccordion {
     @Expose
     public float actionBarSeconds = 4f;
 
-    @ConfigOption(name = "Notify When Full", desc = "Notify once the RNG meter has enough XP for the tracked drop and the last boss' tier can drop it. Its level is set in General > Notification Levels (Important by default, so it shows even in combat or during a slayer quest)")
+    @ConfigOption(name = "Notify When Full", desc = "Notify once the RNG meter has enough XP for the tracked drop and the last boss' tier can drop it. Its level is set below (Important by default, so it shows even in combat or during a slayer quest)")
     @ConfigEditorBoolean
     @Expose
     public boolean notifyWhenFull = true;
+
+    @ConfigOption(name = "Notify When Full Level", desc = "Level of the notification that the RNG meter is full for the tracked drop." + NotificationLevelEnum.LEVELS_DESC)
+    @ConfigEditorDropdown
+    @Expose
+    public NotificationLevelEnum notifyWhenFullLevel = NotificationLevelEnum.IMPORTANT;
 
 }
