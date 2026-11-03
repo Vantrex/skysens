@@ -8,6 +8,7 @@ import de.vantrex.skysens.client.core.event.EventListenerRegistry;
 import de.vantrex.skysens.client.skyblock.event.SkyblockJoinEvent;
 import de.vantrex.skysens.client.skyblock.event.SkyblockQuitEvent;
 import de.vantrex.skysens.client.platform.hook.ChatHandler;
+import de.vantrex.skysens.client.platform.hook.HudHandlers;
 import de.vantrex.skysens.client.platform.hook.KeyHandlers;
 import de.vantrex.skysens.client.platform.hook.TickHandlers;
 import de.vantrex.skysens.client.platform.hook.UseHandlers;
@@ -72,6 +73,7 @@ public class SkysensClient implements ClientModInitializer {
         TickHandlers.register();
         ChatHandler.register();
         KeyHandlers.register();
+        HudHandlers.register();
         ProfitService.getInstance(); // starts counting time on SkyBlock
     }
 

@@ -11,6 +11,7 @@ import de.vantrex.skysens.client.skyblock.price.ItemPriceService;
 import de.vantrex.skysens.client.skyblock.profit.ProfitService;
 import de.vantrex.skysens.client.skyblock.location.LocationService;
 import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.NumberUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 
@@ -73,14 +74,14 @@ public class DungeonNpcProfitFeature implements GameMessageListeningFeature, Aft
             final Matcher sold = SOLD.matcher(stripped.trim());
             if (sold.matches()) {
                 if (config.npcSales) {
-                    this.onSold(Double.parseDouble(sold.group(1).replace(",", "")), config);
+                    this.onSold(NumberUtil.parseNumber(sold.group(1)), config);
                 }
             } else if (SALVAGED.matcher(stripped.trim()).matches()) {
                 this.salvageUntil = System.currentTimeMillis() + SALVAGE_WINDOW_MS;
             } else if (config.salvage && System.currentTimeMillis() <= this.salvageUntil) {
                 final Matcher essence = ESSENCE.matcher(stripped);
                 if (essence.matches()) {
-                    this.onSalvaged(essence.group(2), Double.parseDouble(essence.group(1).replace(",", "")));
+                    this.onSalvaged(essence.group(2), NumberUtil.parseNumber(essence.group(1)));
                 }
             }
         }

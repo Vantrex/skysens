@@ -6,7 +6,8 @@ injection point and delegates to them.
 - `platform/mixin/`: all mixins, package `de.vantrex.skysens.client.platform.mixin`.
 - `platform/hook/`: Fabric API callbacks, registered from `SkysensClient.onInitializeClient()`:
   `UseHandlers` (use item), `TickHandlers` (end of client tick), `ChatHandler` (incoming game messages, and
-  intercepting a bare `!warpto`), `KeyHandlers` (key mappings, category `key.category.skysens.main`).
+  intercepting a bare `!warpto`), `KeyHandlers` (key mappings, category `key.category.skysens.main`),
+  `HudHandlers` (HUD elements: the secondary action bar, see `ClientUtil.sendSecondaryActionBar`).
 
 ## Current mixins
 

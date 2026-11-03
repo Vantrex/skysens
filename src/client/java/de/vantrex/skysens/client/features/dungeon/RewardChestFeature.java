@@ -16,17 +16,16 @@ import de.vantrex.skysens.client.skyblock.profit.ProfitRepository;
 import de.vantrex.skysens.client.persistence.RepositoryRegistry;
 import de.vantrex.skysens.client.skyblock.location.LocationService;
 import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.ItemUtil;
 import de.vantrex.skysens.client.skyblock.item.ItemIdUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemLore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -164,8 +163,7 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
 
     /** Cost parts from the lore of the open button, or null if the lore has no cost (yet). Runs every tick, so no pricing here. */
     static @Nullable SeenCost readCost(ItemStack button) {
-        final ItemLore lore = button.get(DataComponents.LORE);
-        return lore == null ? null : readCost(lore.lines().stream().map(line -> strip(line.getString())).toList());
+        return readCost(ItemUtil.strippedLore(button));
     }
 
     static @Nullable SeenCost readCost(List<String> lore) {
@@ -175,7 +173,7 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
         for (final String text : lore) {
             final Matcher coinsLine = COINS.matcher(text);
             if (coinsLine.matches()) {
-                coins += parseNumber(coinsLine.group(1));
+                coins += NumberUtil.parseNumber(coinsLine.group(1));
                 found = true;
             } else if (text.equals("FREE")) {
                 found = true;
@@ -303,11 +301,11 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
         final ItemPriceService prices = ItemPriceService.getInstance();
         final Matcher coins = COINS.matcher(reward);
         if (coins.matches()) {
-            return parseNumber(coins.group(1));
+            return NumberUtil.parseNumber(coins.group(1));
         }
         final Matcher essence = ESSENCE.matcher(reward);
         if (essence.matches()) {
-            return prices.getPriceById("ESSENCE_" + essence.group(1).toUpperCase(Locale.ROOT)).orElse(0) * parseNumber(essence.group(2));
+            return prices.getPriceById("ESSENCE_" + essence.group(1).toUpperCase(Locale.ROOT)).orElse(0) * NumberUtil.parseNumber(essence.group(2));
         }
         final Matcher book = BOOK.matcher(reward);
         if (book.matches()) {
@@ -315,7 +313,7 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
         }
         final Matcher shard = SHARD.matcher(reward);
         if (shard.matches()) {
-            final double amount = shard.group(2) == null ? 1 : parseNumber(shard.group(2));
+            final double amount = shard.group(2) == null ? 1 : NumberUtil.parseNumber(shard.group(2));
             final OptionalDouble price = prices.getPriceById("SHARD_" + ItemIdUtil.toId(shard.group(1)));
             if (price.isPresent()) {
                 return price.getAsDouble() * amount;
@@ -323,7 +321,7 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
         }
         final Matcher amount = AMOUNT.matcher(reward);
         if (amount.matches()) {
-            return prices.getPrice(amount.group(1)).orElse(0) * parseNumber(amount.group(2));
+            return prices.getPrice(amount.group(1)).orElse(0) * NumberUtil.parseNumber(amount.group(2));
         }
         return prices.getPrice(reward).orElse(0);
     }
@@ -351,14 +349,4 @@ public class RewardChestFeature implements GameMessageListeningFeature, AfterTic
     private static String displayName(String chest) {
         return chest.charAt(0) + chest.substring(1).toLowerCase(Locale.ROOT) + " Chest";
     }
-
-    private static String strip(String text) {
-        final String stripped = ChatFormatting.stripFormatting(text);
-        return (stripped == null ? text : stripped).trim();
-    }
-
-    private static double parseNumber(String number) {
-        return Double.parseDouble(number.replace(",", ""));
-    }
-
 }
