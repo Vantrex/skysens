@@ -4,6 +4,7 @@ import de.vantrex.skysens.client.features.fishing.config.TrophyFrogAccordion;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * The Trophy Frog table: one row per frog with its amount per tier and the total. The rows are built in
@@ -23,11 +25,15 @@ final class TrophyFrogHud {
     private static final int COLUMN_GAP = 6;
     private static final int LINE_HEIGHT = 10;
     private static final int BACKGROUND = 0x80000000;
+    /** A color code (or reset), after which a struck cell has to turn the strikethrough on again. */
+    private static final Pattern STRUCK_COLOR = Pattern.compile("§[0-9a-fr]");
 
     /** Lines above the table (title, hints), each drawn as one piece. */
     private List<Component> header = List.of();
     /** Table cells, the first column is left aligned and the others right aligned. */
     private List<List<Component>> rows = List.of();
+    /** The tooltip of each row in {@link #rows} while hovered with the chat open, null for the column header. */
+    private List<List<Component>> tooltips = List.of();
 
     /** Rebuilds the lines for the profile, null while the profile is unknown. */
     void update(@Nullable TrophyFrogRepository.Profile profile, @NotNull TrophyFrogAccordion config) {
@@ -37,6 +43,7 @@ final class TrophyFrogHud {
             header.add(Component.literal("§7Waiting for your SkyBlock profile..."));
             this.header = header;
             this.rows = List.of();
+            this.tooltips = List.of();
             return;
         }
         if (!profile.menuRead) {
@@ -47,22 +54,30 @@ final class TrophyFrogHud {
         if (!profile.frogs.isEmpty()) {
             rows.add(columnHeader(config));
         }
+        final List<List<Component>> tooltips = new ArrayList<>();
+        if (!rows.isEmpty()) {
+            tooltips.add(null);
+        }
         final TrophyFrogService service = TrophyFrogService.getInstance();
+        final Map<String, List<TrophyFrogConditions.Condition>> conditions = TrophyFrogConditions.evaluate();
         for (final Map.Entry<String, Map<TrophyFrogTier, Integer>> frog : profile.frogs.entrySet()) {
             final Map<TrophyFrogTier, Integer> counts = frog.getValue();
             if (config.hideCompleted && counts.getOrDefault(TrophyFrogTier.DIAMOND, 0) > 0) {
                 continue;
             }
             final TrophyFrogTier highlighted = config.highlightNew ? service.highlightedTier(frog.getKey()) : null;
+            final List<TrophyFrogConditions.Condition> frogConditions = conditions.get(frog.getKey());
+            final boolean struck = config.strikeUncatchable && TrophyFrogConditions.isUncatchable(frogConditions);
+            tooltips.add(tooltip(frog.getKey(), frogConditions));
             final List<Component> row = new ArrayList<>();
-            row.add(Component.literal((highlighted != null ? "§a" : "§f") + frog.getKey()));
+            row.add(cell((highlighted != null ? "§a" : struck ? "§7" : "§f") + frog.getKey(), struck));
             for (final TrophyFrogTier tier : TrophyFrogTier.values()) {
                 final int amount = counts.getOrDefault(tier, 0);
                 final String color = tier == highlighted ? "§a" : tier.colorCode();
-                row.add(Component.literal(amount == 0 ? "§c✖" : color + String.format("%,d", amount)));
+                row.add(cell(amount == 0 ? "§c✖" : color + String.format("%,d", amount), struck));
             }
             if (config.showTotal) {
-                row.add(Component.literal((highlighted != null ? "§a" : "§5") + String.format("%,d", TrophyFrogService.total(counts))));
+                row.add(cell((highlighted != null ? "§a" : "§5") + String.format("%,d", TrophyFrogService.total(counts)), struck));
             }
             rows.add(row);
         }
@@ -70,9 +85,34 @@ final class TrophyFrogHud {
         if (config.hideCompleted && profile.menuRead && rows.size() == 1) {
             header.add(Component.literal("§aAll frogs caught in Diamond tier!"));
             rows.clear();
+            tooltips.clear();
         }
         this.header = header;
         this.rows = rows;
+        this.tooltips = tooltips;
+    }
+
+    /** The frog's requirements, each marked as met, not met or unknown (off the Lotus Atoll or not detectable). */
+    private static List<Component> tooltip(String frog, @Nullable List<TrophyFrogConditions.Condition> conditions) {
+        final List<Component> lines = new ArrayList<>();
+        lines.add(Component.literal("§e" + frog));
+        if (conditions == null) {
+            lines.add(Component.literal("§7No known requirements"));
+            return lines;
+        }
+        for (final TrophyFrogConditions.Condition condition : conditions) {
+            final String mark = condition.met() == null ? "§7• " : condition.met() ? "§a✔ " : "§c✖ ";
+            lines.add(Component.literal(mark + "§f" + condition.description()));
+        }
+        return lines;
+    }
+
+    /**
+     * A table cell, struck through for a frog that can't be caught right now. A color code ends the strikethrough, so
+     * it is repeated after every color code.
+     */
+    private static Component cell(String text, boolean struck) {
+        return Component.literal(struck ? STRUCK_COLOR.matcher(text).replaceAll("$0§m") : text);
     }
 
     private static List<Component> columnHeader(TrophyFrogAccordion config) {
@@ -123,6 +163,26 @@ final class TrophyFrogHud {
         graphics.pose().scale(scale, scale);
         this.drawContent(graphics);
         graphics.pose().popMatrix();
+        if (client.gui.screen() instanceof ChatScreen) {
+            this.drawTooltip(graphics, x, y, scale);
+        }
+    }
+
+    /** The requirements of the frog under the mouse, the chat has to be open to move the mouse. */
+    private void drawTooltip(@NotNull GuiGraphicsExtractor graphics, float x, float y, float scale) {
+        final Minecraft client = Minecraft.getInstance();
+        final double mouseX = client.mouseHandler.getScaledXPos(client.getWindow());
+        final double mouseY = client.mouseHandler.getScaledYPos(client.getWindow());
+        final double localX = (mouseX - x) / scale;
+        final double localY = (mouseY - y) / scale - PADDING - this.header.size() * LINE_HEIGHT;
+        if (localX < 0 || localX >= this.width() || localY < 0) {
+            return;
+        }
+        final int row = (int) (localY / LINE_HEIGHT);
+        if (row >= this.tooltips.size() || this.tooltips.get(row) == null) {
+            return;
+        }
+        graphics.setComponentTooltipForNextFrame(client.font, this.tooltips.get(row), (int) mouseX, (int) mouseY);
     }
 
     /** Draws the table with its top left corner at 0, 0, unscaled. */
