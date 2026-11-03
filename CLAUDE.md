@@ -46,8 +46,10 @@ reference mixins; mixins mostly loop over the feature lists in `FeatureRegistry`
 
 - **Don't rename persisted names.** Repository class names are their file names (`ProfitRepository.json`), and
   config field names are JSON keys. Renaming either silently resets users' data. Moving a class to another package is fine.
+  Moving an option needs a `ConfigMigration` class (one per migration, in `config/migration/`), see
+  [config-and-persistence.md](docs/architecture/config-and-persistence.md).
 - **Register new things explicitly.** Features in `FeatureService.register()`, chat commands in `ChatCommandService`,
-  repositories in `RepositoryRegistry`, mixins in `src/main/resources/skysens.client.mixins.json`. Nothing is
+  repositories in `RepositoryRegistry`, config migrations in `ConfigMigrations`, mixins in `src/main/resources/skysens.client.mixins.json`. Nothing is
   discovered by classpath scanning; `@SkySensFeature` is only a marker.
 - **No compile-time dependency on SkyHanni/Odin.** Go through `integration/` with reflection and a fallback.
 - `Optional` only as a return type, never as a method parameter.

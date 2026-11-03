@@ -1,19 +1,11 @@
 package de.vantrex.skysens.client.config;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.annotations.Expose;
-import de.vantrex.skysens.client.features.visuals.config.SwingAnimationAccordion;
 import de.vantrex.skysens.client.config.annotation.ConfigEditorDynamicZoneDropdown;
 import de.vantrex.skysens.client.config.categories.dev.DevCategory;
+import de.vantrex.skysens.client.config.migration.ConfigMigrations;
 import de.vantrex.skysens.client.features.dungeon.config.DungeonCategory;
 import de.vantrex.skysens.client.features.bazaar.config.BazaarCategory;
-import de.vantrex.skysens.client.features.bazaar.config.OrderAlerts;
-import de.vantrex.skysens.client.features.mining.config.MiningNotificationAccordion;
-import de.vantrex.skysens.client.features.slayer.config.SlayerRngMeterAccordion;
-import de.vantrex.skysens.client.notification.NotificationLevelEnum;
 import de.vantrex.skysens.client.features.fishing.config.FishingCategory;
 import de.vantrex.skysens.client.chatcommand.config.ChatCommandsCategory;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
@@ -36,8 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 @NoArgsConstructor
@@ -123,10 +113,10 @@ public class SkysensConfig extends Config {
 
     public static ManagedConfig<SkysensConfig> getConfig() {
         if (CONFIG == null) {
-            final JsonObject legacySwing = readLegacySwingSettings();
-            final JsonObject legacyLevels = readLegacyNotificationLevels();
+            final File configFile = new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json");
+            final ConfigMigrations migrations = ConfigMigrations.read(configFile);
             CONFIG = ManagedConfig.create(
-                    new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json"),
+                    configFile,
                     SkysensConfig.class,
                     new Function1<ManagedConfigBuilder<SkysensConfig>, Unit>() {
                         @Override
@@ -151,94 +141,11 @@ public class SkysensConfig extends Config {
                         }
                     }
             );
-            if (legacySwing != null) {
-                migrateLegacySwingSettings(legacySwing);
-            }
-            if (legacyLevels != null) {
-                migrateLegacyNotificationLevels(legacyLevels);
+            if (migrations.apply(CONFIG.getInstance())) {
+                CONFIG.saveToFile();
             }
         }
         return CONFIG;
-    }
-
-    /** Returns the pre-move generalCategory.notificationLevels object if the file still has it. */
-    private static JsonObject readLegacyNotificationLevels() {
-        final File file = new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json");
-        if (!file.isFile()) {
-            return null;
-        }
-        try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            final JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-            if (root.get("generalCategory") instanceof JsonObject general
-                    && general.get("notificationLevels") instanceof JsonObject levels) {
-                return levels;
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Could not inspect config for legacy notification levels", e);
-        }
-        return null;
-    }
-
-    /** Moves the levels of the old General > Notification Levels group next to their features' options. */
-    private static void migrateLegacyNotificationLevels(JsonObject levels) {
-        final SkysensConfig config = CONFIG.getInstance();
-        final OrderAlerts orderAlerts = config.bazaarCategory.orderAlerts;
-        orderAlerts.outbidLevel = legacyLevel(levels, "bazaarOutbid", orderAlerts.outbidLevel);
-        orderAlerts.undercutLevel = legacyLevel(levels, "bazaarUndercut", orderAlerts.undercutLevel);
-        orderAlerts.filledLevel = legacyLevel(levels, "bazaarFilled", orderAlerts.filledLevel);
-        final MiningNotificationAccordion mining = config.miningCategory.notifications;
-        mining.pickaxeAbilityLevel = legacyLevel(levels, "pickaxeAbility", mining.pickaxeAbilityLevel);
-        mining.consumableBuffs.filetOFortuneLevel = legacyLevel(levels, "filetOFortune", mining.consumableBuffs.filetOFortuneLevel);
-        mining.consumableBuffs.powderPumpkinLevel = legacyLevel(levels, "powderPumpkin", mining.consumableBuffs.powderPumpkinLevel);
-        final SlayerRngMeterAccordion rngMeter = config.slayerCategory.rngMeter;
-        rngMeter.notifyWhenFullLevel = legacyLevel(levels, "slayerRngMeterFull", rngMeter.notifyWhenFullLevel);
-        CONFIG.saveToFile();
-        LOGGER.info("Migrated notification levels from General to their features");
-    }
-
-    private static NotificationLevelEnum legacyLevel(JsonObject levels, String key, NotificationLevelEnum fallback) {
-        try {
-            return levels.has(key) ? NotificationLevelEnum.valueOf(levels.get(key).getAsString()) : fallback;
-        } catch (Exception e) {
-            LOGGER.warn("Could not migrate notification level {}", key, e);
-            return fallback;
-        }
-    }
-
-    /** Returns the pre-move qolCategory.swingAnimation object if the file still has it and no visuals swing group yet. */
-    private static JsonObject readLegacySwingSettings() {
-        final File file = new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json");
-        if (!file.isFile()) {
-            return null;
-        }
-        try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            final JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-            final JsonObject visuals = root.has("visualsCategory") && root.get("visualsCategory").isJsonObject()
-                    ? root.getAsJsonObject("visualsCategory") : null;
-            if (visuals != null && visuals.has("swingAnimation")) {
-                return null;
-            }
-            final JsonElement qol = root.get("qolCategory");
-            if (qol != null && qol.isJsonObject() && qol.getAsJsonObject().get("swingAnimation") instanceof JsonObject swing) {
-                return swing;
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Could not inspect config for legacy swing settings", e);
-        }
-        return null;
-    }
-
-    private static void migrateLegacySwingSettings(JsonObject legacySwing) {
-        try {
-            final SwingAnimationAccordion old = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
-                    .fromJson(legacySwing, SwingAnimationAccordion.class);
-            old.clamp();
-            CONFIG.getInstance().visualsCategory.swingAnimation.copyFrom(old);
-            CONFIG.saveToFile();
-            LOGGER.info("Migrated swing animation settings from QOL to Visuals");
-        } catch (Exception e) {
-            LOGGER.warn("Failed to migrate legacy swing settings", e);
-        }
     }
 
 }
