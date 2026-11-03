@@ -10,6 +10,7 @@ import de.vantrex.skysens.client.config.annotation.ConfigEditorDynamicZoneDropdo
 import de.vantrex.skysens.client.config.categories.dev.DevCategory;
 import de.vantrex.skysens.client.features.dungeon.config.DungeonCategory;
 import de.vantrex.skysens.client.features.bazaar.config.BazaarCategory;
+import de.vantrex.skysens.client.features.fishing.config.FishingCategory;
 import de.vantrex.skysens.client.chatcommand.config.ChatCommandsCategory;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
 import de.vantrex.skysens.client.features.mining.config.MiningCategory;
@@ -61,6 +62,10 @@ public class SkysensConfig extends Config {
     @Category(name = "Mining", desc = "Mining notifications")
     @Expose
     public MiningCategory miningCategory = new MiningCategory();
+
+    @Category(name = "Fishing", desc = "Trophy Frog HUD")
+    @Expose
+    public FishingCategory fishingCategory = new FishingCategory();
 
     @Category(name = "Dungeon", desc = "Dungeon and Kuudra reward chests")
     @Expose

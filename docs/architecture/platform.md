@@ -8,7 +8,8 @@ injection point and delegates to them.
   `UseHandlers` (use item), `TickHandlers` (end of client tick), `ChatHandler` (incoming game messages, and
   intercepting a bare `!warpto`), `KeyHandlers` (key mappings, category `key.category.skysens.main`),
   `HudHandlers` (HUD elements: the secondary action bar, see `ClientUtil.sendSecondaryActionBar`; wraps the vanilla
-  action bar and the secondary one so `ActionBarLayout` can lift them above Inventory HUD+).
+  action bar and the secondary one so `ActionBarLayout` can lift them above Inventory HUD+; and one element that
+  draws every `HudRenderFeature`).
 
 ## Current mixins
 

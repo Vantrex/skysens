@@ -19,6 +19,7 @@ All extend `Feature` (`isActive()`, `priority()`; lower priority runs first).
 | `ItemRightClickFeature` | `platform/hook/UseHandlers` | Right-clicking with an item |
 | `AfterTickFeature` | `platform/hook/TickHandlers` | End of every client tick, **only while on SkyBlock** |
 | `GameMessageListeningFeature` | `platform/hook/ChatHandler` | Every incoming game (chat) message |
+| `HudRenderFeature` | `platform/hook/HudHandlers` | Every frame on top of the HUD, **only while on SkyBlock** and not hidden with F1 |
 
 The dispatchers check `isActive()` first, with one exception: `GameMessageListeningFeature` is called
 unconditionally, so it must check `isActive()` and `SkysensClient.getInstance().isOnSkyBlock()` itself
@@ -53,6 +54,7 @@ Listeners are matched by exact event class (no inheritance) and run on the firin
 | `SkyblockJoinEvent`, `SkyblockQuitEvent` | `SkysensClient` (Hypixel Mod API location packet, disconnect) |
 | `LocationChangeEvent`, `ZoneChangeEvent` | `LocationService` |
 | `DungeonRunCompleteEvent` | `DungeonRunDetector` |
+| `ProfileChangeEvent` | `ProfileService` (profile name from chat, or once from the tab list after joining) |
 
 Domain events go in `skyblock/event/`. An event that only matters inside one feature stays in that feature's
 package (like `DungeonRunCompleteEvent`).
