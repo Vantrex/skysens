@@ -8,15 +8,10 @@ import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 /** The Trophy Frog HUD. */
 public class TrophyFrogAccordion {
 
-    @ConfigOption(name = "Trophy Frog HUD", desc = "Show how many of each Trophy Frog you caught per tier. There is no API for this: open the Trophy Frogs menu once per profile to load your counts, after that catches from chat are added")
+    @ConfigOption(name = "Trophy Frog HUD", desc = "Show how many of each Trophy Frog you caught per tier, on the Lotus Atoll. There is no API for this: open the Trophy Frogs menu once per profile to load your counts, after that catches from chat are added")
     @ConfigEditorBoolean
     @Expose
     public boolean enabled = true;
-
-    @ConfigOption(name = "Only On Lotus Atoll", desc = "Only show the HUD on the Lotus Atoll, where Trophy Frogs are caught")
-    @ConfigEditorBoolean
-    @Expose
-    public boolean onlyOnLotusAtoll = true;
 
     @ConfigOption(name = "Show Total", desc = "Add a column with the total catches of each frog")
     @ConfigEditorBoolean

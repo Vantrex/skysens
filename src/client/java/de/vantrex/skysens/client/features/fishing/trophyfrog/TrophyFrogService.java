@@ -9,6 +9,8 @@ import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,6 +39,15 @@ public final class TrophyFrogService {
     private static final Pattern TIER_LINE_PATTERN = Pattern.compile("^(?<tier>Bronze|Silver|Gold|Diamond) \\S+(?: \\((?<amount>[\\d,]+)\\))?$");
     /** How long a caught tier is highlighted in the HUD. */
     private static final long HIGHLIGHT_MS = 5_000;
+    /** The catch rate for the pity estimates is measured over this much time on the Lotus Atoll. */
+    public static final long RATE_WINDOW_MS = 10 * 60_000;
+    /** Below this much measured time the catch rate is too uncertain to estimate with. */
+    private static final long MIN_RATE_WINDOW_MS = 60_000;
+    /**
+     * A longer gap between two {@link #onLotusAtoll} calls means the player was elsewhere (or the game paused), that
+     * time isn't counted.
+     */
+    private static final long MAX_TICK_GAP_MS = 1_000;
 
     @Getter
     private static final TrophyFrogService instance = new TrophyFrogService();
@@ -45,6 +56,18 @@ public final class TrophyFrogService {
     private @Nullable String highlightedFrog;
     private @Nullable TrophyFrogTier highlightedTier;
     private long highlightUntilMs;
+
+    /**
+     * The catches of the last {@link #RATE_WINDOW_MS} on the Lotus Atoll, oldest first, stamped with
+     * {@link #atollTimeMs}. Only kept in memory: the rate describes the current fishing session. Belongs to
+     * {@link #rateProfile}, cleared when the profile changes.
+     */
+    private final Deque<RecentCatch> recentCatches = new ArrayDeque<>();
+    private @Nullable TrophyFrogRepository.Profile rateProfile;
+    /** Time spent on the Lotus Atoll with {@link #rateProfile} this game session, a clock that stops elsewhere. */
+    private long atollTimeMs;
+    /** When {@link #onLotusAtoll} was last called (wall clock), 0 before the first call. */
+    private long lastAtollTickMs;
 
     private TrophyFrogService() {
     }
@@ -55,6 +78,17 @@ public final class TrophyFrogService {
 
     /** A parsed catch message. */
     record Catch(@NotNull String frog, @NotNull TrophyFrogTier tier, int amount) {
+    }
+
+    private record RecentCatch(@NotNull String frog, int amount, long atMs) {
+    }
+
+    /** How many catches of one frog there were in the measured time, at most {@link #RATE_WINDOW_MS}. */
+    record CatchRate(int catches, long windowMs) {
+        /** The estimated time for the given amount of catches, null if there were no catches to estimate with. */
+        @Nullable Long timeFor(int catches) {
+            return this.catches == 0 ? null : (long) ((double) catches * this.windowMs / this.catches);
+        }
     }
 
     /**
@@ -128,10 +162,68 @@ public final class TrophyFrogService {
             return;
         }
         profile.frog(caught.frog()).merge(caught.tier(), caught.amount(), Integer::sum);
+        this.recordCatch(profile, caught);
         this.highlightedFrog = caught.frog();
         this.highlightedTier = caught.tier();
         this.highlightUntilMs = System.currentTimeMillis() + HIGHLIGHT_MS;
         save();
+    }
+
+    /**
+     * Advances the Lotus Atoll clock of the catch rate, called every tick while the player is on the Lotus Atoll.
+     * Time away from it (and game pauses) doesn't count, see {@link #MAX_TICK_GAP_MS}.
+     */
+    public void onLotusAtoll() {
+        final TrophyFrogRepository.Profile profile = this.current();
+        if (profile == null) {
+            return;
+        }
+        this.switchProfile(profile);
+        final long now = System.currentTimeMillis();
+        final long gap = now - this.lastAtollTickMs;
+        if (this.lastAtollTickMs != 0 && gap > 0 && gap <= MAX_TICK_GAP_MS) {
+            this.atollTimeMs += gap;
+        }
+        this.lastAtollTickMs = now;
+        while (!this.recentCatches.isEmpty()
+                && this.recentCatches.peekFirst().atMs() < this.atollTimeMs - RATE_WINDOW_MS) {
+            this.recentCatches.removeFirst();
+        }
+    }
+
+    private void recordCatch(TrophyFrogRepository.Profile profile, Catch caught) {
+        this.switchProfile(profile);
+        this.recentCatches.addLast(new RecentCatch(caught.frog(), caught.amount(), this.atollTimeMs));
+    }
+
+    /** Starts the measurement over when the profile changed, the rate of another profile doesn't apply. */
+    private void switchProfile(TrophyFrogRepository.Profile profile) {
+        if (profile != this.rateProfile) {
+            this.rateProfile = profile;
+            this.recentCatches.clear();
+            this.atollTimeMs = 0;
+        }
+    }
+
+    /**
+     * The catches of the frog in the last {@link #RATE_WINDOW_MS} spent on the Lotus Atoll this game session, over
+     * less time if less was spent there. Null while less than a minute was measured on the current profile.
+     */
+    public @Nullable CatchRate catchRate(@NotNull String frog) {
+        if (this.rateProfile == null || this.rateProfile != this.current()) {
+            return null;
+        }
+        final long windowMs = Math.min(RATE_WINDOW_MS, this.atollTimeMs);
+        if (windowMs < MIN_RATE_WINDOW_MS) {
+            return null;
+        }
+        int catches = 0;
+        for (final RecentCatch recent : this.recentCatches) {
+            if (recent.atMs() >= this.atollTimeMs - windowMs && recent.frog().equals(frog)) {
+                catches += recent.amount();
+            }
+        }
+        return new CatchRate(catches, windowMs);
     }
 
     /** The tier of the frog caught in the last few seconds, null if the given frog wasn't. */
