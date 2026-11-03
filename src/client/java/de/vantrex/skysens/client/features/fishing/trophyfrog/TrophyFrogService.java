@@ -5,6 +5,7 @@ import de.vantrex.skysens.client.skyblock.player.ProfileUtil;
 import de.vantrex.skysens.client.util.ClientUtil;
 import de.vantrex.skysens.client.util.NumberUtil;
 import lombok.Getter;
+import net.minecraft.client.Minecraft;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,7 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Keeps the Trophy Frog counts of the current profile. There is no API for them, so they come from two places:
+ * Keeps the Trophy Frog counts of the current account and profile. There is no API for them, so they come from two places:
  * <ul>
  *     <li>the Trophy Frogs menu, whose frogs list each tier in their lore ("Gold ✔ (16)", "Diamond ✖"). It is exact
  *     and overwrites what was counted before;</li>
@@ -61,14 +62,19 @@ public final class TrophyFrogService {
     public void refreshProfile() {
         final String profile = ProfileUtil.currentProfile();
         if (profile != null) {
-            repository().lastProfile = profile;
+            account().lastProfile = profile;
         }
     }
 
-    /** The counts of the current profile. */
+    /** The counts of the current profile of the logged in account. */
     public @NotNull TrophyFrogRepository.Profile current() {
-        final TrophyFrogRepository repository = repository();
-        return repository.profile(repository.lastProfile == null ? UNKNOWN_PROFILE : repository.lastProfile);
+        final TrophyFrogRepository.Account account = account();
+        return account.profile(account.lastProfile == null ? UNKNOWN_PROFILE : account.lastProfile);
+    }
+
+    /** The logged in Minecraft account, by UUID: profiles of different accounts can share a name. */
+    private static TrophyFrogRepository.Account account() {
+        return repository().account(Minecraft.getInstance().getUser().getProfileId().toString());
     }
 
     /** Takes the counts from the open Trophy Frogs menu. Items without tier lines (buttons, panes) are skipped. */
