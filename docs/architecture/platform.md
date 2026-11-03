@@ -7,7 +7,8 @@ injection point and delegates to them.
 - `platform/hook/`: Fabric API callbacks, registered from `SkysensClient.onInitializeClient()`:
   `UseHandlers` (use item), `TickHandlers` (end of client tick), `ChatHandler` (incoming game messages, and
   intercepting a bare `!warpto`), `KeyHandlers` (key mappings, category `key.category.skysens.main`),
-  `HudHandlers` (HUD elements: the secondary action bar, see `ClientUtil.sendSecondaryActionBar`).
+  `HudHandlers` (HUD elements: the secondary action bar, see `ClientUtil.sendSecondaryActionBar`; wraps the vanilla
+  action bar and the secondary one so `ActionBarLayout` can lift them above Inventory HUD+).
 
 ## Current mixins
 
@@ -27,6 +28,7 @@ injection point and delegates to them.
 | `ServerStatsMixin` | `ClientPacketListener` | Feeds time and pong packets to `InternalStatsProvider` |
 | `ChatComponentMixin` | `ChatComponent` | Messages other mods add straight to chat (no game message event) → `DungeonRunDetector` |
 | `PlayerTabOverlayAccessor` | `PlayerTabOverlay` | `@Invoker` for the tab list entries |
+| `InventoryHudKeyActionMixin` | Inventory HUD+ `KeyAction` (`@Pseudo`, `require = 0`) | Its key bindings ran → `ActionBarLayout.markDirty()` |
 
 ## Adding a mixin
 
