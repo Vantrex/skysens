@@ -9,6 +9,7 @@ import de.vantrex.skysens.client.skyblock.event.PartyLeaveEvent;
 import de.vantrex.skysens.client.skyblock.event.PartyMemberJoinEvent;
 import de.vantrex.skysens.client.skyblock.event.PartyMemberLeaveEvent;
 import de.vantrex.skysens.client.skyblock.event.PartyMembersUpdateEvent;
+import de.vantrex.skysens.client.skyblock.event.PartyRoleChangeEvent;
 import de.vantrex.skysens.client.util.ChatUtil;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
@@ -33,17 +34,19 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Tracks the player's Hypixel party: whether they are in one, the leader, the other members and the size.
+ * Tracks the player's Hypixel party: whether they are in one, the other members, everyone's {@link PartyRole rank} and
+ * the size.
  * <p>
  * Once per connection the state is read from the Hypixel Mod API ({@link PartyService}), as are the answers to requests
- * of other mods. After that, the party chat messages keep it up to date ("You have joined ReZuni's party!",
- * "ReZuni joined the party.", "You have been kicked from the party by ReZuni", ...), and {@code /party list} re-reads
- * the whole party. The Mod API only names members in the same lobby, so a member's name can be unknown.
+ * of other mods; this also picks up a party the player was already in when joining Hypixel. After that, the party chat
+ * messages keep it up to date ("You have joined ReZuni's party!", "ReZuni joined the party.", "ReZuni has promoted
+ * FaiN69 to Party Moderator", ...), and {@code /party list} re-reads the whole party. The Mod API only names members in
+ * the same lobby, so a member's name can be unknown; a rank is unknown for the members listed when joining a party.
  * <p>
  * The state is not saved: it is unknown after a restart or reconnect until the Mod API answered or a party message was
  * seen. Always active, so the events fire regardless of which features are on. All state changes run on the client
  * thread. Fires {@link PartyJoinEvent}, {@link PartyLeaveEvent}, {@link PartyKickEvent}, {@link PartyMemberJoinEvent},
- * {@link PartyMemberLeaveEvent} and {@link PartyMembersUpdateEvent}.
+ * {@link PartyMemberLeaveEvent}, {@link PartyRoleChangeEvent} and {@link PartyMembersUpdateEvent}.
  */
 public final class PartyTracker implements GameMessageListeningFeature {
 
@@ -62,8 +65,11 @@ public final class PartyTracker implements GameMessageListeningFeature {
     private static final Pattern SELF_KICKED = Pattern.compile("^You have been kicked from the party by " + NAME + "\\.?$");
     private static final Pattern DISBANDED = Pattern.compile("^(?:" + NAME + " has disbanded the party!|The party was disbanded because .+)$");
     private static final Pattern NOT_IN_PARTY = Pattern.compile("^You are not (?:currently )?in a party(?: right now)?\\.$");
-    private static final Pattern TRANSFERRED = Pattern.compile("^The party was transferred to " + NAME + " (?:by|because) .+$");
-    private static final Pattern PROMOTED_TO_LEADER = Pattern.compile("^" + NAME + " has promoted " + NAME + " to Party Leader$");
+    /** /party transfer, the old leader becomes a moderator. */
+    private static final Pattern TRANSFERRED_BY = Pattern.compile("^The party was transferred to " + NAME + " by " + NAME + "$");
+    /** E.g. "... because ReZuni left", the old leader is gone. */
+    private static final Pattern TRANSFERRED_BECAUSE = Pattern.compile("^The party was transferred to " + NAME + " because .+$");
+    private static final Pattern ROLE_CHANGED = Pattern.compile("^" + NAME + " has (?:promoted|demoted) " + NAME + " to Party (Leader|Moderator|Member)$");
 
     // /party list, one multi-line message
     private static final Pattern LIST_HEADER = Pattern.compile("^Party Members \\((\\d+)\\)$");
@@ -80,8 +86,9 @@ public final class PartyTracker implements GameMessageListeningFeature {
     @Getter
     private boolean known;
     private boolean inParty;
-    /** The leader's name, null if unknown. The player's own name if they lead the party. */
-    private @Nullable String leader;
+    /** The player's own rank, null if unknown or not in a party. */
+    private @Nullable PartyRole role;
+    /** The other members, never the player. */
     private final List<PartyMember> members = new ArrayList<>();
     /** Whether the Mod API was already asked on this connection, it rate limits party info requests. */
     private boolean requested;
@@ -125,15 +132,49 @@ public final class PartyTracker implements GameMessageListeningFeature {
         return PartyService.getInstance().isInParty();
     }
 
-    /** Whether the player leads their party. */
-    public boolean isLeader() {
-        final String self = selfName();
-        return this.isInParty() && self != null && self.equalsIgnoreCase(this.leader);
+    /** The player's own rank, null if unknown or not in a party. */
+    public @Nullable PartyRole getRole() {
+        return this.isInParty() ? this.role : null;
     }
 
-    /** The leader's name, null if unknown or not in a party. */
+    /** The rank of the given player (the player themselves included), null if unknown or not in our party. */
+    public @Nullable PartyRole getRole(@NotNull String name) {
+        if (name.equalsIgnoreCase(selfName())) {
+            return this.getRole();
+        }
+        return this.isInParty() ? this.findMember(name).map(PartyMember::getRole).orElse(null) : null;
+    }
+
+    /** Whether the player leads their party. */
+    public boolean isLeader() {
+        return this.getRole() == PartyRole.LEADER;
+    }
+
+    /** Whether the player's rank is the given one or higher, e.g. {@code hasRole(MODERATOR)} to kick. */
+    public boolean hasRole(@NotNull PartyRole required) {
+        final PartyRole own = this.getRole();
+        return own != null && own.isAtLeast(required);
+    }
+
+    /** Whether another member is known to lead the party. */
+    public boolean isLedByOtherMember() {
+        return this.isInParty() && this.members.stream().anyMatch(member -> member.getRole() == PartyRole.LEADER);
+    }
+
+    /** The leader's name, the player's own if they lead. Null if unknown or not in a party. */
     public @Nullable String getLeader() {
-        return this.isInParty() ? this.leader : null;
+        if (!this.isInParty()) {
+            return null;
+        }
+        if (this.role == PartyRole.LEADER) {
+            return selfName();
+        }
+        return this.members.stream()
+                .filter(member -> member.getRole() == PartyRole.LEADER)
+                .map(PartyMember::getName)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(null);
     }
 
     /** The other members, without the player. Empty if not in a party. */
@@ -153,7 +194,11 @@ public final class PartyTracker implements GameMessageListeningFeature {
 
     /** Whether the given player is another member of our party. */
     public boolean hasMember(@NotNull String name) {
-        return this.isInParty() && this.members.stream().anyMatch(member -> member.hasName(name));
+        return this.isInParty() && this.findMember(name).isPresent();
+    }
+
+    private @NotNull Optional<PartyMember> findMember(@NotNull String name) {
+        return this.members.stream().filter(member -> member.hasName(name)).findFirst();
     }
 
     // ---- connection ----
@@ -161,10 +206,14 @@ public final class PartyTracker implements GameMessageListeningFeature {
     /** Forgets the state, e.g. on disconnect. Fires no events, the party itself survives a reconnect. */
     public void reset() {
         this.known = false;
-        this.inParty = false;
-        this.leader = null;
-        this.members.clear();
+        this.clearParty();
         this.requested = false;
+    }
+
+    private void clearParty() {
+        this.inParty = false;
+        this.role = null;
+        this.members.clear();
     }
 
     private void requestOnce() {
@@ -189,16 +238,22 @@ public final class PartyTracker implements GameMessageListeningFeature {
             return;
         }
         final UUID self = client.player.getUUID();
+        final UUID leaderId = packet.getLeader().orElse(null);
+        PartyRole ownRole = leaderId != null && leaderId.equals(self) ? PartyRole.LEADER : null;
         final List<PartyMember> snapshot = new ArrayList<>();
-        // the member set may or may not contain us, the size is counted without us either way
-        for (UUID uuid : packet.getMembers()) {
-            if (!uuid.equals(self)) {
-                snapshot.add(new PartyMember(uuid, this.nameOf(uuid)));
+        // the member map may or may not contain us, the size is counted without us either way
+        for (ClientboundPartyInfoPacket.PartyMember member : packet.getMemberMap().values()) {
+            PartyRole memberRole = PartyRole.of(member.getRole());
+            if (memberRole == null && member.getUuid().equals(leaderId)) {
+                memberRole = PartyRole.LEADER;
+            }
+            if (member.getUuid().equals(self)) {
+                ownRole = memberRole;
+            } else {
+                snapshot.add(new PartyMember(member.getUuid(), this.nameOf(member.getUuid()), memberRole));
             }
         }
-        final UUID leaderId = packet.getLeader().orElse(null);
-        final String leaderName = leaderId == null ? null : leaderId.equals(self) ? selfName() : this.nameOf(leaderId);
-        this.applySnapshot(true, leaderName, snapshot);
+        this.applySnapshot(true, ownRole, snapshot);
     }
 
     /** The name from the tab list (same lobby), else the name we already know for this UUID, else null. */
@@ -223,35 +278,31 @@ public final class PartyTracker implements GameMessageListeningFeature {
         if (info != null) {
             return info.getProfile().id();
         }
-        return this.members.stream()
-                .filter(member -> member.hasName(name))
-                .map(PartyMember::getUuid)
-                .filter(Objects::nonNull)
-                .findFirst()
-                .orElse(null);
+        return this.findMember(name).map(PartyMember::getUuid).orElse(null);
     }
 
     /**
      * Replaces the whole state, from the Mod API or /party list. Fires a leave event if we turn out not to be in a party
-     * anymore; finding a party we missed joining only fires the {@link PartyMembersUpdateEvent}.
+     * anymore; finding a party we missed joining, or ranks we missed changing, only fires the
+     * {@link PartyMembersUpdateEvent}.
      */
-    private void applySnapshot(boolean nowInParty, @Nullable String newLeader, @NotNull List<PartyMember> newMembers) {
+    private void applySnapshot(boolean nowInParty, @Nullable PartyRole ownRole, @NotNull List<PartyMember> newMembers) {
         final boolean wasKnown = this.known;
         final boolean wasInParty = this.inParty;
         final boolean changed = !wasKnown || wasInParty != nowInParty
-                || !Objects.equals(this.leader, newLeader) || !this.members.equals(newMembers);
+                || this.role != ownRole || !this.members.equals(newMembers);
         this.known = true;
-        this.inParty = nowInParty;
-        this.leader = nowInParty ? newLeader : null;
-        this.members.clear();
+        this.clearParty();
         if (nowInParty) {
+            this.inParty = true;
+            this.role = ownRole;
             this.members.addAll(newMembers);
         }
         if (wasKnown && wasInParty && !nowInParty) {
             fire(new PartyLeaveEvent(PartyLeaveReason.UNKNOWN));
         }
         if (changed) {
-            fire(new PartyMembersUpdateEvent(this.inParty, this.leader, this.getMemberNames(), this.getSize()));
+            fire(new PartyMembersUpdateEvent(this.inParty, this.getRole(), this.getLeader(), this.getMemberNames(), this.getSize()));
         }
     }
 
@@ -306,29 +357,36 @@ public final class PartyTracker implements GameMessageListeningFeature {
             this.onSelfLeft(PartyLeaveReason.DISBANDED, true);
         } else if (NOT_IN_PARTY.matcher(line).matches()) {
             this.onSelfLeft(PartyLeaveReason.UNKNOWN, false);
-        } else if ((matcher = TRANSFERRED.matcher(line)).matches()) {
-            this.onNewLeader(matcher.group(1), self);
-        } else if ((matcher = PROMOTED_TO_LEADER.matcher(line)).matches()) {
-            this.onNewLeader(matcher.group(2), self);
+        } else if ((matcher = TRANSFERRED_BY.matcher(line)).matches()) {
+            this.onNewLeader(matcher.group(1), true, self);
+        } else if ((matcher = TRANSFERRED_BECAUSE.matcher(line)).matches()) {
+            this.onNewLeader(matcher.group(1), false, self);
+        } else if ((matcher = ROLE_CHANGED.matcher(line)).matches()) {
+            final PartyRole newRole = Objects.requireNonNull(PartyRole.ofTitle(matcher.group(3)));
+            if (newRole == PartyRole.LEADER) {
+                this.onNewLeader(matcher.group(2), true, self);
+            } else {
+                this.changeRole(matcher.group(2), newRole, self);
+            }
         }
     }
 
-    private void onSelfJoined(@NotNull String newLeader) {
-        this.members.clear();
+    private void onSelfJoined(@NotNull String leader) {
+        this.clearParty();
         this.known = true;
         this.inParty = true;
-        this.leader = newLeader;
-        this.members.add(new PartyMember(this.uuidOf(newLeader), newLeader));
-        ClientUtil.sendDebug("Party: joined " + newLeader + "'s party");
-        fire(new PartyJoinEvent(newLeader, this.getMemberNames()));
+        this.role = PartyRole.MEMBER;
+        this.members.add(new PartyMember(this.uuidOf(leader), leader, PartyRole.LEADER));
+        ClientUtil.sendDebug("Party: joined " + leader + "'s party");
+        fire(new PartyJoinEvent(leader, this.getMemberNames()));
     }
 
-    /** Follows "You have joined ...'s party!" and lists the members already in it. */
+    /** Follows "You have joined ...'s party!" and lists the members already in it, their ranks are unknown. */
     private void onPartyingWith(@NotNull String list, @NotNull String self) {
         for (String entry : list.split(", ")) {
             final Matcher name = NAME_IN_LIST.matcher(entry.trim());
             if (name.matches()) {
-                this.addMember(name.group(1), self);
+                this.addMember(name.group(1), null, self);
             }
         }
     }
@@ -339,15 +397,14 @@ public final class PartyTracker implements GameMessageListeningFeature {
             return;
         }
         final boolean wasKnown = this.known;
-        this.members.clear();
+        this.clearParty();
         this.known = true;
         this.inParty = true;
         if (!wasKnown) {
-            // we may have been in someone else's party all along (members can invite too)
-            this.leader = null;
+            // we may have been in someone else's party all along (members can invite too), so our rank is unknown
             return;
         }
-        this.leader = self;
+        this.role = PartyRole.LEADER;
         ClientUtil.sendDebug("Party: created a party");
         fire(new PartyJoinEvent(self, List.of()));
     }
@@ -357,21 +414,31 @@ public final class PartyTracker implements GameMessageListeningFeature {
             return;
         }
         if (!this.isInParty()) {
-            // only shown to party members, so we are in one; the leader is unknown if we missed how we got here
-            this.members.clear();
-            this.leader = null;
+            // only shown to party members, so we are in one; our rank is unknown if we missed how we got here
+            this.clearParty();
             this.known = true;
             this.inParty = true;
         }
-        this.addMember(name, self);
+        this.addMember(name, PartyRole.MEMBER, self);
         ClientUtil.sendDebug("Party: " + name + " joined");
         fire(new PartyMemberJoinEvent(name));
     }
 
-    private void addMember(@NotNull String name, @NotNull String self) {
-        if (!name.equalsIgnoreCase(self) && this.members.stream().noneMatch(member -> member.hasName(name))) {
-            this.members.add(new PartyMember(this.uuidOf(name), name));
+    /** Adds the member if they aren't known yet; a known member keeps their rank unless it was unknown. */
+    private @Nullable PartyMember addMember(@NotNull String name, @Nullable PartyRole memberRole, @NotNull String self) {
+        if (name.equalsIgnoreCase(self)) {
+            return null;
         }
+        final Optional<PartyMember> existing = this.findMember(name);
+        if (existing.isPresent()) {
+            if (existing.get().getRole() == null) {
+                existing.get().setRole(memberRole);
+            }
+            return existing.get();
+        }
+        final PartyMember member = new PartyMember(this.uuidOf(name), name, memberRole);
+        this.members.add(member);
+        return member;
     }
 
     private void onMemberLeft(@NotNull String name, @NotNull PartyLeaveReason reason, @NotNull String self) {
@@ -379,9 +446,6 @@ public final class PartyTracker implements GameMessageListeningFeature {
             return;
         }
         this.members.removeIf(member -> member.hasName(name));
-        if (name.equalsIgnoreCase(this.leader)) {
-            this.leader = null;
-        }
         ClientUtil.sendDebug("Party: " + name + " left (" + reason + ")");
         fire(new PartyMemberLeaveEvent(name, reason));
     }
@@ -389,23 +453,58 @@ public final class PartyTracker implements GameMessageListeningFeature {
     /** @param certain false if the message doesn't prove we were in a party, then only a tracked party fires the event */
     private void onSelfLeft(@NotNull PartyLeaveReason reason, boolean certain) {
         final boolean fireEvent = certain || this.isInParty();
-        this.members.clear();
-        this.leader = null;
+        this.clearParty();
         this.known = true;
-        this.inParty = false;
         if (fireEvent) {
             ClientUtil.sendDebug("Party: left (" + reason + ")");
             fire(new PartyLeaveEvent(reason));
         }
     }
 
-    private void onNewLeader(@NotNull String name, @NotNull String self) {
+    /**
+     * The party now belongs to {@code name}.
+     *
+     * @param oldLeaderStays whether the old leader is still in the party, then they become a moderator
+     */
+    private void onNewLeader(@NotNull String name, boolean oldLeaderStays, @NotNull String self) {
         if (!this.isInParty()) {
             return;
         }
-        this.leader = name;
-        if (!name.equalsIgnoreCase(self)) {
-            this.addMember(name, self);
+        if (this.role == PartyRole.LEADER && !name.equalsIgnoreCase(self)) {
+            this.changeRole(self, oldLeaderStays ? PartyRole.MODERATOR : PartyRole.MEMBER, self);
+        }
+        for (PartyMember member : List.copyOf(this.members)) {
+            if (member.getRole() == PartyRole.LEADER && !member.hasName(name)) {
+                if (oldLeaderStays && member.getName() != null) {
+                    this.changeRole(member.getName(), PartyRole.MODERATOR, self);
+                } else {
+                    // gone, or no name to report; the leave message removes them
+                    member.setRole(PartyRole.MODERATOR);
+                }
+            }
+        }
+        this.changeRole(name, PartyRole.LEADER, self);
+    }
+
+    /** Sets the rank of a member or the player and fires a {@link PartyRoleChangeEvent} if it changed. */
+    private void changeRole(@NotNull String name, @NotNull PartyRole newRole, @NotNull String self) {
+        if (!this.isInParty()) {
+            return;
+        }
+        final boolean isSelf = name.equalsIgnoreCase(self);
+        final PartyRole oldRole;
+        if (isSelf) {
+            oldRole = this.role;
+            this.role = newRole;
+        } else {
+            final PartyMember existing = this.findMember(name).orElse(null);
+            oldRole = existing == null ? null : existing.getRole();
+            final PartyMember member = existing != null ? existing : Objects.requireNonNull(this.addMember(name, newRole, self));
+            member.setRole(newRole);
+        }
+        if (oldRole != newRole) {
+            ClientUtil.sendDebug("Party: " + name + " is now " + newRole);
+            fire(new PartyRoleChangeEvent(name, isSelf, oldRole, newRole));
         }
     }
 
@@ -419,29 +518,31 @@ public final class PartyTracker implements GameMessageListeningFeature {
      * </pre>
      */
     private void onPartyList(@NotNull List<String> lines, @NotNull String self) {
-        String newLeader = null;
+        boolean sawLeader = false;
+        PartyRole ownRole = null;
         final List<PartyMember> snapshot = new ArrayList<>();
         for (String line : lines) {
-            final Matcher role = LIST_ROLE.matcher(line);
-            if (!role.matches()) {
+            final Matcher roleLine = LIST_ROLE.matcher(line);
+            if (!roleLine.matches()) {
                 continue;
             }
-            final Matcher member = LIST_MEMBER.matcher(role.group(2));
+            final PartyRole lineRole = Objects.requireNonNull(PartyRole.ofTitle(roleLine.group(1)));
+            sawLeader |= lineRole == PartyRole.LEADER;
+            final Matcher member = LIST_MEMBER.matcher(roleLine.group(2));
             while (member.find()) {
                 final String name = member.group(1);
-                if (role.group(1).equals("Leader")) {
-                    newLeader = name;
-                }
-                if (!name.equalsIgnoreCase(self) && snapshot.stream().noneMatch(known -> known.hasName(name))) {
-                    snapshot.add(new PartyMember(this.uuidOf(name), name));
+                if (name.equalsIgnoreCase(self)) {
+                    ownRole = lineRole;
+                } else if (snapshot.stream().noneMatch(known -> known.hasName(name))) {
+                    snapshot.add(new PartyMember(this.uuidOf(name), name, lineRole));
                 }
             }
         }
-        if (newLeader == null) {
+        if (!sawLeader) {
             // the role lines came in another message, don't wipe the members with an empty list
             return;
         }
-        this.applySnapshot(true, newLeader, snapshot);
+        this.applySnapshot(true, ownRole, snapshot);
     }
 
     private static @Nullable String selfName() {

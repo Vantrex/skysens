@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.features.warp;
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.chatcommand.ChatCommandContext;
 import de.vantrex.skysens.client.config.SkysensConfig;
+import de.vantrex.skysens.client.skyblock.party.PartyRole;
 import de.vantrex.skysens.client.skyblock.party.PartyTracker;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
@@ -163,12 +164,12 @@ public final class WarpToService {
 
     /**
      * Whether the party only holds us and the player we are warping. startWarp confirmed we weren't in a party before the
-     * invite, so an unknown leader is fine; a known other leader or another member means it isn't our party.
+     * invite, so an unknown rank is fine; another member, or anyone else leading, means it isn't our party.
      */
     private boolean onlyWarpingPlayerInParty() {
         final PartyTracker party = PartyTracker.getInstance();
-        final String leader = party.getLeader();
-        if (leader != null && !party.isLeader()) {
+        final PartyRole role = party.getRole();
+        if ((role != null && role != PartyRole.LEADER) || party.isLedByOtherMember()) {
             return false;
         }
         return party.getMembers().stream().allMatch(member -> this.warpingPlayer.equalsIgnoreCase(member.getName()));
