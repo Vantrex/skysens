@@ -39,8 +39,11 @@ public final class TrophyFrogService {
     private static final Pattern TIER_LINE_PATTERN = Pattern.compile("^(?<tier>Bronze|Silver|Gold|Diamond) \\S+(?: \\((?<amount>[\\d,]+)\\))?$");
     /** How long a caught tier is highlighted in the HUD. */
     private static final long HIGHLIGHT_MS = 5_000;
-    /** The catch rate for the pity estimates is measured over this much time on the Lotus Atoll. */
-    public static final long RATE_WINDOW_MS = 10 * 60_000;
+    /**
+     * The catch rate for the pity estimates is measured over at most this much time on the Lotus Atoll: all of it
+     * this session until then, the most recent hour after.
+     */
+    public static final long RATE_WINDOW_MS = 60 * 60_000;
     /** Below this much measured time the catch rate is too uncertain to estimate with. */
     private static final long MIN_RATE_WINDOW_MS = 60_000;
     /**
