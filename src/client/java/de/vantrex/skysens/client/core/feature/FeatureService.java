@@ -7,6 +7,7 @@ import de.vantrex.skysens.client.skyblock.player.AfkTracker;
 import de.vantrex.skysens.client.skyblock.player.CombatTracker;
 import de.vantrex.skysens.client.skyblock.coop.CoopMemberTracker;
 import de.vantrex.skysens.client.skyblock.player.ProfileService;
+import de.vantrex.skysens.client.skyblock.party.PartyTracker;
 import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
 import de.vantrex.skysens.client.features.bazaar.BazaarHighlightFeature;
 import de.vantrex.skysens.client.chatcommand.ChatCommandFeature;
@@ -81,6 +82,7 @@ public class FeatureService {
         this.featureRegistry.register(CombatTracker.getInstance());
         this.featureRegistry.register(AfkTracker.getInstance());
         this.featureRegistry.register(ProfileService.getInstance());
+        this.featureRegistry.register(PartyTracker.getInstance());
         this.featureRegistry.register(CoopMemberTracker.getInstance());
         this.featureRegistry.register(SlayerTracker.getInstance());
 

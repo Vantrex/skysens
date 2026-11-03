@@ -55,6 +55,7 @@ Listeners are matched by exact event class (no inheritance) and run on the firin
 | `LocationChangeEvent`, `ZoneChangeEvent` | `LocationService` |
 | `DungeonRunCompleteEvent` | `DungeonRunDetector` |
 | `ProfileChangeEvent` | `ProfileService` (profile name from chat, or once from the tab list after joining) |
+| `PartyJoinEvent`, `PartyLeaveEvent`, `PartyKickEvent`, `PartyMemberJoinEvent`, `PartyMemberLeaveEvent`, `PartyRoleChangeEvent`, `PartyMembersUpdateEvent` | `PartyTracker` (party chat messages, `/party list`, Mod API party info) |
 | `CoopMemberJoinEvent`, `CoopMemberQuitEvent` | `CoopMemberTracker` ("<name> joined/left SkyBlock." in chat) |
 | `CoopMembersUpdateEvent` | `CoopMemberTracker` (co-op widget in the tab list on the private island changed) |
 
