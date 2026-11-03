@@ -26,6 +26,7 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.hypixel.data.type.GameType;
+import de.vantrex.skysens.client.skyblock.party.PartyTracker;
 import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
 import net.minecraft.client.Minecraft;
@@ -113,6 +114,7 @@ public class SkysensClient implements ClientModInitializer {
             this.locationService.handleLocationUpdate(map, mode);
         });
         ClientPlayConnectionEvents.DISCONNECT.register((listener, client) -> {
+            PartyTracker.getInstance().reset();
             if (this.isOnSkyBlock) {
                 this.isOnSkyBlock = false;
                 EventListenerRegistry.REGISTRY.fireEvent(new SkyblockQuitEvent());

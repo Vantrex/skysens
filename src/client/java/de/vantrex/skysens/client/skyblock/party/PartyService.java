@@ -1,4 +1,4 @@
-package de.vantrex.skysens.client.features.warp;
+package de.vantrex.skysens.client.skyblock.party;
 
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.util.ClientUtil;

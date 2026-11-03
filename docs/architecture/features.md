@@ -55,6 +55,7 @@ Listeners are matched by exact event class (no inheritance) and run on the firin
 | `LocationChangeEvent`, `ZoneChangeEvent` | `LocationService` |
 | `DungeonRunCompleteEvent` | `DungeonRunDetector` |
 | `ProfileChangeEvent` | `ProfileService` (profile name from chat, or once from the tab list after joining) |
+| `PartyJoinEvent`, `PartyLeaveEvent`, `PartyKickEvent`, `PartyMemberJoinEvent`, `PartyMemberLeaveEvent`, `PartyMembersUpdateEvent` | `PartyTracker` (party chat messages, `/party list`, Mod API party info) |
 
 Domain events go in `skyblock/event/`. An event that only matters inside one feature stays in that feature's
 package (like `DungeonRunCompleteEvent`).
