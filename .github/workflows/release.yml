@@ -6,6 +6,8 @@ name: Release
 # - If mod_version in gradle.properties is higher than the latest v* tag, it is released as-is.
 #   Use this for minor/major bumps: set e.g. mod_version=1.1.0 in your PR.
 # - Otherwise the latest tag's patch number is bumped (v1.0.3 -> 1.0.4).
+# The Modrinth changelog and the GitHub release notes come from .github/scripts/changelog.sh:
+# the promotion PR's description, followed by every PR merged since the last release.
 
 on:
   push:
@@ -19,6 +21,7 @@ concurrency:
 
 permissions:
   contents: write
+  pull-requests: read
 
 jobs:
   release:
@@ -50,6 +53,18 @@ jobs:
           echo "Releasing $VERSION"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
+      - name: Changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          bash .github/scripts/changelog.sh > changelog.md
+          cat changelog.md
+          {
+            echo "CHANGELOG<<CHANGELOG_EOF"
+            cat changelog.md
+            echo "CHANGELOG_EOF"
+          } >> "$GITHUB_ENV"
+
       - name: Build
         run: |
           chmod +x gradlew
@@ -61,7 +76,6 @@ jobs:
           MODRINTH_TOKEN: ${{ secrets.MODRINTH_TOKEN }}
           MODRINTH_PROJECT_ID: ${{ vars.MODRINTH_PROJECT_ID }}
           MODRINTH_VERSION_TYPE: release
-          CHANGELOG: ${{ github.event.head_commit.message }}
 
       # Creates the v<version> tag on this commit, only after the Modrinth upload succeeded.
       - name: GitHub release
@@ -70,5 +84,5 @@ jobs:
           tag_name: v${{ env.VERSION }}
           target_commitish: ${{ github.sha }}
           name: SkySens ${{ env.VERSION }}
-          body: ${{ github.event.head_commit.message }}
+          body_path: changelog.md
           files: build/libs/skysens-${{ env.VERSION }}.jar
