@@ -4,6 +4,7 @@ import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.features.junkhighlight.config.JunkHighlightSubCategory;
 import de.vantrex.skysens.client.features.sensitivity.config.SensitivitySubCategory;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 public class QolCategory {
@@ -18,5 +19,8 @@ public class QolCategory {
     @Expose
     public JunkHighlightSubCategory junkHighlight = new JunkHighlightSubCategory();
 
-
+    @ConfigOption(name = "Hide Armor Bar", desc = "Hide the vanilla armor bar above the health bar")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean hideArmorBar = false;
 }
