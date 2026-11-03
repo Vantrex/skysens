@@ -5,12 +5,19 @@ import de.vantrex.skysens.client.skyblock.profit.config.ProfitTrackerAccordion;
 import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.notification.NotificationDisplayTypeEnum;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;
+import de.vantrex.skysens.client.ui.HudEditorScreen;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 public class GeneralCategory {
+
+    /** Not saved (no {@code @Expose}), only a button. */
+    @ConfigOption(name = "Edit HUD Positions", desc = "Move and scale every SkySens HUD: drag to move, Ctrl + scroll to scale, right click to reset. Also /skysens hud")
+    @ConfigEditorButton(buttonText = "Edit HUD")
+    public Runnable editHudPositions = HudEditorScreen::open;
 
     @ConfigOption(name = "Notification Display Type", desc = "The type of display to use for notifications")
     @ConfigEditorDropdown

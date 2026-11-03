@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.ui.model;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.config.annotation.ConfigEditorDynamicZoneDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorColour;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
@@ -79,6 +80,9 @@ public final class ConfigTree {
         if (field.isAnnotationPresent(ConfigEditorDynamicZoneDropdown.class)) return OptionKind.ZONE_DROPDOWN;
         if (field.isAnnotationPresent(ConfigEditorColour.class)) return OptionKind.COLOUR;
         if (field.isAnnotationPresent(ConfigEditorText.class)) return OptionKind.TEXT;
+        if (field.isAnnotationPresent(ConfigEditorButton.class) && Runnable.class.isAssignableFrom(field.getType())) {
+            return OptionKind.BUTTON;
+        }
         return OptionKind.UNSUPPORTED;
     }
 

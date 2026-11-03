@@ -26,6 +26,16 @@ unconditionally, so it must check `isActive()` and `SkysensClient.getInstance().
 (see `ChatCommandFeature`). Messages SkySens sends itself are skipped (`ClientUtil.isSendingOwnMessage()`). Messages
 hidden by the chat filter are still delivered to the other features.
 
+## Movable HUDs
+
+Every HUD element should be movable in the HUD editor (`/skysens hud`, or "Edit HUD Positions" in General). Implement
+`core/hud/MovableHud` for it: size, position and scale getters/setters, a preview that also works without data, and a
+reset. A `HudRenderFeature` returns its elements from `movableHuds()`; HUDs that don't belong to a feature register in
+`HudRegistry` (see `SecondaryActionBarHud`, registered in `HudHandlers`). While the editor is open
+`HudRegistry.isEditing()` is true and the live HUD isn't drawn, the editor draws the previews. Store positions in
+percent of the screen; for an element with a fixed default place use `HudPosition`, which keeps the default until the
+element is moved.
+
 ## Adding a feature
 
 1. Create `features/<name>/<Name>Feature.java`, annotate it with `@SkySensFeature` (a marker only) and implement the

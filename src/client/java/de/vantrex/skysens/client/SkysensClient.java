@@ -3,6 +3,7 @@ package de.vantrex.skysens.client;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.features.visuals.VisualsSettingsTransfer;
+import de.vantrex.skysens.client.ui.HudEditorScreen;
 import de.vantrex.skysens.client.ui.SkysensConfigScreen;
 import de.vantrex.skysens.client.core.event.EventListenerRegistry;
 import de.vantrex.skysens.client.skyblock.event.SkyblockJoinEvent;
@@ -146,6 +147,11 @@ public class SkysensClient implements ClientModInitializer {
                                     Screen parent = client.gui.screen() instanceof ChatScreen ? null : client.gui.screen();
                                     client.gui.setScreen(new SkysensConfigScreen(parent, true));
                                 });
+                                return 1;
+                            }))
+                    .then(ClientCommands.literal("hud")
+                            .executes(context -> {
+                                HudEditorScreen.open();
                                 return 1;
                             }))
                     .then(ClientCommands.literal("scale")
