@@ -1,7 +1,8 @@
 package de.vantrex.skysens.client.features.warp;
 
-import de.vantrex.skysens.client.features.warp.CoopRepository.Coop;
-import de.vantrex.skysens.client.features.warp.CoopRepository.Member;
+import de.vantrex.skysens.client.skyblock.coop.CoopMemberTracker;
+import de.vantrex.skysens.client.skyblock.coop.CoopRepository.Coop;
+import de.vantrex.skysens.client.skyblock.coop.CoopRepository.Member;
 import de.vantrex.skysens.client.util.TimeUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -81,6 +82,10 @@ public class WarpToMenuScreen extends Screen {
         }
         if (live) {
             return List.of();
+        }
+        if (coop.lastSeenAt == 0) {
+            return List.of("Online status from co-op join/leave messages,",
+                    "visit your private island to see all members.");
         }
         final long minutes = TimeUnit.MILLISECONDS.toMinutes(System.currentTimeMillis() - coop.lastSeenAt);
         return List.of("Online status from your private island, " + TimeUtil.formatAge(minutes));
