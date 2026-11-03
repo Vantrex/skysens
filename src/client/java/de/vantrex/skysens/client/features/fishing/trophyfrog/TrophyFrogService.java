@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -74,17 +75,26 @@ public final class TrophyFrogService {
     public void onMenu(@NotNull List<MenuItem> items) {
         final TrophyFrogRepository.Profile profile = this.current();
         boolean changed = false;
-        boolean foundFrog = false;
+        // rebuilt in menu order, frogs only seen in chat so far go to the end
+        final Map<String, Map<TrophyFrogTier, Integer>> ordered = new LinkedHashMap<>();
         for (final MenuItem item : items) {
             final Map<TrophyFrogTier, Integer> counts = parseTiers(item.lore());
             if (counts.isEmpty()) {
                 continue;
             }
-            foundFrog = true;
             final Map<TrophyFrogTier, Integer> stored = profile.frog(item.name());
             if (!stored.equals(counts)) {
                 stored.clear();
                 stored.putAll(counts);
+                changed = true;
+            }
+            ordered.put(item.name(), stored);
+        }
+        final boolean foundFrog = !ordered.isEmpty();
+        if (foundFrog) {
+            profile.frogs.forEach(ordered::putIfAbsent);
+            if (!List.copyOf(ordered.keySet()).equals(List.copyOf(profile.frogs.keySet()))) {
+                profile.frogs = ordered;
                 changed = true;
             }
         }

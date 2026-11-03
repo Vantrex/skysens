@@ -32,8 +32,8 @@ final class TrophyFrogHud {
         final List<Component> header = new ArrayList<>();
         header.add(Component.literal(TITLE));
         if (!profile.menuRead) {
-            header.add(Component.literal("§cOpen the Trophy Frogs menu"));
-            header.add(Component.literal("§cto load your counts."));
+            header.add(Component.literal("§cOpen the Trophy Frogs menu at"));
+            header.add(Component.literal("§cResearcher Ribery to load your counts."));
         }
         final List<List<Component>> rows = new ArrayList<>();
         if (!profile.frogs.isEmpty()) {
