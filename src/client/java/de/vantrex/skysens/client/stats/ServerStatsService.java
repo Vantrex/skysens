@@ -1,5 +1,8 @@
 package de.vantrex.skysens.client.stats;
 
+import de.vantrex.skysens.client.integration.odin.OdinStatsProvider;
+import de.vantrex.skysens.client.integration.skyhanni.SkyHanniStatsProvider;
+
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;

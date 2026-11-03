@@ -1,0 +1,57 @@
+# SkyBlock domain and other-mod integrations
+
+## `skyblock/`: shared domain logic
+
+Code that several features need and that is about SkyBlock itself, not about one feature.
+
+| Package | Contents |
+|---|---|
+| `location/` | `LocationService`: current island (`SkyblockLocationEnum`, from the Mod API `map`) and zone (`Zone`, from the sidebar's `⏣`/`ф` line). `zone/` holds one `ZoneEnum` per island with the sidebar names |
+| `event/` | `SkyblockJoinEvent`, `SkyblockQuitEvent`, `LocationChangeEvent`, `ZoneChangeEvent`, and from `SlayerTracker`: `SlayerQuestStartEvent`, `SlayerBossSpawnEvent`, `SlayerBossCocoonEvent`, `SlayerQuestEndEvent` |
+| `player/` | `PlayerService` (own name), `ProfileService` (current SkyBlock profile, fires `ProfileChangeEvent`), `AfkTracker`, `CombatTracker` (the last three registered as features) |
+| `party/` | `PartyTracker` (registered as a feature): whether the player is in a Hypixel party, its members, everyone's `PartyRole` (leader, moderator, member; `getRole()`, `hasRole(...)`) and the size. Also picks up a party the player was already in when joining Hypixel. Read once per connection from the Mod API (`PartyService`), then kept up to date from the party chat messages and `/party list`. Not saved. Fires `PartyJoinEvent`, `PartyLeaveEvent` (with a `PartyLeaveReason`), `PartyKickEvent` (followed by a leave with `KICKED`), `PartyMemberJoinEvent`, `PartyMemberLeaveEvent`, `PartyRoleChangeEvent` (promote, demote, transfer) and `PartyMembersUpdateEvent`. Use `checkInParty()` instead of the cached state where a wrong answer would do harm, like `!warpto` does before inviting |
+| `coop/` | `CoopMemberTracker` (co-op members and online status per profile from the tab list and chat, always-on feature, fires the co-op events), `CoopRepository` |
+| `slayer/` | `SlayerTracker` (registered as a feature): whether a slayer quest is running, its boss and whether the boss spawned or was cocooned, from chat and the sidebar. Always on; the slayer stats in `features/slayer/` build on its events, as does the RNG meter tracking in `features/slayer/rng/` (drop data from the community wiki, exact XP read from the /rng menu) and the kills-left line above the action bar (XP per kill learned from sidebar progress) |
+| `entity/` | `EntityClassifier`: player / NPC / other, with the NPC heuristic (v2 UUID or no tab list entry) |
+| `item/` | `HypixelExtraAttributes` (item NBT), `ItemIdUtil` (display name → Hypixel id) |
+| `price/` | `ItemPriceService` + `ItemPriceProvider` chain |
+| `profit/` | `ProfitService`, `ProfitRepository`, `!profit`; combines SkyHanni's trackers with SkySens' own |
+
+### Locations and zones
+
+- `isOnSkyBlock()` and the island come from the Hypixel Mod API location packet (`SkysensClient`). Use
+  `/mocklocation <map>` (or `null`) in the dev client to fake an island.
+- The zone is polled from the scoreboard every few client ticks (`TICKS_UNTIL_ZONE_CHECK`) and fires
+  `ZoneChangeEvent` when it changes. An island change resets it to null first.
+  Unknown zones are reported once through `ClientUtil.sendDebug` ("Unknown zone on …"). Add them to the island's
+  `*ZoneEnum` with the exact sidebar text.
+- A new island needs a `SkyblockLocationEnum` constant and, if it has zones, a `ZoneEnum`. Islands are matched by the
+  Mod API `mode` (e.g. `foraging_2`), which survives island renames; the `map` name and the constant name are fallbacks.
+  Never rename or remove a constant, the sensitivity config is keyed by it.
+
+## Provider chains
+
+Data that SkyHanni or Odin may already have is read through a list of providers, tried in order. An empty result
+falls through to the next provider, and the last one is always SkySens' own implementation:
+
+| Service | Providers in order |
+|---|---|
+| `ItemPriceService` | `SkyHanniPriceProvider` → `HypixelPriceProvider` (Hypixel item list + bazaar API, EliteSkyblock lowest BIN) |
+| `ServerStatsService` (TPS, ping) | `SkyHanniStatsProvider` → `OdinStatsProvider` → `InternalStatsProvider` (time/pong packets) |
+
+Chat command bridges (`OdinChatCommandsBridge`, `SkyHanniPartyCommandsBridge`) work the same way, see
+[chat-commands.md](chat-commands.md). `SkyHanniTrackerReader` feeds `ProfitService` with SkyHanni's profit trackers.
+
+## `integration/`: rules for touching other mods
+
+- **No compile-time dependency** on SkyHanni or Odin; they may be absent or a different version. Check
+  `FabricLoader.getInstance().isModLoaded(...)` in `isAvailable()`.
+- Reach their Kotlin `object`s with `KotlinObjectAccessor` (reflection on `INSTANCE`). Any reflective failure logs
+  one warning and switches the accessor off for the session, so SkySens falls back instead of crashing.
+- Adapters are `public` classes in `integration/<mod>/` that implement an interface owned by the consumer
+  (`ItemPriceProvider` in `skyblock/price`, `ServerStatsProvider` in `stats`, `ChatCommandBridge` in `chatcommand`).
+  To support a new mod, add an adapter and put it in the right place in the consumer's provider list.
+- `InventoryHudBridge` reads Inventory HUD+'s HUD position from its public static fields and mirrors its layout
+  math. `ActionBarLayout` (`features/actionbar/`) uses it to move the action bars above the HUD, recomputing only
+  when marked dirty (its key bindings via `InventoryHudKeyActionMixin`, closing its config screens) or on a resize.
+- Network calls (`HypixelPriceProvider`) must not block the client thread: prefetch and refresh asynchronously.

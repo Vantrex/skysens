@@ -2,25 +2,32 @@ package de.vantrex.skysens.client;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import de.vantrex.skysens.client.config.SkysensConfig;
-import de.vantrex.skysens.client.config.VisualsSettingsTransfer;
-import de.vantrex.skysens.client.config.ui.SkysensConfigScreen;
-import de.vantrex.skysens.client.handler.ChatHandler;
-import de.vantrex.skysens.client.handler.KeyHandlers;
-import de.vantrex.skysens.client.handler.TickHandlers;
-import de.vantrex.skysens.client.handler.UseHandlers;
-import de.vantrex.skysens.client.feature.dungeon.RewardChestFeature;
-import de.vantrex.skysens.client.profit.ProfitService;
-import de.vantrex.skysens.client.service.FeatureService;
-import de.vantrex.skysens.client.repository.RepositoryRegistry;
-import de.vantrex.skysens.client.service.LocationService;
-import de.vantrex.skysens.client.service.SensitivityService;
+import de.vantrex.skysens.client.features.visuals.VisualsSettingsTransfer;
+import de.vantrex.skysens.client.ui.HudEditorScreen;
+import de.vantrex.skysens.client.ui.SkysensConfigScreen;
+import de.vantrex.skysens.client.core.event.EventListenerRegistry;
+import de.vantrex.skysens.client.skyblock.event.SkyblockJoinEvent;
+import de.vantrex.skysens.client.skyblock.event.SkyblockQuitEvent;
+import de.vantrex.skysens.client.platform.hook.ChatHandler;
+import de.vantrex.skysens.client.platform.hook.HudHandlers;
+import de.vantrex.skysens.client.platform.hook.KeyHandlers;
+import de.vantrex.skysens.client.platform.hook.TickHandlers;
+import de.vantrex.skysens.client.platform.hook.UseHandlers;
+import de.vantrex.skysens.client.features.dungeon.RewardChestFeature;
+import de.vantrex.skysens.client.skyblock.profit.ProfitService;
+import de.vantrex.skysens.client.core.feature.FeatureService;
+import de.vantrex.skysens.client.persistence.RepositoryRegistry;
+import de.vantrex.skysens.client.skyblock.location.LocationService;
+import de.vantrex.skysens.client.features.sensitivity.SensitivityService;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.hypixel.data.type.GameType;
+import de.vantrex.skysens.client.skyblock.party.PartyTracker;
 import net.hypixel.modapi.HypixelModAPI;
 import net.hypixel.modapi.packet.impl.clientbound.event.ClientboundLocationPacket;
 import net.minecraft.client.Minecraft;
@@ -68,6 +75,7 @@ public class SkysensClient implements ClientModInitializer {
         TickHandlers.register();
         ChatHandler.register();
         KeyHandlers.register();
+        HudHandlers.register();
         ProfitService.getInstance(); // starts counting time on SkyBlock
     }
 
@@ -88,16 +96,30 @@ public class SkysensClient implements ClientModInitializer {
             var serverType = (GameType) packet.getServerType()
                     .filter(serverType1 -> serverType1 instanceof GameType)
                     .orElse(null);
+            final boolean currentlyOnSkyBlock = this.isOnSkyBlock;
             if (!GameType.SKYBLOCK.equals(serverType)) {
                 this.isOnSkyBlock = false;
+                if (currentlyOnSkyBlock) {
+                    EventListenerRegistry.REGISTRY.fireEvent(new SkyblockQuitEvent());
+                }
                 return;
             }
             this.isOnSkyBlock = true;
+            if (!currentlyOnSkyBlock) {
+                EventListenerRegistry.REGISTRY.fireEvent(new SkyblockJoinEvent());
+            }
             var lobbyName = packet.getLobbyName().orElse(null);
             var mode = packet.getMode().orElse(null);
             var map = packet.getMap().orElse(null);
             ClientUtil.sendDebug("Server: " + this.serverName + " | Lobby: " + lobbyName + " | Map: " + map + " | Mode: " + mode);
-            this.locationService.handleLocationUpdate(map);
+            this.locationService.handleLocationUpdate(map, mode);
+        });
+        ClientPlayConnectionEvents.DISCONNECT.register((listener, client) -> {
+            PartyTracker.getInstance().reset();
+            if (this.isOnSkyBlock) {
+                this.isOnSkyBlock = false;
+                EventListenerRegistry.REGISTRY.fireEvent(new SkyblockQuitEvent());
+            }
         });
     }
 
@@ -120,6 +142,20 @@ public class SkysensClient implements ClientModInitializer {
                         });
                         return 1;
                     })
+                    .then(ClientCommands.literal("dev")
+                            .executes(context -> {
+                                Minecraft client = Minecraft.getInstance();
+                                client.execute(() -> {
+                                    Screen parent = client.gui.screen() instanceof ChatScreen ? null : client.gui.screen();
+                                    client.gui.setScreen(new SkysensConfigScreen(parent, true));
+                                });
+                                return 1;
+                            }))
+                    .then(ClientCommands.literal("hud")
+                            .executes(context -> {
+                                HudEditorScreen.open();
+                                return 1;
+                            }))
                     .then(ClientCommands.literal("scale")
                             .then(ClientCommands.literal("export")
                                     .executes(context -> VisualsSettingsTransfer.export()))
@@ -153,7 +189,8 @@ public class SkysensClient implements ClientModInitializer {
                                 if (location.equals("null")) {
                                     location = null;
                                 }
-                                this.locationService.handleLocationUpdate(location);
+                                // matches either a mode (mining_3) or a map name ("Dwarven Mines")
+                                this.locationService.handleLocationUpdate(location, location);
                                 return 1;
                             })));
         });

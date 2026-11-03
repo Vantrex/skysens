@@ -1,0 +1,40 @@
+package de.vantrex.skysens.client.features.dungeon;
+
+import de.vantrex.skysens.client.config.SkysensConfig;
+import de.vantrex.skysens.client.core.event.EventListenerRegistry;
+import de.vantrex.skysens.client.core.event.SkysensListener;
+import de.vantrex.skysens.client.core.feature.Feature;
+import de.vantrex.skysens.client.util.ClientUtil;
+import de.vantrex.skysens.client.util.TimeUtil;
+
+/** Records every completed dungeon run (see {@link DungeonRunDetector}) in the {@link DungeonRunStats}. */
+public class DungeonRunStatsFeature implements Feature, SkysensListener<DungeonRunCompleteEvent> {
+
+    public DungeonRunStatsFeature() {
+        EventListenerRegistry.REGISTRY.registerListener(this, DungeonRunCompleteEvent.class);
+    }
+
+    @Override
+    public boolean isActive() {
+        return SkysensConfig.getInstance().dungeonCategory.runStats.enabled;
+    }
+
+    @Override
+    public void handle(DungeonRunCompleteEvent event) {
+        if (!this.isActive()) {
+            return;
+        }
+        final DungeonRunStats.FloorStats floorStats = DungeonRunStats.getInstance().record(event.getFloor(),
+                event.getSeconds(), event.getScore(), event.getRank().equals("S+"), event.getDeaths());
+        if (SkysensConfig.getInstance().dungeonCategory.runStats.chatSummary) {
+            sendRunSummary(event, floorStats);
+        }
+    }
+
+    private static void sendRunSummary(DungeonRunCompleteEvent event, DungeonRunStats.FloorStats floorStats) {
+        ClientUtil.sendPrefixed("§7Run #" + floorStats.runs + " (" + event.getFloor() + "): "
+                + TimeUtil.formatRunTime(event.getSeconds()) + " " + event.getRank()
+                + " | session avg " + TimeUtil.formatRunTime(floorStats.avgSeconds()));
+    }
+
+}

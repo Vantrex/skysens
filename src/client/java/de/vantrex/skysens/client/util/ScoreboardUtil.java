@@ -11,12 +11,17 @@ import net.minecraft.world.scores.PlayerTeam;
 import net.minecraft.world.scores.Scoreboard;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @UtilityClass
 public class ScoreboardUtil {
 
-    /** The sidebar lines without formatting, in no particular order. Empty if there is no sidebar. */
+    /** The order vanilla draws the sidebar in: highest score at the top, ties by owner name. */
+    private final Comparator<PlayerScoreEntry> DISPLAY_ORDER = Comparator.comparingInt(PlayerScoreEntry::value).reversed()
+            .thenComparing(PlayerScoreEntry::owner, String.CASE_INSENSITIVE_ORDER);
+
+    /** The sidebar lines without formatting, top to bottom as they are shown. Empty if there is no sidebar. */
     public List<String> getSidebarLines() {
         final List<String> lines = new ArrayList<>();
         final ClientLevel level = Minecraft.getInstance().level;
@@ -28,7 +33,10 @@ public class ScoreboardUtil {
         if (sidebar == null) {
             return lines;
         }
-        for (final PlayerScoreEntry entry : scoreboard.listPlayerScores(sidebar)) {
+        final List<PlayerScoreEntry> entries = new ArrayList<>(scoreboard.listPlayerScores(sidebar));
+        entries.removeIf(PlayerScoreEntry::isHidden);
+        entries.sort(DISPLAY_ORDER);
+        for (final PlayerScoreEntry entry : entries) {
             final PlayerTeam team = scoreboard.getPlayersTeam(entry.owner());
             if (team == null) {
                 continue;

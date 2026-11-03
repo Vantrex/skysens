@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8",
-  "package": "de.vantrex.skysens.client.mixin",
+  "package": "de.vantrex.skysens.client.platform.mixin",
   "mixins": [
   ],
   "compatibilityLevel": "JAVA_21",
@@ -19,7 +19,9 @@
     "HudMixin",
     "ServerStatsMixin",
     "PlayerTabOverlayAccessor",
-    "ChatComponentMixin"
+    "AbstractContainerScreenAccessor",
+    "ChatComponentMixin",
+    "InventoryHudKeyActionMixin"
   ],
   "injectors": {
     "defaultRequire": 1

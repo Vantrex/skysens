@@ -88,6 +88,7 @@ tasks.shadowJar {
     from(sourceSets.main.get().output)
     from(sourceSets.named("client").get().output)
     from("LICENSE.txt") { rename { "${it}_${archives_base_name}" } }
+    from("licenses") { into("META-INF/licenses/${archives_base_name}") }
     archiveClassifier.set("")
 }
 
@@ -134,7 +135,7 @@ tasks.processResources {
 
 // ---------------------------------------------------------------------------------------------------------
 // Generated GUI font definitions.
-// Keep in sync with de.vantrex.skysens.client.config.ui.render.FontFamily (the MINECRAFT family has no JSON).
+// Keep in sync with de.vantrex.skysens.client.ui.render.FontFamily (the MINECRAFT family has no JSON).
 // One JSON per family x weight x oversample level (1..8): skysens:<prefix>_regular_N, <prefix>_semibold_N and
 // <prefix>_semibold_display_N, each = a ttf provider + minecraft:default as the last (fallback) provider.
 // ---------------------------------------------------------------------------------------------------------

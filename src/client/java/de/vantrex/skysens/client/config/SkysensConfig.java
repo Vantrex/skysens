@@ -1,22 +1,18 @@
 package de.vantrex.skysens.client.config;
 
-
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.annotations.Expose;
-import de.vantrex.skysens.client.config.categories.visuals.SwingAnimationAccordion;
 import de.vantrex.skysens.client.config.annotation.ConfigEditorDynamicZoneDropdown;
 import de.vantrex.skysens.client.config.categories.dev.DevCategory;
-import de.vantrex.skysens.client.config.categories.dungeon.DungeonCategory;
-import de.vantrex.skysens.client.config.categories.bazaar.BazaarCategory;
-import de.vantrex.skysens.client.config.categories.chat.ChatCommandsCategory;
+import de.vantrex.skysens.client.config.migration.ConfigMigrations;
+import de.vantrex.skysens.client.features.dungeon.config.DungeonCategory;
+import de.vantrex.skysens.client.features.bazaar.config.BazaarCategory;
+import de.vantrex.skysens.client.features.fishing.config.FishingCategory;
+import de.vantrex.skysens.client.chatcommand.config.ChatCommandsCategory;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
-import de.vantrex.skysens.client.config.categories.mining.MiningCategory;
+import de.vantrex.skysens.client.features.mining.config.MiningCategory;
 import de.vantrex.skysens.client.config.categories.qol.QolCategory;
-import de.vantrex.skysens.client.config.categories.slayer.SlayerCategory;
-import de.vantrex.skysens.client.config.categories.visuals.VisualsCategory;
+import de.vantrex.skysens.client.features.slayer.config.SlayerCategory;
+import de.vantrex.skysens.client.features.visuals.config.VisualsCategory;
 import io.github.notenoughupdates.moulconfig.Config;
 import io.github.notenoughupdates.moulconfig.annotations.Category;
 import io.github.notenoughupdates.moulconfig.common.text.StructuredText;
@@ -32,8 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 @NoArgsConstructor
@@ -43,15 +37,15 @@ public class SkysensConfig extends Config {
     private static final Logger LOGGER = LoggerFactory.getLogger("skysens");
     private static ManagedConfig<SkysensConfig> CONFIG;
 
-    @Category(name = "General", desc = "General Options")
+    @Category(name = "General", desc = "Notifications and the profit tracker")
     @Expose
     public GeneralCategory generalCategory = new GeneralCategory();
 
-    @Category(name = "Bazaar", desc = "Bazaar Options")
+    @Category(name = "Bazaar", desc = "Order highlights, alerts and click protection")
     @Expose
     public BazaarCategory bazaarCategory = new BazaarCategory();
 
-    @Category(name = "QOL", desc = "Quality of Life Options")
+    @Category(name = "Quality of Life", desc = "Sensitivity per location and junk highlighting")
     @Expose
     public QolCategory qolCategory = new QolCategory();
 
@@ -59,26 +53,30 @@ public class SkysensConfig extends Config {
     @Expose
     public VisualsCategory visualsCategory = new VisualsCategory();
 
-    @Category(name = "Mining", desc = "Mining Options")
+    @Category(name = "Mining", desc = "Mining notifications")
     @Expose
     public MiningCategory miningCategory = new MiningCategory();
+
+    @Category(name = "Fishing", desc = "Trophy Frog HUD")
+    @Expose
+    public FishingCategory fishingCategory = new FishingCategory();
 
     @Category(name = "Dungeon", desc = "Dungeon and Kuudra reward chests")
     @Expose
     public DungeonCategory dungeonCategory = new DungeonCategory();
 
-    @Category(name = "Chat Commands", desc = "Commands others can use in co-op and party chat, like !ping and !tps")
+    @Category(name = "Chat Commands", desc = "Commands others can use in co-op and party chat")
     @Expose
     public ChatCommandsCategory chatCommandsCategory = new ChatCommandsCategory();
 
     @Category(name = "Slayer", desc = "Slayer session stats, shown by !slayer")
     @Expose
     public SlayerCategory slayerCategory = new SlayerCategory();
-    @Category(name = "Chat Filter", desc = "Hide spammy chat messages, one option per message")
+    @Category(name = "Chat Filter", desc = "Hide spammy chat messages one by one")
     @Expose
-    public de.vantrex.skysens.client.config.categories.chatfilter.ChatFilterCategory chatFilterCategory = new de.vantrex.skysens.client.config.categories.chatfilter.ChatFilterCategory();
+    public de.vantrex.skysens.client.features.chatfilter.config.ChatFilterCategory chatFilterCategory = new de.vantrex.skysens.client.features.chatfilter.config.ChatFilterCategory();
 
-    @Category(name = "Dev", desc = "Dev Options")
+    @Category(name = "Dev", desc = "Debugging and diagnostics")
     @Expose
     public DevCategory devCategory = new DevCategory();
 
@@ -93,6 +91,10 @@ public class SkysensConfig extends Config {
     /** Selected config GUI font: a FontFamily id (default INTER, unknown values fall back to INTER). Same persistence approach as {@link #guiTheme}. */
     @Expose
     public String guiFont = "INTER";
+
+    /** Config GUI scale mode: "AUTO" (default, a smaller effective scale when the game's is too large) or "GAME" (the game's GUI scale). Same persistence approach as {@link #guiTheme}. */
+    @Expose
+    public String guiScaleMode = "AUTO";
 
     @Override
     public void saveNow() {
@@ -111,9 +113,10 @@ public class SkysensConfig extends Config {
 
     public static ManagedConfig<SkysensConfig> getConfig() {
         if (CONFIG == null) {
-            final JsonObject legacySwing = readLegacySwingSettings();
+            final File configFile = new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json");
+            final ConfigMigrations migrations = ConfigMigrations.read(configFile);
             CONFIG = ManagedConfig.create(
-                    new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json"),
+                    configFile,
                     SkysensConfig.class,
                     new Function1<ManagedConfigBuilder<SkysensConfig>, Unit>() {
                         @Override
@@ -138,47 +141,11 @@ public class SkysensConfig extends Config {
                         }
                     }
             );
-            if (legacySwing != null) {
-                migrateLegacySwingSettings(legacySwing);
+            if (migrations.apply(CONFIG.getInstance())) {
+                CONFIG.saveToFile();
             }
         }
         return CONFIG;
-    }
-
-    /** Returns the pre-move qolCategory.swingAnimation object if the file still has it and no visuals swing group yet. */
-    private static JsonObject readLegacySwingSettings() {
-        final File file = new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json");
-        if (!file.isFile()) {
-            return null;
-        }
-        try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            final JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-            final JsonObject visuals = root.has("visualsCategory") && root.get("visualsCategory").isJsonObject()
-                    ? root.getAsJsonObject("visualsCategory") : null;
-            if (visuals != null && visuals.has("swingAnimation")) {
-                return null;
-            }
-            final JsonElement qol = root.get("qolCategory");
-            if (qol != null && qol.isJsonObject() && qol.getAsJsonObject().get("swingAnimation") instanceof JsonObject swing) {
-                return swing;
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Could not inspect config for legacy swing settings", e);
-        }
-        return null;
-    }
-
-    private static void migrateLegacySwingSettings(JsonObject legacySwing) {
-        try {
-            final SwingAnimationAccordion old = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
-                    .fromJson(legacySwing, SwingAnimationAccordion.class);
-            old.clamp();
-            CONFIG.getInstance().visualsCategory.swingAnimation.copyFrom(old);
-            CONFIG.saveToFile();
-            LOGGER.info("Migrated swing animation settings from QOL to Visuals");
-        } catch (Exception e) {
-            LOGGER.warn("Failed to migrate legacy swing settings", e);
-        }
     }
 
 }

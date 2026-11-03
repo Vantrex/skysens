@@ -1,26 +1,18 @@
 package de.vantrex.skysens.client.chatcommand;
 
+import de.vantrex.skysens.client.features.activity.ActivityCommand;
+import de.vantrex.skysens.client.features.dungeon.RunsCommand;
+import de.vantrex.skysens.client.features.slayer.SlayerCommand;
+import de.vantrex.skysens.client.features.warp.WarpToCommand;
+import de.vantrex.skysens.client.skyblock.profit.ProfitCommand;
+
 import de.vantrex.skysens.client.SkysensClient;
-import de.vantrex.skysens.client.chatcommand.impl.ActivityCommand;
-import de.vantrex.skysens.client.chatcommand.impl.BuffsCommand;
-import de.vantrex.skysens.client.chatcommand.impl.CoinFlipCommand;
-import de.vantrex.skysens.client.chatcommand.impl.CoordsCommand;
-import de.vantrex.skysens.client.chatcommand.impl.DiceCommand;
-import de.vantrex.skysens.client.chatcommand.impl.FpsCommand;
-import de.vantrex.skysens.client.chatcommand.impl.HelpCommand;
-import de.vantrex.skysens.client.chatcommand.impl.PingCommand;
-import de.vantrex.skysens.client.chatcommand.impl.ProfitCommand;
-import de.vantrex.skysens.client.chatcommand.impl.RunsCommand;
-import de.vantrex.skysens.client.chatcommand.impl.ServerCommand;
-import de.vantrex.skysens.client.chatcommand.impl.SlayerCommand;
-import de.vantrex.skysens.client.chatcommand.impl.TpsCommand;
-import de.vantrex.skysens.client.chatcommand.impl.WarpToCommand;
-import de.vantrex.skysens.client.chatcommand.impl.ZoneCommand;
-import de.vantrex.skysens.client.chatcommand.integration.ChatCommandBridge;
-import de.vantrex.skysens.client.chatcommand.integration.OdinChatCommandsBridge;
-import de.vantrex.skysens.client.chatcommand.integration.SkyHanniPartyCommandsBridge;
+import de.vantrex.skysens.client.chatcommand.impl.*;
+import de.vantrex.skysens.client.integration.odin.OdinChatCommandsBridge;
+import de.vantrex.skysens.client.integration.skyhanni.SkyHanniPartyCommandsBridge;
 import de.vantrex.skysens.client.config.SkysensConfig;
-import de.vantrex.skysens.client.config.categories.chat.ChatCommandsCategory;
+import de.vantrex.skysens.client.chatcommand.config.ChatCommandsCategory;
+import de.vantrex.skysens.client.util.Brand;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
@@ -70,6 +62,7 @@ public final class ChatCommandService {
         this.registry.register(new ActivityCommand());
         this.registry.register(new RunsCommand());
         this.registry.register(new SlayerCommand());
+        this.registry.register(new UptimeCommand());
     }
 
     /** Handles a received chat message. Called on the client thread. */
@@ -155,8 +148,9 @@ public final class ChatCommandService {
      * so a burst (e.g. several drops at once) doesn't get us muted. Safe to call from any thread.
      */
     public void send(@NotNull ChatChannel channel, @NotNull String message) {
-        final String command = channel.getReplyCommand() + " " + sanitize(message);
-        final String trimmed = command.length() > MAX_CHAT_LENGTH ? command.substring(0, MAX_CHAT_LENGTH) : command;
+        final String command = channel.getReplyCommand() + " " + Brand.uncoloredPrefix() + sanitize(message);
+        final String trimmed = command.length() > + MAX_CHAT_LENGTH ? command.substring(0, MAX_CHAT_LENGTH) : command;
+
         final long delay;
         synchronized (this) {
             final long now = System.currentTimeMillis();

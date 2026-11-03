@@ -3,9 +3,9 @@ package de.vantrex.skysens.client.chatcommand.impl;
 import de.vantrex.skysens.client.chatcommand.ChatCommand;
 import de.vantrex.skysens.client.chatcommand.ChatCommandContext;
 import de.vantrex.skysens.client.config.SkysensConfig;
-import de.vantrex.skysens.client.enums.location.SkyblockLocationEnum;
-import de.vantrex.skysens.client.model.Zone;
-import de.vantrex.skysens.client.service.LocationService;
+import de.vantrex.skysens.client.skyblock.location.SkyblockLocationEnum;
+import de.vantrex.skysens.client.skyblock.location.Zone;
+import de.vantrex.skysens.client.skyblock.location.LocationService;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

@@ -1,13 +1,22 @@
 package de.vantrex.skysens.client.config.categories.general;
 
+import de.vantrex.skysens.client.skyblock.profit.config.ProfitTrackerAccordion;
+
 import com.google.gson.annotations.Expose;
-import de.vantrex.skysens.client.enums.NotificationDisplayTypeEnum;
+import de.vantrex.skysens.client.notification.NotificationDisplayTypeEnum;
 import io.github.notenoughupdates.moulconfig.annotations.Accordion;
+import de.vantrex.skysens.client.ui.HudEditorScreen;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 public class GeneralCategory {
+
+    @ConfigOption(name = "Edit HUD Positions", desc = "Move and scale every SkySens HUD: drag to move, Ctrl + scroll to scale, right click to reset. Also /skysens hud")
+    @ConfigEditorButton(buttonText = "Edit HUD")
+    public Runnable editHudPositions = HudEditorScreen::open;
 
     @ConfigOption(name = "Notification Display Type", desc = "The type of display to use for notifications")
     @ConfigEditorDropdown
@@ -23,6 +32,26 @@ public class GeneralCategory {
     @ConfigEditorBoolean
     @Expose
     public boolean holdNotificationsWhileAfk = true;
+
+    @ConfigOption(name = "Hold Notifications In Combat", desc = "Keep notifications back while you are fighting, and show them once you stopped")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean holdNotificationsInCombat;
+
+    @ConfigOption(name = "Out of Combat After (seconds)", desc = "Seconds without taking or dealing damage until held notifications are shown")
+    @ConfigEditorSlider(minValue = 3f, maxValue = 60f, minStep = 1f)
+    @Expose
+    public float notificationOutOfCombatSeconds = 10f;
+
+    @ConfigOption(name = "Hold Notifications In Dungeons and Kuudra", desc = "Keep notifications back during a dungeon or Kuudra run, and show them once you left it")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean holdNotificationsInInstances;
+
+    @ConfigOption(name = "Hold Notifications During Slayer Quests", desc = "Keep notifications back while a slayer quest is active, and show them once it is completed, failed or cancelled")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean holdNotificationsDuringSlayerQuest;
 
     @ConfigOption(name = "Profit Tracker", desc = "Session and all-time profit of drops and reward chests, shown by !profit")
     @Accordion
