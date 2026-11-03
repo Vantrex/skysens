@@ -17,8 +17,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.time.LocalTime;
-import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Map;
 
@@ -34,9 +32,6 @@ final class TrophyFrogConditions {
     }
 
     private static final String RED_SWEATER_ID = "RED_SWEATER";
-    /** Tropical Rain and Blossoming run from XX:35 to XX:55 UTC, both let Wetlands Frogs bite. */
-    private static final int WEATHER_START_MINUTE = 35;
-    private static final int WEATHER_END_MINUTE = 55;
 
     private TrophyFrogConditions() {
     }
@@ -60,8 +55,9 @@ final class TrophyFrogConditions {
                 Map.entry("Exploding Frog", List.of(new Condition("Combine Lily Pads until they explode", null))),
                 Map.entry("Leap Frog", List.of(new Condition("Caught while midair",
                         check ? !player.onGround() && !player.isInWater() : null))),
-                Map.entry("Wetlands Frog", List.of(new Condition("Caught during rain (XX:35 - XX:55 UTC)",
-                        check ? isRaining(level) : null))),
+                Map.entry("Wetlands Frog", List.of(new Condition("Caught during Tropical Rain",
+                        // Only the rain the server sends: Blossoming takes the same time slot but doesn't count
+                        check ? level.isRaining() : null))),
                 Map.entry("Reality Hopper", List.of(new Condition("Caught in a Wormhole (Lotus Eater's Cave)", notInHighlands))),
                 Map.entry("Blessed Frog", List.of(new Condition("Active Frogcoin blessing (Lotus Eater's Cave)", notInHighlands))),
                 Map.entry("Bullfrog", List.of(new Condition("Wearing a Red Sweater", check ? wearsRedSweater(player) : null))),
@@ -79,12 +75,6 @@ final class TrophyFrogConditions {
 
     private static @Nullable LotusAtollZoneEnum zone(@Nullable Zone<?> zone) {
         return zone != null && zone.getZoneEnum() instanceof LotusAtollZoneEnum atollZone ? atollZone : null;
-    }
-
-    /** The rain the server sends, or the weather slot by the clock in case a weather comes without vanilla rain. */
-    private static boolean isRaining(@NotNull ClientLevel level) {
-        final int minute = LocalTime.now(ZoneOffset.UTC).getMinute();
-        return level.isRaining() || (minute >= WEATHER_START_MINUTE && minute < WEATHER_END_MINUTE);
     }
 
     private static boolean wearsRedSweater(@NotNull LocalPlayer player) {
