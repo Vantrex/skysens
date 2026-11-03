@@ -77,14 +77,14 @@ final class TrophyFrogHud {
             tooltip.addAll(pityLines(frog.getKey(), counts, service.catchRate(frog.getKey()), profile.menuRead));
             tooltips.add(tooltip);
             final List<Component> row = new ArrayList<>();
-            row.add(cell((highlighted != null ? "§a" : struck ? "§7" : "§f") + frog.getKey(), struck));
+            row.add(nameCell((highlighted != null ? "§a" : struck ? "§7" : "§f") + frog.getKey(), struck));
             for (final TrophyFrogTier tier : TrophyFrogTier.values()) {
                 final int amount = counts.getOrDefault(tier, 0);
                 final String color = tier == highlighted ? "§a" : tier.colorCode();
-                row.add(cell(amount == 0 ? "§c✖" : color + String.format("%,d", amount), struck));
+                row.add(Component.literal(amount == 0 ? "§c✖" : color + String.format("%,d", amount)));
             }
             if (config.showTotal) {
-                row.add(cell((highlighted != null ? "§a" : "§5") + String.format("%,d", TrophyFrogService.total(counts)), struck));
+                row.add(Component.literal((highlighted != null ? "§a" : "§5") + String.format("%,d", TrophyFrogService.total(counts))));
             }
             rows.add(row);
         }
@@ -154,10 +154,10 @@ final class TrophyFrogHud {
     }
 
     /**
-     * A table cell, struck through for a frog that can't be caught right now. A color code ends the strikethrough, so
-     * it is repeated after every color code.
+     * The frog's name cell, struck through for a frog that can't be caught right now (its counts stay unstruck). A
+     * color code ends the strikethrough, so it is repeated after every color code.
      */
-    private static Component cell(String text, boolean struck) {
+    private static Component nameCell(String text, boolean struck) {
         return Component.literal(struck ? STRUCK_COLOR.matcher(text).replaceAll("$0§m") : text);
     }
 

@@ -28,7 +28,7 @@ public class TrophyFrogAccordion {
     @Expose
     public boolean hideCompleted = false;
 
-    @ConfigOption(name = "Strike Uncatchable Frogs", desc = "On the Lotus Atoll, strike through frogs you can't catch right now: wrong zone, no rain, no Red Sweater, not underwater, midair or on a leaf. Wormholes and Frogcoin blessings can't be detected, those frogs are only struck in the Lotus Highlands. Open the chat and hover a frog in the HUD to see its requirements")
+    @ConfigOption(name = "Strike Uncatchable Frogs", desc = "On the Lotus Atoll, strike through the names of frogs you can't catch right now: wrong zone, no rain, no Red Sweater, not underwater, midair or on a leaf. Wormholes and Frogcoin blessings can't be detected, those frogs are only struck in the Lotus Highlands. Open the chat and hover a frog in the HUD to see its requirements")
     @ConfigEditorBoolean
     @Expose
     public boolean strikeUncatchable = true;
