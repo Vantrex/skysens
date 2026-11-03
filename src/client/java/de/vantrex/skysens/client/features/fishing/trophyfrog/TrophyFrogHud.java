@@ -1,11 +1,14 @@
 package de.vantrex.skysens.client.features.fishing.trophyfrog;
 
 import de.vantrex.skysens.client.features.fishing.config.TrophyFrogAccordion;
+import de.vantrex.skysens.client.util.ScreenUtil;
 import de.vantrex.skysens.client.util.TimeUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +37,7 @@ final class TrophyFrogHud {
     private List<Component> header = List.of();
     /** Table cells, the first column is left aligned and the others right aligned. */
     private List<List<Component>> rows = List.of();
-    /** The tooltip of each row in {@link #rows} while hovered with the chat open, null for the column header. */
+    /** The tooltip of each row in {@link #rows} while hovered with the chat or an inventory open, null for the column header. */
     private List<List<Component>> tooltips = List.of();
 
     /** Rebuilds the lines for the profile, null while the profile is unknown. */
@@ -206,12 +209,21 @@ final class TrophyFrogHud {
         graphics.pose().scale(scale, scale);
         this.drawContent(graphics);
         graphics.pose().popMatrix();
-        if (client.gui.screen() instanceof ChatScreen) {
+        if (showsTooltip(client.gui.screen())) {
             this.drawTooltip(graphics, x, y, scale);
         }
     }
 
-    /** The requirements of the frog under the mouse, the chat has to be open to move the mouse. */
+    /**
+     * Whether the mouse is free to hover the HUD: with the chat or an inventory open. The HUD's tooltip is set before
+     * the screen's and the first one wins, so not over an item in an inventory, where the item's tooltip goes first.
+     */
+    private static boolean showsTooltip(@Nullable Screen screen) {
+        return screen instanceof ChatScreen
+                || screen instanceof AbstractContainerScreen<?> && !ScreenUtil.isOverItem(screen);
+    }
+
+    /** The requirements of the frog under the mouse, the chat or an inventory has to be open to move the mouse. */
     private void drawTooltip(@NotNull GuiGraphicsExtractor graphics, float x, float y, float scale) {
         final Minecraft client = Minecraft.getInstance();
         final double mouseX = client.mouseHandler.getScaledXPos(client.getWindow());
