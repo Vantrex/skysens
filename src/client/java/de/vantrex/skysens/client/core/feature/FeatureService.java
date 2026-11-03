@@ -2,6 +2,7 @@ package de.vantrex.skysens.client.core.feature;
 
 import de.vantrex.skysens.client.features.activity.ActivityTrackingFeature;
 import de.vantrex.skysens.client.features.bazaar.BazaarDisableClickFeature;
+import de.vantrex.skysens.client.features.fishing.trophyfrog.TrophyFrogFeature;
 import de.vantrex.skysens.client.skyblock.player.AfkTracker;
 import de.vantrex.skysens.client.skyblock.player.CombatTracker;
 import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
@@ -76,6 +77,7 @@ public class FeatureService {
         this.featureRegistry.register(new DungeonNpcProfitFeature());
         this.featureRegistry.register(new de.vantrex.skysens.client.features.chatfilter.ChatSpamFilterFeature());
         this.featureRegistry.register(new JunkHighlightFeature());
+        this.featureRegistry.register(new TrophyFrogFeature());
         this.featureRegistry.register(CombatTracker.getInstance());
         this.featureRegistry.register(AfkTracker.getInstance());
         this.featureRegistry.register(SlayerTracker.getInstance());

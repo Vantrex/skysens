@@ -1,14 +1,11 @@
 package de.vantrex.skysens.client.features.warp;
 
-import de.vantrex.skysens.client.platform.mixin.PlayerTabOverlayAccessor;
 import de.vantrex.skysens.client.features.warp.CoopRepository.Coop;
 import de.vantrex.skysens.client.features.warp.CoopRepository.Member;
 import de.vantrex.skysens.client.persistence.RepositoryRegistry;
+import de.vantrex.skysens.client.skyblock.player.ProfileUtil;
 import lombok.Getter;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.PlayerInfo;
-import net.minecraft.network.chat.Component;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,7 +27,6 @@ import java.util.regex.Pattern;
  */
 public final class CoopMemberTracker {
 
-    private static final Pattern PROFILE_PATTERN = Pattern.compile("^Profile: (\\w+)");
     private static final Pattern HEADER_PATTERN = Pattern.compile("^Co-?op \\((\\d+)\\)$");
     // optional SkyBlock level, the name, then e.g. a symbol or "(Offline 12d)"
     private static final Pattern MEMBER_PATTERN = Pattern.compile("^(?:\\[\\d+] )?(\\w{1,16})(.*)$");
@@ -53,14 +49,9 @@ public final class CoopMemberTracker {
         if (client.getConnection() == null || client.player == null) {
             return;
         }
-        final List<String> lines = new ArrayList<>();
-        for (final PlayerInfo info : ((PlayerTabOverlayAccessor) client.gui.hud.getTabList()).skysens$getPlayerInfos()) {
-            final Component displayName = info.getTabListDisplayName();
-            final String line = displayName == null ? null : ChatFormatting.stripFormatting(displayName.getString());
-            lines.add(line == null ? "" : line.trim());
-        }
+        final List<String> lines = ProfileUtil.tabListLines();
         final CoopRepository repository = RepositoryRegistry.COOP_REPOSITORY;
-        final String profile = parseProfile(lines);
+        final String profile = ProfileUtil.parseProfile(lines);
         if (profile != null) {
             repository.lastProfile = profile;
         }
@@ -83,16 +74,6 @@ public final class CoopMemberTracker {
     /** True if the widget is in the tab list right now, so the online status is current. */
     public boolean isLive() {
         return this.liveAt != 0 && System.currentTimeMillis() - this.liveAt < 2000;
-    }
-
-    static @Nullable String parseProfile(@NotNull List<String> lines) {
-        for (final String line : lines) {
-            final Matcher matcher = PROFILE_PATTERN.matcher(line);
-            if (matcher.find()) {
-                return matcher.group(1);
-            }
-        }
-        return null;
     }
 
     /** The members below the "Coop (n)" header without {@code self}, or null if there is no such header. */

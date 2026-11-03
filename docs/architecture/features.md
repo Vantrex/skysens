@@ -19,6 +19,7 @@ All extend `Feature` (`isActive()`, `priority()`; lower priority runs first).
 | `ItemRightClickFeature` | `platform/hook/UseHandlers` | Right-clicking with an item |
 | `AfterTickFeature` | `platform/hook/TickHandlers` | End of every client tick, **only while on SkyBlock** |
 | `GameMessageListeningFeature` | `platform/hook/ChatHandler` | Every incoming game (chat) message |
+| `HudRenderFeature` | `platform/hook/HudHandlers` | Every frame on top of the HUD, **only while on SkyBlock** and not hidden with F1 |
 
 The dispatchers check `isActive()` first, with one exception: `GameMessageListeningFeature` is called
 unconditionally, so it must check `isActive()` and `SkysensClient.getInstance().isOnSkyBlock()` itself

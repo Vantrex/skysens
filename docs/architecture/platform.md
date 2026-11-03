@@ -7,7 +7,8 @@ injection point and delegates to them.
 - `platform/hook/`: Fabric API callbacks, registered from `SkysensClient.onInitializeClient()`:
   `UseHandlers` (use item), `TickHandlers` (end of client tick), `ChatHandler` (incoming game messages, and
   intercepting a bare `!warpto`), `KeyHandlers` (key mappings, category `key.category.skysens.main`),
-  `HudHandlers` (HUD elements: the secondary action bar, see `ClientUtil.sendSecondaryActionBar`).
+  `HudHandlers` (HUD elements: the secondary action bar, see `ClientUtil.sendSecondaryActionBar`, and one element
+  that draws every `HudRenderFeature`).
 
 ## Current mixins
 
