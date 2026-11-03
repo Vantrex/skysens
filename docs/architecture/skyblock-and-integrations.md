@@ -49,4 +49,7 @@ Chat command bridges (`OdinChatCommandsBridge`, `SkyHanniPartyCommandsBridge`) w
 - Adapters are `public` classes in `integration/<mod>/` that implement an interface owned by the consumer
   (`ItemPriceProvider` in `skyblock/price`, `ServerStatsProvider` in `stats`, `ChatCommandBridge` in `chatcommand`).
   To support a new mod, add an adapter and put it in the right place in the consumer's provider list.
+- `InventoryHudBridge` reads Inventory HUD+'s HUD position from its public static fields and mirrors its layout
+  math. `ActionBarLayout` (`features/actionbar/`) uses it to move the action bars above the HUD, recomputing only
+  when marked dirty (its key bindings via `InventoryHudKeyActionMixin`, closing its config screens) or on a resize.
 - Network calls (`HypixelPriceProvider`) must not block the client thread: prefetch and refresh asynchronously.

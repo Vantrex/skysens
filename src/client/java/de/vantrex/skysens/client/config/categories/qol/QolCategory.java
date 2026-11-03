@@ -23,4 +23,9 @@ public class QolCategory {
     @ConfigEditorBoolean
     @Expose
     public boolean hideArmorBar = false;
+
+    @ConfigOption(name = "Action Bar Above Inventory HUD", desc = "If Inventory HUD+ is installed and its inventory HUD is shown where the action bar is, move the action bar (and SkySens' own) up above it. Nothing moves if they don't overlap.")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean moveActionBarAboveInventoryHud = true;
 }

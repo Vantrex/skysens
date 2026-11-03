@@ -19,7 +19,8 @@
     "HudMixin",
     "ServerStatsMixin",
     "PlayerTabOverlayAccessor",
-    "ChatComponentMixin"
+    "ChatComponentMixin",
+    "InventoryHudKeyActionMixin"
   ],
   "injectors": {
     "defaultRequire": 1
