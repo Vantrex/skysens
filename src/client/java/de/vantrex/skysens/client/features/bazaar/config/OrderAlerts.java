@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.features.bazaar.config;
 import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.notification.NotificationDisplayTypeEnum;
+import de.vantrex.skysens.client.notification.NotificationLevelEnum;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
@@ -30,6 +31,21 @@ public class OrderAlerts {
     @ConfigEditorBoolean
     @Expose
     public boolean filledAlerts = true;
+
+    @ConfigOption(name = "Outbid level", desc = "Level of the outbid alert. Important also skips the waiting for combat and runs below." + NotificationLevelEnum.LEVELS_DESC)
+    @ConfigEditorDropdown
+    @Expose
+    public NotificationLevelEnum outbidLevel = NotificationLevelEnum.NORMAL;
+
+    @ConfigOption(name = "Undercut level", desc = "Level of the undercut alert. Important also skips the waiting for combat and runs below." + NotificationLevelEnum.LEVELS_DESC)
+    @ConfigEditorDropdown
+    @Expose
+    public NotificationLevelEnum undercutLevel = NotificationLevelEnum.NORMAL;
+
+    @ConfigOption(name = "Filled level", desc = "Level of the order filled alert." + NotificationLevelEnum.LEVELS_DESC)
+    @ConfigEditorDropdown
+    @Expose
+    public NotificationLevelEnum filledLevel = NotificationLevelEnum.NORMAL;
 
     @ConfigOption(name = "Check interval (seconds)", desc = "How often the bazaar prices are checked for outbid and undercut orders (one request for all products)")
     @ConfigEditorSlider(minValue = 20f, maxValue = 300f, minStep = 5f)

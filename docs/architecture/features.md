@@ -69,5 +69,7 @@ plain chat output.
 
 Every notification has a `NotificationLevelEnum` (`.level(...)` on the builder, default `NORMAL`). `NORMAL` ones wait
 while notifications are held (AFK, combat, dungeons/Kuudra, slayer quests); `IMPORTANT` ones ignore those holds and are
-shown before queued normal ones. The user picks the level of each notification in General → Notification Levels
-(`NotificationLevelsAccordion`), so a new notification gets a field there and passes it to `.level(...)`. `ClientUtil.sendDebug(...)` only prints when Dev → Debug Mode is on.
+shown before queued normal ones. The user picks the level of each notification next to the feature's own option
+(e.g. `OrderAlerts.outbidLevel`, `SlayerRngMeterAccordion.notifyWhenFullLevel`), so a new notification gets a
+`NotificationLevelEnum` field in its feature's config (description suffixed with `NotificationLevelEnum.LEVELS_DESC`)
+and passes it to `.level(...)`. `ClientUtil.sendDebug(...)` only prints when Dev → Debug Mode is on.
