@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.features.fishing.trophyfrog;
 
 import de.vantrex.skysens.client.features.fishing.config.TrophyFrogAccordion;
+import de.vantrex.skysens.client.util.TimeUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -68,7 +70,9 @@ final class TrophyFrogHud {
             final TrophyFrogTier highlighted = config.highlightNew ? service.highlightedTier(frog.getKey()) : null;
             final List<TrophyFrogConditions.Condition> frogConditions = conditions.get(frog.getKey());
             final boolean struck = config.strikeUncatchable && TrophyFrogConditions.isUncatchable(frogConditions);
-            tooltips.add(tooltip(frog.getKey(), frogConditions));
+            final List<Component> tooltip = tooltip(frog.getKey(), frogConditions);
+            tooltip.addAll(pityLines(frog.getKey(), counts, service.catchRate(frog.getKey()), profile.menuRead));
+            tooltips.add(tooltip);
             final List<Component> row = new ArrayList<>();
             row.add(cell((highlighted != null ? "§a" : struck ? "§7" : "§f") + frog.getKey(), struck));
             for (final TrophyFrogTier tier : TrophyFrogTier.values()) {
@@ -103,6 +107,45 @@ final class TrophyFrogHud {
         for (final TrophyFrogConditions.Condition condition : conditions) {
             final String mark = condition.met() == null ? "§7• " : condition.met() ? "§a✔ " : "§c✖ ";
             lines.add(Component.literal(mark + "§f" + condition.description()));
+        }
+        return lines;
+    }
+
+    /**
+     * The catches until the frog's guaranteed Gold and Diamond (see {@link TrophyFrogPity}) and how long they take at
+     * its catch rate of the last {@link TrophyFrogService#RATE_WINDOW_MS}. Nothing once the frog was caught in Diamond,
+     * there is no pity left then.
+     */
+    private static List<Component> pityLines(String frog, Map<TrophyFrogTier, Integer> counts,
+                                             @Nullable TrophyFrogService.CatchRate rate, boolean menuRead) {
+        if (counts.getOrDefault(TrophyFrogTier.DIAMOND, 0) > 0) {
+            return List.of();
+        }
+        final List<Component> lines = new ArrayList<>();
+        lines.add(Component.empty());
+        for (final TrophyFrogTier tier : List.of(TrophyFrogTier.GOLD, TrophyFrogTier.DIAMOND)) {
+            final String name = tier.colorCode() + tier.name().charAt(0) + tier.name().substring(1).toLowerCase(Locale.ROOT);
+            final Integer left = TrophyFrogPity.catchesLeft(frog, tier, counts);
+            if (left == null) {
+                lines.add(Component.literal(name + "§7: already caught"));
+                continue;
+            }
+            final Long time = rate == null ? null : rate.timeFor(left);
+            lines.add(Component.literal(name + " pity§7 in §f" + String.format("%,d", left)
+                    + (left == 1 ? "§7 catch" : "§7 catches")
+                    + (time == null ? "" : " §8(§e~" + TimeUtil.formatDuration(time) + "§8)")));
+        }
+        if (rate == null) {
+            lines.add(Component.literal("§8Measuring your catch rate..."));
+        } else if (rate.catches() == 0) {
+            lines.add(Component.literal("§8None caught in your last " + TimeUtil.formatDuration(rate.windowMs())
+                    + " on the Lotus Atoll"));
+        } else {
+            lines.add(Component.literal("§8Based on " + String.format("%,d", rate.catches()) + " caught in your last "
+                    + TimeUtil.formatDuration(rate.windowMs()) + " on the Lotus Atoll"));
+        }
+        if (!menuRead) {
+            lines.add(Component.literal("§cCounts incomplete, open the Trophy Frogs menu"));
         }
         return lines;
     }

@@ -56,17 +56,13 @@ public class TrophyFrogFeature implements GameMessageListeningFeature, AfterTick
                 && screen.getTitle().getString().trim().equals(TrophyFrogService.MENU_TITLE)) {
             service.onMenu(menuItems(screen.getMenu()));
         }
+        service.onLotusAtoll();
         this.hud.update(service.current(), config());
     }
 
     @Override
     public void renderHud(GuiGraphicsExtractor graphics, DeltaTracker deltaTracker) {
-        final TrophyFrogAccordion config = config();
-        if (config.onlyOnLotusAtoll
-                && LocationService.getInstance().getCurrentLocation() != SkyblockLocationEnum.LOTUS_ATOLL) {
-            return;
-        }
-        this.hud.draw(graphics, config);
+        this.hud.draw(graphics, config());
     }
 
     @Override
@@ -92,9 +88,14 @@ public class TrophyFrogFeature implements GameMessageListeningFeature, AfterTick
         return SkysensConfig.getInstance().fishingCategory.trophyFrogs;
     }
 
+    /**
+     * Only on the Lotus Atoll: frogs are only caught there and the Trophy Frogs menu is at Researcher Ribery there, so
+     * elsewhere there is nothing to read or show.
+     */
     @Override
     public boolean isActive() {
-        return config().enabled;
+        return config().enabled
+                && LocationService.getInstance().getCurrentLocation() == SkyblockLocationEnum.LOTUS_ATOLL;
     }
 
     /** The table in the HUD editor, stored in the existing position and scale options. */
@@ -107,10 +108,10 @@ public class TrophyFrogFeature implements GameMessageListeningFeature, AfterTick
 
         @Override
         public boolean isEnabled() {
-            return TrophyFrogFeature.this.isActive();
+            return config().enabled;
         }
 
-        /** {@link #afterTick} doesn't build the lines while the feature is switched off. */
+        /** {@link #afterTick} doesn't build the lines while the feature is inactive, e.g. off the Lotus Atoll. */
         private TrophyFrogHud hud() {
             if (TrophyFrogFeature.this.hud.isEmpty()) {
                 TrophyFrogFeature.this.hud.update(TrophyFrogService.getInstance().current(), config());
