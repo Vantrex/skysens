@@ -5,6 +5,7 @@ import de.vantrex.skysens.client.features.bazaar.BazaarDisableClickFeature;
 import de.vantrex.skysens.client.features.fishing.trophyfrog.TrophyFrogFeature;
 import de.vantrex.skysens.client.skyblock.player.AfkTracker;
 import de.vantrex.skysens.client.skyblock.player.CombatTracker;
+import de.vantrex.skysens.client.skyblock.coop.CoopMemberTracker;
 import de.vantrex.skysens.client.skyblock.player.ProfileService;
 import de.vantrex.skysens.client.skyblock.party.PartyTracker;
 import de.vantrex.skysens.client.skyblock.slayer.SlayerTracker;
@@ -13,7 +14,6 @@ import de.vantrex.skysens.client.chatcommand.ChatCommandFeature;
 import de.vantrex.skysens.client.features.lootshare.LootShareFeature;
 import de.vantrex.skysens.client.features.lootshare.SackProfitFeature;
 import de.vantrex.skysens.client.features.warp.WarpToFeature;
-import de.vantrex.skysens.client.features.warp.WarpToMenuFeature;
 import de.vantrex.skysens.client.features.dungeon.DungeonRunDetector;
 import de.vantrex.skysens.client.features.dungeon.DungeonRunStatsFeature;
 import de.vantrex.skysens.client.features.dungeon.DungeonNpcProfitFeature;
@@ -65,7 +65,6 @@ public class FeatureService {
 
         this.featureRegistry.register(new ChatCommandFeature());
         this.featureRegistry.register(new WarpToFeature());
-        this.featureRegistry.register(new WarpToMenuFeature());
         this.featureRegistry.register(new LootShareFeature());
         this.featureRegistry.register(new SackProfitFeature());
         this.featureRegistry.register(this.rewardChestFeature);
@@ -84,6 +83,7 @@ public class FeatureService {
         this.featureRegistry.register(AfkTracker.getInstance());
         this.featureRegistry.register(ProfileService.getInstance());
         this.featureRegistry.register(PartyTracker.getInstance());
+        this.featureRegistry.register(CoopMemberTracker.getInstance());
         this.featureRegistry.register(SlayerTracker.getInstance());
 
     }

@@ -1,13 +1,9 @@
 package de.vantrex.skysens.client.config;
 
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.gson.annotations.Expose;
-import de.vantrex.skysens.client.features.visuals.config.SwingAnimationAccordion;
 import de.vantrex.skysens.client.config.annotation.ConfigEditorDynamicZoneDropdown;
 import de.vantrex.skysens.client.config.categories.dev.DevCategory;
+import de.vantrex.skysens.client.config.migration.ConfigMigrations;
 import de.vantrex.skysens.client.features.dungeon.config.DungeonCategory;
 import de.vantrex.skysens.client.features.bazaar.config.BazaarCategory;
 import de.vantrex.skysens.client.features.fishing.config.FishingCategory;
@@ -32,8 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 
 @NoArgsConstructor
@@ -119,9 +113,10 @@ public class SkysensConfig extends Config {
 
     public static ManagedConfig<SkysensConfig> getConfig() {
         if (CONFIG == null) {
-            final JsonObject legacySwing = readLegacySwingSettings();
+            final File configFile = new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json");
+            final ConfigMigrations migrations = ConfigMigrations.read(configFile);
             CONFIG = ManagedConfig.create(
-                    new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json"),
+                    configFile,
                     SkysensConfig.class,
                     new Function1<ManagedConfigBuilder<SkysensConfig>, Unit>() {
                         @Override
@@ -146,47 +141,11 @@ public class SkysensConfig extends Config {
                         }
                     }
             );
-            if (legacySwing != null) {
-                migrateLegacySwingSettings(legacySwing);
+            if (migrations.apply(CONFIG.getInstance())) {
+                CONFIG.saveToFile();
             }
         }
         return CONFIG;
-    }
-
-    /** Returns the pre-move qolCategory.swingAnimation object if the file still has it and no visuals swing group yet. */
-    private static JsonObject readLegacySwingSettings() {
-        final File file = new File(FabricLoader.getInstance().getConfigDir().toFile(), "skysens/config.json");
-        if (!file.isFile()) {
-            return null;
-        }
-        try (Reader reader = Files.newBufferedReader(file.toPath(), StandardCharsets.UTF_8)) {
-            final JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
-            final JsonObject visuals = root.has("visualsCategory") && root.get("visualsCategory").isJsonObject()
-                    ? root.getAsJsonObject("visualsCategory") : null;
-            if (visuals != null && visuals.has("swingAnimation")) {
-                return null;
-            }
-            final JsonElement qol = root.get("qolCategory");
-            if (qol != null && qol.isJsonObject() && qol.getAsJsonObject().get("swingAnimation") instanceof JsonObject swing) {
-                return swing;
-            }
-        } catch (Exception e) {
-            LOGGER.warn("Could not inspect config for legacy swing settings", e);
-        }
-        return null;
-    }
-
-    private static void migrateLegacySwingSettings(JsonObject legacySwing) {
-        try {
-            final SwingAnimationAccordion old = new GsonBuilder().excludeFieldsWithoutExposeAnnotation().create()
-                    .fromJson(legacySwing, SwingAnimationAccordion.class);
-            old.clamp();
-            CONFIG.getInstance().visualsCategory.swingAnimation.copyFrom(old);
-            CONFIG.saveToFile();
-            LOGGER.info("Migrated swing animation settings from QOL to Visuals");
-        } catch (Exception e) {
-            LOGGER.warn("Failed to migrate legacy swing settings", e);
-        }
     }
 
 }

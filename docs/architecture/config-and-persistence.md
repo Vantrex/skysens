@@ -39,8 +39,16 @@ Conventions:
 
 - If `config.json` can't be parsed, MoulConfig would fall back to defaults and overwrite the file on the next save.
   `SkysensConfig` first copies the unreadable file to `config.json.broken-<timestamp>`.
-- Moving an option to another category changes its JSON path, so existing values would be lost. Add a one-off
-  migration like `readLegacySwingSettings` / `migrateLegacySwingSettings` (swing settings moved from QOL to Visuals).
+- Moving an option to another category changes its JSON path, so existing values would be lost. Add a migration:
+  one class per migration in `config/migration/` implementing `ConfigMigration`, e.g. `LegacySwingConfigMigration`
+  (swing settings moved from QOL to Visuals) or `LegacyNotificationLevelsConfigMigration`.
+  - `shouldMigrate(root)` checks the raw `config.json` (read before MoulConfig loads it) for the old path. It must
+    turn false once the config has been saved, which happens naturally because the save drops keys that no longer
+    exist on the config classes.
+  - `migrate(root, config)` copies the old values into the loaded `SkysensConfig`. Don't save there.
+  - Register it in the `MIGRATIONS` list in `ConfigMigrations`. `SkysensConfig.getConfig()` runs them in order and
+    saves once if any applied; a failing migration is logged and skipped.
+  - Never put migration logic into `SkysensConfig` itself.
 
 ## The config screen (`ui/`)
 

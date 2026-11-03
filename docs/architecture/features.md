@@ -56,6 +56,8 @@ Listeners are matched by exact event class (no inheritance) and run on the firin
 | `DungeonRunCompleteEvent` | `DungeonRunDetector` |
 | `ProfileChangeEvent` | `ProfileService` (profile name from chat, or once from the tab list after joining) |
 | `PartyJoinEvent`, `PartyLeaveEvent`, `PartyKickEvent`, `PartyMemberJoinEvent`, `PartyMemberLeaveEvent`, `PartyRoleChangeEvent`, `PartyMembersUpdateEvent` | `PartyTracker` (party chat messages, `/party list`, Mod API party info) |
+| `CoopMemberJoinEvent`, `CoopMemberQuitEvent` | `CoopMemberTracker` ("<name> joined/left SkyBlock." in chat) |
+| `CoopMembersUpdateEvent` | `CoopMemberTracker` (co-op widget in the tab list on the private island changed) |
 
 Domain events go in `skyblock/event/`. An event that only matters inside one feature stays in that feature's
 package (like `DungeonRunCompleteEvent`).
@@ -68,5 +70,7 @@ plain chat output.
 
 Every notification has a `NotificationLevelEnum` (`.level(...)` on the builder, default `NORMAL`). `NORMAL` ones wait
 while notifications are held (AFK, combat, dungeons/Kuudra, slayer quests); `IMPORTANT` ones ignore those holds and are
-shown before queued normal ones. The user picks the level of each notification in General → Notification Levels
-(`NotificationLevelsAccordion`), so a new notification gets a field there and passes it to `.level(...)`. `ClientUtil.sendDebug(...)` only prints when Dev → Debug Mode is on.
+shown before queued normal ones. The user picks the level of each notification next to the feature's own option
+(e.g. `OrderAlerts.outbidLevel`, `SlayerRngMeterAccordion.notifyWhenFullLevel`), so a new notification gets a
+`NotificationLevelEnum` field in its feature's config (description suffixed with `NotificationLevelEnum.LEVELS_DESC`)
+and passes it to `.level(...)`. `ClientUtil.sendDebug(...)` only prints when Dev → Debug Mode is on.
