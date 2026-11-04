@@ -33,11 +33,12 @@ public final class TrophyFrogService {
     public static final String MENU_TITLE = "Trophy Frogs";
 
     /**
-     * The prefix symbol differs between versions (♔ or a resource pack glyph), so the match starts after it. Repeated
+     * The prefix symbol differs between versions (♔ or a resource pack glyph), so only symbols and spaces may come
+     * before the message. That keeps out player chat ("Name: TROPHY FROG! ..."), which starts with a name. Repeated
      * messages can end with a stack counter ("BRONZE! (2)"), that is still one catch.
      */
     private static final Pattern CATCH_PATTERN = Pattern.compile(
-            "TROPHY FROG! You caught(?: an?)? (?<name>.+?) (?<tier>BRONZE|SILVER|GOLD|DIAMOND)(?: x(?<amount>[\\d,]+))?!(?: \\(\\d[\\d,]*\\))?$");
+            "^[^\\p{L}\\p{N}:]*TROPHY FROG! You caught(?: an?)? (?<name>[^!]+?) (?<tier>BRONZE|SILVER|GOLD|DIAMOND)(?: x(?<amount>[\\d,]+))?!(?: \\(\\d[\\d,]*\\))?$");
     /** A tier line in a frog's lore: "Gold ✔ (16)" when caught, "Diamond ✖" when not. */
     private static final Pattern TIER_LINE_PATTERN = Pattern.compile("^(?<tier>Bronze|Silver|Gold|Diamond) \\S+(?: \\((?<amount>[\\d,]+)\\))?$");
     /** How long a caught tier is highlighted in the HUD. */
