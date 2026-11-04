@@ -120,7 +120,8 @@ public final class TrophyFrogService {
             return;
         }
         boolean changed = false;
-        // rebuilt in menu order, frogs only seen in chat so far go to the end
+        // rebuilt in menu order. The menu is the source of truth: frogs it doesn't list (e.g. from a misread chat line)
+        // are dropped
         final Map<String, Map<TrophyFrogTier, Integer>> ordered = new LinkedHashMap<>();
         for (final MenuItem item : items) {
             final Map<TrophyFrogTier, Integer> counts = parseTiers(item.lore());
@@ -137,7 +138,9 @@ public final class TrophyFrogService {
         }
         final boolean foundFrog = !ordered.isEmpty();
         if (foundFrog) {
-            profile.frogs.forEach(ordered::putIfAbsent);
+            profile.frogs.keySet().stream()
+                    .filter(frog -> !ordered.containsKey(frog))
+                    .forEach(frog -> ClientUtil.sendDebug("Trophy Frogs: not in the menu, removed: " + frog));
             if (!List.copyOf(ordered.keySet()).equals(List.copyOf(profile.frogs.keySet()))) {
                 profile.frogs = ordered;
                 changed = true;
