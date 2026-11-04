@@ -2,6 +2,8 @@ package de.vantrex.skysens.client.config;
 
 import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.config.annotation.ConfigEditorDynamicZoneDropdown;
+import de.vantrex.skysens.client.config.annotation.ConfigEditorMultiSelect;
+import de.vantrex.skysens.client.config.categories.misc.MiscCategory;
 import de.vantrex.skysens.client.config.categories.dev.DevCategory;
 import de.vantrex.skysens.client.config.migration.ConfigMigrations;
 import de.vantrex.skysens.client.features.dungeon.config.DungeonCategory;
@@ -76,6 +78,10 @@ public class SkysensConfig extends Config {
     @Expose
     public de.vantrex.skysens.client.features.chatfilter.config.ChatFilterCategory chatFilterCategory = new de.vantrex.skysens.client.features.chatfilter.config.ChatFilterCategory();
 
+    @Category(name = "Misc", desc = "Year of the Witch ingredients")
+    @Expose
+    public MiscCategory miscCategory = new MiscCategory();
+
     @Category(name = "Dev", desc = "Debugging and diagnostics")
     @Expose
     public DevCategory devCategory = new DevCategory();
@@ -124,6 +130,9 @@ public class SkysensConfig extends Config {
                             skysensConfigManagedConfigBuilder.customProcessor(ConfigEditorDynamicZoneDropdown.class,
                                     (processedOption, configEditorDynamicZoneDropdown)
                                             -> new ZoneDropdownEditorStub(processedOption));
+                            skysensConfigManagedConfigBuilder.customProcessor(ConfigEditorMultiSelect.class,
+                                    (processedOption, configEditorMultiSelect)
+                                            -> new MultiSelectEditorStub(processedOption));
                             // MoulConfig keeps the defaults when parsing fails, and the next save would
                             // overwrite the user's file. Keep a copy of the unreadable file first.
                             skysensConfigManagedConfigBuilder.setLoadFailed((dataFile, exception) -> {

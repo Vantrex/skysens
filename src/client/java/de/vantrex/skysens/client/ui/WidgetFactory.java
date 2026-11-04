@@ -5,6 +5,7 @@ import de.vantrex.skysens.client.ui.widget.AccordionWidget;
 import de.vantrex.skysens.client.ui.widget.ButtonWidget;
 import de.vantrex.skysens.client.ui.widget.ColourWidget;
 import de.vantrex.skysens.client.ui.widget.DropdownWidget;
+import de.vantrex.skysens.client.ui.widget.MultiSelectWidget;
 import de.vantrex.skysens.client.ui.widget.OptionWidget;
 import de.vantrex.skysens.client.ui.widget.SliderWidget;
 import de.vantrex.skysens.client.ui.widget.TextWidget;
@@ -22,6 +23,7 @@ public final class WidgetFactory {
             case TOGGLE -> new ToggleWidget(node);
             case SLIDER -> new SliderWidget(node);
             case DROPDOWN, ZONE_DROPDOWN -> new DropdownWidget(node);
+            case MULTI_SELECT -> new MultiSelectWidget(node);
             case COLOUR -> new ColourWidget(node);
             case TEXT -> new TextWidget(node);
             case BUTTON -> new ButtonWidget(node);
