@@ -68,6 +68,7 @@ Listeners are matched by exact event class (no inheritance) and run on the firin
 | `PartyJoinEvent`, `PartyLeaveEvent`, `PartyKickEvent`, `PartyMemberJoinEvent`, `PartyMemberLeaveEvent`, `PartyRoleChangeEvent`, `PartyMembersUpdateEvent` | `PartyTracker` (party chat messages, `/party list`, Mod API party info) |
 | `CoopMemberJoinEvent`, `CoopMemberQuitEvent` | `CoopMemberTracker` ("<name> joined/left SkyBlock." in chat) |
 | `CoopMembersUpdateEvent` | `CoopMemberTracker` (co-op widget in the tab list on the private island changed) |
+| `SackItemsAddedEvent`, `SackItemsRemovedEvent` | `SackTracker` in `skyblock/sack/` (the "[Sacks] +N items, -N items." chat message, one event per direction) |
 
 Domain events go in `skyblock/event/`. An event that only matters inside one feature stays in that feature's
 package (like `DungeonRunCompleteEvent`).

@@ -4,6 +4,7 @@ import de.vantrex.skysens.client.features.bazaar.BazaarOrderRepository;
 import de.vantrex.skysens.client.features.dungeon.DungeonRunRepository;
 import de.vantrex.skysens.client.features.fishing.trophyfrog.TrophyFrogRepository;
 import de.vantrex.skysens.client.features.slayer.rng.SlayerRngRepository;
+import de.vantrex.skysens.client.features.witch.WitchIngredientRepository;
 import de.vantrex.skysens.client.skyblock.coop.CoopRepository;
 import de.vantrex.skysens.client.skyblock.profit.ProfitRepository;
 
@@ -27,6 +28,7 @@ public final class RepositoryRegistry {
     public static DungeonRunRepository DUNGEON_RUN_REPOSITORY;
     public static SlayerRngRepository SLAYER_RNG_REPOSITORY;
     public static TrophyFrogRepository TROPHY_FROG_REPOSITORY;
+    public static WitchIngredientRepository WITCH_INGREDIENT_REPOSITORY;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path BASE_DIR = FabricLoader.getInstance().getConfigDir().resolve("skysens/repositories");
@@ -40,6 +42,7 @@ public final class RepositoryRegistry {
         DUNGEON_RUN_REPOSITORY = loadRepository(DungeonRunRepository.class);
         SLAYER_RNG_REPOSITORY = loadRepository(SlayerRngRepository.class);
         TROPHY_FROG_REPOSITORY = loadRepository(TrophyFrogRepository.class);
+        WITCH_INGREDIENT_REPOSITORY = loadRepository(WitchIngredientRepository.class);
     }
 
     private static <T> T loadRepository(Class<T> clazz) {
@@ -68,6 +71,7 @@ public final class RepositoryRegistry {
         saveRepository(DUNGEON_RUN_REPOSITORY);
         saveRepository(SLAYER_RNG_REPOSITORY);
         saveRepository(TROPHY_FROG_REPOSITORY);
+        saveRepository(WITCH_INGREDIENT_REPOSITORY);
     }
 
     public static void saveRepository(Object repository) {

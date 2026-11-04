@@ -6,7 +6,7 @@ Everything is stored under `<minecraft>/config/skysens/`:
 |---|---|---|
 | `config.json` | `SkysensConfig` (MoulConfig `ManagedConfig`) | All options |
 | `sensitivity.json` | `SensitivityService` | Per-location/zone mouse sensitivity |
-| `repositories/<ClassName>.json` | `RepositoryRegistry` | `SimpleKeyValueRepository`, `ProfitRepository`, `CoopRepository`, `BazaarOrderRepository`, `DungeonRunRepository`, `SlayerRngRepository`, `TrophyFrogRepository` |
+| `repositories/<ClassName>.json` | `RepositoryRegistry` | `SimpleKeyValueRepository`, `ProfitRepository`, `CoopRepository`, `BazaarOrderRepository`, `DungeonRunRepository`, `SlayerRngRepository`, `TrophyFrogRepository`, `WitchIngredientRepository` |
 | `repositories/ActivityTracker.json` | `ActivityTracker` | Activity timeline (saved by the tracker itself) |
 
 ## Options (MoulConfig)
@@ -24,11 +24,12 @@ SkysensConfig                       @Category fields, one per sidebar entry, in 
 Conventions:
 
 - A feature's config classes live in `features/<name>/config/`. Categories that span several features stay in
-  `config/categories/` (General, QOL, Dev); chat commands keep theirs in `chatcommand/config/`.
+  `config/categories/` (General, QOL, Misc, Dev); chat commands keep theirs in `chatcommand/config/`.
 - Every persisted field needs `@Expose`. Initialise it with its default (`public boolean foo = true;`).
 - Supported editors (what the custom screen can draw, see `ui/model/ConfigTree.kindOf`): `@ConfigEditorBoolean`,
   `@ConfigEditorSlider`, `@ConfigEditorDropdown`, `@ConfigEditorColour`, `@ConfigEditorText`, `@Accordion`, and the
-  SkySens-specific `@ConfigEditorDynamicZoneDropdown`. Any other editor shows as "unsupported" in the screen.
+  SkySens-specific `@ConfigEditorDynamicZoneDropdown` and `@ConfigEditorMultiSelect` (a `List<SomeEnum>` of checked
+  constants, drawn by `MultiSelectWidget`, kept in the tree by `MultiSelectEditorStub`). Any other editor shows as "unsupported" in the screen.
 - `@ConfigEditorDynamicZoneDropdown` is registered as a custom processor in `SkysensConfig.getConfig()` and backed by
   `ZoneDropdownEditorStub`, which only exists so MoulConfig keeps the option in the tree.
 - `guiTheme` and `guiFont` on `SkysensConfig` are `@Expose` without `@Category`, so they're saved but not shown as

@@ -1,36 +1,25 @@
 package de.vantrex.skysens.client.features.lootshare;
 
-import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.config.SkysensConfig;
-import de.vantrex.skysens.client.core.feature.GameMessageListeningFeature;
+import de.vantrex.skysens.client.core.event.EventListenerRegistry;
+import de.vantrex.skysens.client.core.event.SkysensListener;
+import de.vantrex.skysens.client.core.feature.Feature;
 import de.vantrex.skysens.client.core.feature.SkySensFeature;
 import de.vantrex.skysens.client.skyblock.profit.ProfitService;
-import net.minecraft.ChatFormatting;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.HoverEvent;
-import net.minecraft.network.chat.Style;
-import org.jetbrains.annotations.Nullable;
+import de.vantrex.skysens.client.skyblock.event.SackItemsAddedEvent;
+import de.vantrex.skysens.client.skyblock.sack.SackItem;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.OptionalDouble;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
- * Counts items that went straight into sacks for the profit tracker. Hypixel summarizes them every few seconds as
- * "[Sacks] +179 items. (Last 12s.)", the hover of "+179 items" lists every item. Removed items ("-5 items") are
- * withdrawals and ignored.
+ * Counts items that went straight into sacks for the profit tracker, from the {@link SackItemsAddedEvent} of
+ * {@code SackTracker}. Removed items are withdrawals and ignored.
  */
 @SkySensFeature
-public class SackProfitFeature implements GameMessageListeningFeature {
-
-    private static final Pattern SACKS_PATTERN = Pattern.compile("^\\[Sacks]\\s.*");
-    /** The "+179 items" part of the message, whose hover lists the added items. */
-    private static final Pattern ADDED_PATTERN = Pattern.compile("^\\+[\\d,]+ items?\\b.*");
-    /** "+27 Gabagool Distillate (Combat Sack)", also tolerates a missing sack name. */
-    private static final Pattern LINE_PATTERN = Pattern.compile("^\\s*\\+([\\d,]+)x? (.+?)(?:\\s+\\([^()]*\\))?\\s*$");
+public class SackProfitFeature implements Feature, SkysensListener<SackItemsAddedEvent> {
 
     /** How long a rare drop is remembered, so its sack entry isn't counted a second time. */
     private static final long DROP_MEMORY_MILLIS = 60_000L;
@@ -75,37 +64,23 @@ public class SackProfitFeature implements GameMessageListeningFeature {
         return left;
     }
 
+    public SackProfitFeature() {
+        EventListenerRegistry.REGISTRY.registerListener(this, SackItemsAddedEvent.class);
+    }
+
     @Override
-    public void onGameMessage(Component message, boolean overlay) {
-        if (overlay || !this.isActive() || !SkysensClient.getInstance().isOnSkyBlock()) {
-            return;
-        }
-        final String text = ChatFormatting.stripFormatting(message.getString());
-        if (text == null || !SACKS_PATTERN.matcher(text.trim()).matches()) {
-            return;
-        }
-        final Component hover = findAddedHover(message, null);
-        if (hover == null) {
-            return;
-        }
-        final String hoverText = ChatFormatting.stripFormatting(hover.getString());
-        if (hoverText == null) {
+    public void handle(SackItemsAddedEvent event) {
+        if (!this.isActive()) {
             return;
         }
         double total = 0;
         boolean any = false;
-        for (final String line : hoverText.split("\\R")) {
-            final Matcher matcher = LINE_PATTERN.matcher(line);
-            if (!matcher.matches()) {
-                continue;
-            }
-            final int amount = Integer.parseInt(matcher.group(1).replace(",", ""));
-            final String name = matcher.group(2).trim();
-            final int uncounted = subtractRememberedDrops(name, amount);
+        for (final SackItem entry : event.getItems()) {
+            final int uncounted = subtractRememberedDrops(entry.name(), entry.amount());
             if (uncounted <= 0) {
                 continue;
             }
-            final OptionalDouble value = LootShareFeature.dropValue(uncounted + "x " + name);
+            final OptionalDouble value = LootShareFeature.dropValue(uncounted + "x " + entry.name());
             if (value.isPresent()) {
                 total += value.getAsDouble();
                 any = true;
@@ -115,25 +90,6 @@ public class SackProfitFeature implements GameMessageListeningFeature {
             // one event per message, not per item
             ProfitService.getInstance().record(ProfitService.detectActivity(), total);
         }
-    }
-
-    /** The hover text of the "+N items" component, searching the siblings and inheriting the parent's hover. */
-    private static @Nullable Component findAddedHover(Component component, @Nullable Component inherited) {
-        Component hover = inherited;
-        if (component.getStyle().getHoverEvent() instanceof HoverEvent.ShowText showText) {
-            hover = showText.value();
-        }
-        final String own = ChatFormatting.stripFormatting(component.getString());
-        if (hover != null && own != null && ADDED_PATTERN.matcher(own.trim()).matches()) {
-            return hover;
-        }
-        for (final Component sibling : component.getSiblings()) {
-            final Component found = findAddedHover(sibling, hover);
-            if (found != null) {
-                return found;
-            }
-        }
-        return null;
     }
 
     @Override
