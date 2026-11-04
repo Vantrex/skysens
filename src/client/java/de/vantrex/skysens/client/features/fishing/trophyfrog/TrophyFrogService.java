@@ -33,11 +33,12 @@ public final class TrophyFrogService {
     public static final String MENU_TITLE = "Trophy Frogs";
 
     /**
-     * The prefix symbol differs between versions (♔ or a resource pack glyph), so the match starts after it. Repeated
+     * The prefix symbol differs between versions (♔ or a resource pack glyph), so only symbols and spaces may come
+     * before the message. That keeps out player chat ("Name: TROPHY FROG! ..."), which starts with a name. Repeated
      * messages can end with a stack counter ("BRONZE! (2)"), that is still one catch.
      */
     private static final Pattern CATCH_PATTERN = Pattern.compile(
-            "TROPHY FROG! You caught(?: an?)? (?<name>.+?) (?<tier>BRONZE|SILVER|GOLD|DIAMOND)(?: x(?<amount>[\\d,]+))?!(?: \\(\\d[\\d,]*\\))?$");
+            "^[^\\p{L}\\p{N}:]*TROPHY FROG! You caught(?: an?)? (?<name>[^!]+?) (?<tier>BRONZE|SILVER|GOLD|DIAMOND)(?: x(?<amount>[\\d,]+))?!(?: \\(\\d[\\d,]*\\))?$");
     /** A tier line in a frog's lore: "Gold ✔ (16)" when caught, "Diamond ✖" when not. */
     private static final Pattern TIER_LINE_PATTERN = Pattern.compile("^(?<tier>Bronze|Silver|Gold|Diamond) \\S+(?: \\((?<amount>[\\d,]+)\\))?$");
     /** How long a caught tier is highlighted in the HUD. */
@@ -119,7 +120,8 @@ public final class TrophyFrogService {
             return;
         }
         boolean changed = false;
-        // rebuilt in menu order, frogs only seen in chat so far go to the end
+        // rebuilt in menu order. The menu is the source of truth: frogs it doesn't list (e.g. from a misread chat line)
+        // are dropped
         final Map<String, Map<TrophyFrogTier, Integer>> ordered = new LinkedHashMap<>();
         for (final MenuItem item : items) {
             final Map<TrophyFrogTier, Integer> counts = parseTiers(item.lore());
@@ -136,7 +138,9 @@ public final class TrophyFrogService {
         }
         final boolean foundFrog = !ordered.isEmpty();
         if (foundFrog) {
-            profile.frogs.forEach(ordered::putIfAbsent);
+            profile.frogs.keySet().stream()
+                    .filter(frog -> !ordered.containsKey(frog))
+                    .forEach(frog -> ClientUtil.sendDebug("Trophy Frogs: not in the menu, removed: " + frog));
             if (!List.copyOf(ordered.keySet()).equals(List.copyOf(profile.frogs.keySet()))) {
                 profile.frogs = ordered;
                 changed = true;
