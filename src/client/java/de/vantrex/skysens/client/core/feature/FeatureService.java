@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.core.feature;
 import de.vantrex.skysens.client.features.activity.ActivityTrackingFeature;
 import de.vantrex.skysens.client.features.bazaar.BazaarDisableClickFeature;
 import de.vantrex.skysens.client.features.fishing.trophyfrog.TrophyFrogFeature;
+import de.vantrex.skysens.client.features.volcano.VolcanoEruptionFeature;
 import de.vantrex.skysens.client.features.witch.WitchIngredientFeature;
 import de.vantrex.skysens.client.skyblock.sack.SackTracker;
 import de.vantrex.skysens.client.skyblock.player.AfkTracker;
@@ -82,6 +83,7 @@ public class FeatureService {
         this.featureRegistry.register(new JunkHighlightFeature());
         this.featureRegistry.register(new TrophyFrogFeature());
         this.featureRegistry.register(new WitchIngredientFeature());
+        this.featureRegistry.register(new VolcanoEruptionFeature());
         this.featureRegistry.register(CombatTracker.getInstance());
         this.featureRegistry.register(AfkTracker.getInstance());
         this.featureRegistry.register(ProfileService.getInstance());

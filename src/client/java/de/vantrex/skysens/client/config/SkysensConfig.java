@@ -78,7 +78,7 @@ public class SkysensConfig extends Config {
     @Expose
     public de.vantrex.skysens.client.features.chatfilter.config.ChatFilterCategory chatFilterCategory = new de.vantrex.skysens.client.features.chatfilter.config.ChatFilterCategory();
 
-    @Category(name = "Misc", desc = "Year of the Witch ingredients")
+    @Category(name = "Misc", desc = "Year of the Witch ingredients, Crimson Isle volcano eruptions")
     @Expose
     public MiscCategory miscCategory = new MiscCategory();
 
