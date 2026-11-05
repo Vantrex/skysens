@@ -183,7 +183,8 @@ public class VolcanoEruptionFeature implements AfterTickFeature {
         this.lastAnnouncedServer = this.server;
         this.lastAnnounced = explosivity;
         final String message = explosivity.name() + " volcano eruption on " + this.server;
-        final boolean warpMe = SkysensConfig.getInstance().chatCommandsCategory.commands.warpMe;
+        final boolean warpMe = explosivity == VolcanoExplosivity.CATACLYSMIC
+                && SkysensConfig.getInstance().chatCommandsCategory.commands.warpMe;
         final ChatCommandService chat = ChatCommandService.getInstance();
         if (config().announce) {
             for (final ChatChannel channel : config().announceChannel.getChannels()) {

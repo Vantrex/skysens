@@ -34,4 +34,9 @@ class VolcanoFoundEruption {
         return Optional.ofNullable(explosivity);
     }
 
+    /** Whether a CATACLYSMIC eruption was found and we are still on its server, the only time !warpme works. */
+    boolean isCataclysmic() {
+        return current().filter(found -> found == VolcanoExplosivity.CATACLYSMIC).isPresent();
+    }
+
 }
