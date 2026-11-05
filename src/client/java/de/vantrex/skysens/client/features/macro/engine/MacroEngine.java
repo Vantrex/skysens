@@ -14,6 +14,7 @@ import de.vantrex.skysens.client.features.macro.node.param.Params;
 import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.util.ClientUtil;
 import net.minecraft.client.input.InputWithModifiers;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -129,11 +130,12 @@ public final class MacroEngine {
         if (!SkysensConfig.getInstance().macroCategory.showBlockedHint) {
             return;
         }
+        final Component message = Component.literal(text).withStyle(ChatFormatting.RED);
         if (SkysensClient.getInstance().isOnSkyBlock()) {
-            ClientUtil.sendSecondaryActionBar(Component.literal(text), 1500);
+            ClientUtil.sendSecondaryActionBar(message, 1500);
         } else {
             // Only reachable with the dev bypass: the secondary action bar is only drawn on SkyBlock.
-            ClientUtil.sendActionBar(Component.literal(text));
+            ClientUtil.sendActionBar(message);
         }
     }
 
