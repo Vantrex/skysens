@@ -42,6 +42,14 @@ public class NotificationService {
         this.notificationQueue.add(text);
     }
 
+    /**
+     * Shows a notification right away, bypassing the queue (which only runs on SkyBlock). For notifications that are
+     * explicitly allowed off SkyBlock, e.g. macros with the dev bypass.
+     */
+    public void displayNow(final @NotNull Notification notification) {
+        this.displayNotification(notification, true);
+    }
+
     @Synchronized
     public boolean hasNextNotification() {
         return !this.notificationQueue.isEmpty();

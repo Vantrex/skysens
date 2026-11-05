@@ -20,6 +20,7 @@ public final class FeatureRegistry {
     private final List<GameMessageListeningFeature> gameMessageListeningFeatures = new ArrayList<>();
     private final List<RawGameMessageListeningFeature> rawGameMessageListeningFeatures = new ArrayList<>();
     private final List<HudRenderFeature> hudRenderFeature = new ArrayList<>();
+    private final List<RawInputFeature> rawInputFeature = new ArrayList<>();
 
     public void register(Feature feature) {
         if (feature instanceof HandledScreenFeature handledScreenFeature) {
@@ -55,6 +56,9 @@ public final class FeatureRegistry {
         if (feature instanceof HudRenderFeature hudRenderFeature) {
             this.hudRenderFeature.add(hudRenderFeature);
         }
+        if (feature instanceof RawInputFeature rawInputFeature) {
+            this.rawInputFeature.add(rawInputFeature);
+        }
         this.sort();
     }
 
@@ -70,6 +74,7 @@ public final class FeatureRegistry {
         CollectionsKt.sortBy(this.gameMessageListeningFeatures, Feature::priority);
         CollectionsKt.sortBy(this.rawGameMessageListeningFeatures, Feature::priority);
         CollectionsKt.sortBy(this.hudRenderFeature, Feature::priority);
+        CollectionsKt.sortBy(this.rawInputFeature, Feature::priority);
     }
 
 }

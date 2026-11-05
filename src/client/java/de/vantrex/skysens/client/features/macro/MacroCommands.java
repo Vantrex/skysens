@@ -2,6 +2,10 @@ package de.vantrex.skysens.client.features.macro;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import de.vantrex.skysens.client.features.macro.analysis.NodeIssue;
+import de.vantrex.skysens.client.features.macro.engine.ExecutionLog;
+import de.vantrex.skysens.client.features.macro.engine.ExecutionRecord;
+import de.vantrex.skysens.client.features.macro.engine.GraphWalker;
+import de.vantrex.skysens.client.features.macro.engine.Resolution;
 import de.vantrex.skysens.client.features.macro.model.MacroNode;
 import de.vantrex.skysens.client.features.macro.model.Workflow;
 import de.vantrex.skysens.client.features.macro.node.NodeTypes;
@@ -22,7 +26,9 @@ public final class MacroCommands {
                 .then(ClientCommands.literal("reload")
                         .executes(context -> reload()))
                 .then(ClientCommands.literal("debug")
-                        .executes(context -> debug()));
+                        .executes(context -> debug()))
+                .then(ClientCommands.literal("log")
+                        .executes(context -> log()));
     }
 
     private static int reload() {
@@ -30,6 +36,42 @@ public final class MacroCommands {
         service.reload();
         ClientUtil.sendPrefixed("§7Macros reloaded: " + service.getWorkflows().size() + " workflows, " + service.nodeCount() + " nodes.");
         return 1;
+    }
+
+    private static int log() {
+        final List<ExecutionRecord> records = ExecutionLog.getInstance().recent(10);
+        if (records.isEmpty()) {
+            ClientUtil.sendPrefixed("§7No macro key presses logged yet.");
+            return 1;
+        }
+        final long now = System.currentTimeMillis();
+        for (ExecutionRecord record : records) {
+            final Resolution resolution = record.resolution();
+            final GraphWalker.PathResult path = resolution.chosenPath();
+            final String color = resolution.ran() ? "§a" : resolution.outcome() == Resolution.Outcome.NO_ACTION ? "§7" : "§e";
+            final StringBuilder line = new StringBuilder("§7[" + (now - record.time()) / 1000 + "s ago] §f" + record.chord().displayName()
+                    + (record.inGui() ? " §8(gui)" : "") + " " + color + outcomeLabel(resolution.outcome()));
+            if (path != null) {
+                line.append(" §7").append(path.ref().workflow().name).append(" -> ")
+                        .append(NodeTypes.resolve(path.action().type).displayName())
+                        .append(" \"").append(NodeTypes.resolve(path.action().type).summary(path.action())).append("\"");
+            }
+            if (resolution.message() != null) {
+                line.append(" §8(").append(resolution.message()).append(")");
+            }
+            ClientUtil.sendPrefixed(line.toString());
+        }
+        return 1;
+    }
+
+    private static String outcomeLabel(Resolution.Outcome outcome) {
+        return switch (outcome) {
+            case RAN -> "Ran";
+            case RATE_LIMITED -> "Rate limited";
+            case ON_COOLDOWN -> "On cooldown";
+            case FAILED -> "Failed";
+            case NO_ACTION -> "No action";
+        };
     }
 
     private static int debug() {

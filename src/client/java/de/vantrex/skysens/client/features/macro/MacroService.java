@@ -57,8 +57,7 @@ public final class MacroService {
     }
 
     private void rebuildIndex() {
-        // No triggers are indexed yet (input pipeline comes in a later milestone).
-        this.triggerIndex = TriggerIndex.EMPTY;
+        this.triggerIndex = TriggerIndex.build(this.workflows);
     }
 
     public int nodeCount() {

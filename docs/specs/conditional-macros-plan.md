@@ -1008,3 +1008,21 @@ These override the plan and Amendment A where they differ.
   6. **Navigate:** drag to select; pan with middle-drag or Space+drag; zoom with Ctrl+wheel; Ctrl+C/V copies, Ctrl+Z/Y undoes and redoes.
   7. **Test:** press the key in game; the path it took lights up green. The Executions tab shows why something did or didn't run.
 - **Where it lives:** `features/macro/editor/TutorialOverlay` with a static list of steps (anchor + text), so new steps are easy to add.
+
+## Keybind conflicts (added 2026-11-06, part of M3, editor badge in M7)
+
+A trigger whose key or mouse button is also bound to a key mapping in `Minecraft.options.keyMappings` (vanilla and
+other mods) gets a WARNING issue: "Q is also bound to Drop Item: that binding only works when no macro action runs".
+
+- **Matching:** device and code against the mapping's bound `InputConstants.Key`. Vanilla mappings have no modifiers, so a conflict counts regardless of the trigger's Ctrl/Shift/Alt, but the message says "Ctrl+Q also triggers Drop Item" for modified chords.
+- **Where it lives:** `features/macro/analysis/KeybindConflicts` returns `List<NodeIssue>`. Results are cached per index rebuild and invalidated when the options are saved, e.g. on Controls screen close.
+- **Where it shows:**
+  - `/skysens macros debug`
+  - one chat line per conflicting trigger after `MacroService` reload/commit, throttled
+  - the trigger node's warning badge in the editor (M7)
+
+## Dev-bypass display fixes (2026-11-06)
+
+Off SkyBlock, which is only reachable with the dev bypass, toasts are shown directly via
+`NotificationService.displayNow` and blocked hints use the vanilla action bar. The notification queue and the
+secondary action bar only render on SkyBlock.

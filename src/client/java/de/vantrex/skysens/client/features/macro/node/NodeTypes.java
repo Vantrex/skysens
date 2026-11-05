@@ -1,5 +1,11 @@
 package de.vantrex.skysens.client.features.macro.node;
 
+import de.vantrex.skysens.client.features.macro.node.action.PlaySoundNode;
+import de.vantrex.skysens.client.features.macro.node.action.SendChatNode;
+import de.vantrex.skysens.client.features.macro.node.action.SendCommandNode;
+import de.vantrex.skysens.client.features.macro.node.action.ToastNode;
+import de.vantrex.skysens.client.features.macro.node.trigger.HotkeyTriggerNode;
+
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -10,13 +16,16 @@ public final class NodeTypes {
     private static final Map<String, NodeType> TYPES = new LinkedHashMap<>();
 
     static {
-        // No real node types yet (M2+).
+        register(new HotkeyTriggerNode());
+        register(new SendCommandNode());
+        register(new SendChatNode());
+        register(new ToastNode());
+        register(new PlaySoundNode());
     }
 
     private NodeTypes() {
     }
 
-    @SuppressWarnings("unused")
     private static void register(NodeType type) {
         if (TYPES.put(type.id(), type) != null) {
             throw new IllegalStateException("Duplicate node type " + type.id());

@@ -80,6 +80,10 @@ Several trigger nodes may live on one canvas (as in n8n).
 - **Warnings**
   - At press time: a chat or toast message listing which branches/workflows matched and which one ran.
   - In the editor: badges on nodes that obviously overlap, and on keys bound in more than one active workflow.
+  - **Keybind conflicts**: a trigger whose key or mouse button is also bound to a vanilla or mod key mapping
+    (Controls screen) gets a warning. It names the conflicting binding(s), e.g. "Q is also bound to Drop Item: that
+    binding only works when no macro action runs". It is shown on the trigger node in the editor, in
+    `/skysens macros debug`, and once in chat after a reload or when a macro is saved.
 - Order between workflows bound to the same key is user-defined (macro list order).
 - **Unknown state**: the player can already be in a party when (re)joining Hypixel, and the party is only known
   once the Hypixel Mod API answered. Conditions are tri-state (true / false / unknown); unknown never matches, not

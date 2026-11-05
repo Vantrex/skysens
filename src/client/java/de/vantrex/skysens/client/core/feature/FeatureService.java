@@ -96,6 +96,7 @@ public class FeatureService {
         this.featureRegistry.register(de.vantrex.skysens.client.skyblock.diana.DianaTracker.getInstance());
         this.featureRegistry.register(de.vantrex.skysens.client.skyblock.time.SkyblockEventCalendar.getInstance());
         this.featureRegistry.register(de.vantrex.skysens.client.skyblock.sidebar.SidebarEventTracker.getInstance());
+        this.featureRegistry.register(new de.vantrex.skysens.client.features.macro.MacroFeature());
 
     }
 
