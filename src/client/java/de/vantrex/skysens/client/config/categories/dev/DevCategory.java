@@ -11,4 +11,9 @@ public class DevCategory {
     @Expose
     public boolean debugMode = false;
 
+    @ConfigOption(name = "Macros Outside SkyBlock", desc = "Let macros fire outside SkyBlock. Only has an effect in the development client")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean macroIgnoreSkyBlock = false;
+
 }
