@@ -13,6 +13,7 @@ import de.vantrex.skysens.client.notification.NotificationService;
 import de.vantrex.skysens.client.notification.NotificationSound;
 import de.vantrex.skysens.client.skyblock.location.LocationService;
 import de.vantrex.skysens.client.skyblock.location.SkyblockLocationEnum;
+import de.vantrex.skysens.client.util.ChatUtil;
 import de.vantrex.skysens.client.util.ClientUtil;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -186,11 +187,11 @@ public class VolcanoEruptionFeature implements AfterTickFeature {
         final ChatCommandService chat = ChatCommandService.getInstance();
         if (config().announce) {
             for (final ChatChannel channel : config().announceChannel.getChannels()) {
-                chat.send(channel, warpMe ? message + " - type !warpme to get warped" : message);
+                chat.send(channel, ChatUtil.withAntiSpam(warpMe ? message + " - type !warpme to get warped" : message));
             }
         }
         for (final String player : players) {
-            chat.sendPrivateMessage(player, warpMe ? message + " - reply !warpme to get warped" : message);
+            chat.sendPrivateMessage(player, ChatUtil.withAntiSpam(warpMe ? message + " - reply !warpme to get warped" : message));
         }
     }
 

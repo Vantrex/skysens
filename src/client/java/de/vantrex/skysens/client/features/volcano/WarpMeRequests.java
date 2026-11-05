@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.features.volcano;
 import de.vantrex.skysens.client.chatcommand.ChatChannel;
 import de.vantrex.skysens.client.skyblock.party.PartyWarpService;
 import de.vantrex.skysens.client.util.Brand;
+import de.vantrex.skysens.client.util.ChatUtil;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.experimental.UtilityClass;
 import net.minecraft.client.Minecraft;
@@ -29,7 +30,7 @@ class WarpMeRequests {
     private static final Pattern OWN_PRIVATE_REQUEST = Pattern.compile("^To (?:\\[[^]]+] )?(\\w{1,16})(?: [^\\w\\s:]+)?: !warpme\\b.*$");
     /** The text of an eruption announcement that offers !warpme, see {@link VolcanoEruptionFeature}. */
     private static final Pattern ANNOUNCEMENT = Pattern.compile("^" + Pattern.quote(Brand.uncoloredPrefix().trim())
-            + " [A-Z]+ volcano eruption on \\S+ - (?:type|reply) !warpme to get warped$");
+            + " [A-Z]+ volcano eruption on \\S+ - (?:type|reply) !warpme to get warped(?:" + ChatUtil.ANTI_SPAM_SUFFIX_REGEX + ")?$");
 
     private @Nullable String lastAnnouncer;
     private long lastAnnouncedAt;
