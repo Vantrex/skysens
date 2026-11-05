@@ -14,17 +14,17 @@ public class ChatUtil {
     private static final Pattern STACK_COUNTER = Pattern.compile("\\s+\\(\\d+\\)$");
 
     private static final String ANTI_SPAM_CHARS = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    /** Matches the suffix {@link #withAntiSpam(String)} appends, e.g. " [x7Qk]". */
-    public static final String ANTI_SPAM_SUFFIX_REGEX = " \\[[A-Za-z0-9]{4}]";
+    /** Matches the suffix {@link #withAntiSpam(String)} appends, e.g. " [x7QkP3mA]". */
+    public static final String ANTI_SPAM_SUFFIX_REGEX = " \\[[A-Za-z0-9]{8}]";
 
     /**
-     * The message with a random suffix like " [x7Qk]", so Hypixel doesn't block it as a repeat of an earlier message
+     * The message with a random suffix like " [x7QkP3mA]", so Hypixel doesn't block it as a repeat of an earlier message
      * ("You cannot say the same message twice!").
      */
     public @NotNull String withAntiSpam(@NotNull String message) {
         final ThreadLocalRandom random = ThreadLocalRandom.current();
         final StringBuilder suffix = new StringBuilder(" [");
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 8; i++) {
             suffix.append(ANTI_SPAM_CHARS.charAt(random.nextInt(ANTI_SPAM_CHARS.length())));
         }
         return message + suffix.append(']');
