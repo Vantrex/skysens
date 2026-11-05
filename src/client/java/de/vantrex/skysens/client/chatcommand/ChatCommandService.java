@@ -150,7 +150,21 @@ public final class ChatCommandService {
      * so a burst (e.g. several drops at once) doesn't get us muted. Safe to call from any thread.
      */
     public void send(@NotNull ChatChannel channel, @NotNull String message) {
-        final String command = channel.getReplyCommand() + " " + Brand.uncoloredPrefix() + sanitize(message);
+        this.sendCommand(channel.getReplyCommand() + " " + Brand.uncoloredPrefix() + sanitize(message));
+    }
+
+    /**
+     * Sends a private message ({@code /msg}) to a player, spaced like {@link #send(ChatChannel, String)}.
+     * Invalid player names are ignored. Safe to call from any thread.
+     */
+    public void sendPrivateMessage(@NotNull String playerName, @NotNull String message) {
+        if (!playerName.matches("\\w{1,16}")) {
+            return;
+        }
+        this.sendCommand("msg " + playerName + " " + Brand.uncoloredPrefix() + sanitize(message));
+    }
+
+    private void sendCommand(@NotNull String command) {
         final String trimmed = command.length() > + MAX_CHAT_LENGTH ? command.substring(0, MAX_CHAT_LENGTH) : command;
 
         final long delay;

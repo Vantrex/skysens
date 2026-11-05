@@ -20,7 +20,9 @@ import net.minecraft.sounds.SoundEvents;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -166,16 +168,36 @@ public class VolcanoEruptionFeature implements AfterTickFeature {
     }
 
     private void announce(VolcanoExplosivity explosivity) {
-        if (!config().announce || this.server == null
+        final List<String> players = messagePlayers();
+        if ((!config().announce && players.isEmpty()) || this.server == null
                 || (this.server.equals(this.lastAnnouncedServer) && explosivity == this.lastAnnounced)) {
             return;
         }
         this.lastAnnouncedServer = this.server;
         this.lastAnnounced = explosivity;
         final String message = explosivity.name() + " volcano eruption on " + this.server;
-        for (final ChatChannel channel : config().announceChannel.getChannels()) {
-            ChatCommandService.getInstance().send(channel, message);
+        final ChatCommandService chat = ChatCommandService.getInstance();
+        if (config().announce) {
+            for (final ChatChannel channel : config().announceChannel.getChannels()) {
+                chat.send(channel, message);
+            }
         }
+        for (final String player : players) {
+            chat.sendPrivateMessage(player, message);
+        }
+    }
+
+    /** The names from "Message Players", without blanks and duplicates. */
+    private static List<String> messagePlayers() {
+        final String names = config().messagePlayers;
+        if (names == null || names.isBlank()) {
+            return List.of();
+        }
+        return Arrays.stream(names.split(","))
+                .map(String::trim)
+                .filter(name -> !name.isEmpty())
+                .distinct()
+                .toList();
     }
 
     private void notifySameServer(String serverName, long secondsAgo) {

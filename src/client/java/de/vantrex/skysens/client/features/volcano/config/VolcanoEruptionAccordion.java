@@ -6,6 +6,7 @@ import de.vantrex.skysens.client.notification.NotificationLevelEnum;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorText;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
 
 /** The Blazing Volcano eruption title on the Crimson Isle, and the same server alert for server hunting. */
@@ -35,6 +36,11 @@ public class VolcanoEruptionAccordion {
     @ConfigEditorDropdown
     @Expose
     public ShareChannelEnum announceChannel = ShareChannelEnum.PARTY;
+
+    @ConfigOption(name = "Message Players", desc = "Comma separated player names to send the eruption to via /msg, e.g. \"Vantrex, Notch\". Works without Announce Eruptions; leave empty to message nobody")
+    @ConfigEditorText
+    @Expose
+    public String messagePlayers = "";
 
     @ConfigOption(name = "Same Server Alert", desc = "Show a title when you join a Crimson Isle server you were already on a short time ago, so you can warp again right away while searching for an eruption")
     @ConfigEditorBoolean
