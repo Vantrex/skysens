@@ -16,6 +16,7 @@ import de.vantrex.skysens.client.features.macro.model.MacroNode;
 import de.vantrex.skysens.client.features.macro.node.param.Params;
 import de.vantrex.skysens.client.util.ClientUtil;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.input.InputWithModifiers;
 import net.minecraft.network.chat.Component;
@@ -64,8 +65,18 @@ public final class MacroEngine {
         if (index.isEmpty()) {
             return;
         }
-        final InputChord chord = InputChord.of(device, code, event);
-        final TriggerIndex.BindingGroup group = index.lookup(chord);
+        InputChord chord = InputChord.of(device, code, event);
+        TriggerIndex.BindingGroup group = index.lookup(chord);
+        if (group == null) {
+            // Sneak (Shift) and sprint (Ctrl) are held while playing: when nothing is bound to the exact chord, try
+            // again without the modifiers that are only held as movement keys, so "N" still fires while sneaking.
+            final int movementMods = heldMovementModifiers() & chord.mods();
+            if (movementMods != 0) {
+                final InputChord withoutMovement = new InputChord(chord.device(), chord.code(), chord.mods() & ~movementMods);
+                group = index.lookup(withoutMovement);
+                chord = withoutMovement;
+            }
+        }
         if (group == null) {
             return;
         }
@@ -210,6 +221,27 @@ public final class MacroEngine {
             // Only reachable with the dev bypass: the secondary action bar is only drawn on SkyBlock.
             ClientUtil.sendActionBar(message);
         }
+    }
+
+    /** The modifier bits of Shift/Ctrl/Alt keys that are bound to sneak or sprint and currently held. */
+    private static int heldMovementModifiers() {
+        final Minecraft mc = Minecraft.getInstance();
+        if (mc.options == null) {
+            return 0;
+        }
+        return modifierBitIfHeld(mc.options.keyShift) | modifierBitIfHeld(mc.options.keySprint);
+    }
+
+    private static int modifierBitIfHeld(KeyMapping mapping) {
+        if (!mapping.isDown()) {
+            return 0;
+        }
+        return switch (mapping.saveString()) {
+            case "key.keyboard.left.shift", "key.keyboard.right.shift" -> InputChord.SHIFT;
+            case "key.keyboard.left.control", "key.keyboard.right.control" -> InputChord.CTRL;
+            case "key.keyboard.left.alt", "key.keyboard.right.alt" -> InputChord.ALT;
+            default -> 0;
+        };
     }
 
     private static String formatSeconds(long ms) {
