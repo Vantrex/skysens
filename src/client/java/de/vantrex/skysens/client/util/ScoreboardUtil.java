@@ -21,6 +21,20 @@ public class ScoreboardUtil {
     private final Comparator<PlayerScoreEntry> DISPLAY_ORDER = Comparator.comparingInt(PlayerScoreEntry::value).reversed()
             .thenComparing(PlayerScoreEntry::owner, String.CASE_INSENSITIVE_ORDER);
 
+    /** The sidebar title without formatting, or null if there is no sidebar. */
+    public String getSidebarTitle() {
+        final ClientLevel level = Minecraft.getInstance().level;
+        if (level == null) {
+            return null;
+        }
+        final Objective sidebar = level.getScoreboard().getDisplayObjective(DisplaySlot.SIDEBAR);
+        if (sidebar == null) {
+            return null;
+        }
+        final String title = ChatFormatting.stripFormatting(sidebar.getDisplayName().getString());
+        return title == null ? null : title.trim();
+    }
+
     /** The sidebar lines without formatting, top to bottom as they are shown. Empty if there is no sidebar. */
     public List<String> getSidebarLines() {
         final List<String> lines = new ArrayList<>();

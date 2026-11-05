@@ -6,6 +6,7 @@ import de.vantrex.skysens.client.features.fishing.trophyfrog.TrophyFrogRepositor
 import de.vantrex.skysens.client.features.slayer.rng.SlayerRngRepository;
 import de.vantrex.skysens.client.features.witch.WitchIngredientRepository;
 import de.vantrex.skysens.client.skyblock.coop.CoopRepository;
+import de.vantrex.skysens.client.skyblock.pet.ActivePetRepository;
 import de.vantrex.skysens.client.skyblock.profit.ProfitRepository;
 
 import com.google.gson.Gson;
@@ -29,6 +30,8 @@ public final class RepositoryRegistry {
     public static SlayerRngRepository SLAYER_RNG_REPOSITORY;
     public static TrophyFrogRepository TROPHY_FROG_REPOSITORY;
     public static WitchIngredientRepository WITCH_INGREDIENT_REPOSITORY;
+    public static ActivePetRepository ACTIVE_PET_REPOSITORY;
+    public static de.vantrex.skysens.client.skyblock.dungeon.DungeonClassRepository DUNGEON_CLASS_REPOSITORY;
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Path BASE_DIR = FabricLoader.getInstance().getConfigDir().resolve("skysens/repositories");
@@ -43,6 +46,8 @@ public final class RepositoryRegistry {
         SLAYER_RNG_REPOSITORY = loadRepository(SlayerRngRepository.class);
         TROPHY_FROG_REPOSITORY = loadRepository(TrophyFrogRepository.class);
         WITCH_INGREDIENT_REPOSITORY = loadRepository(WitchIngredientRepository.class);
+        ACTIVE_PET_REPOSITORY = loadRepository(ActivePetRepository.class);
+        DUNGEON_CLASS_REPOSITORY = loadRepository(de.vantrex.skysens.client.skyblock.dungeon.DungeonClassRepository.class);
     }
 
     private static <T> T loadRepository(Class<T> clazz) {
@@ -72,6 +77,8 @@ public final class RepositoryRegistry {
         saveRepository(SLAYER_RNG_REPOSITORY);
         saveRepository(TROPHY_FROG_REPOSITORY);
         saveRepository(WITCH_INGREDIENT_REPOSITORY);
+        saveRepository(ACTIVE_PET_REPOSITORY);
+        saveRepository(DUNGEON_CLASS_REPOSITORY);
     }
 
     public static void saveRepository(Object repository) {

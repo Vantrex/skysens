@@ -29,4 +29,18 @@ public class TabListUtil {
         return lines;
     }
 
+    /** The tab list entries as components (with their colors) in display order; empty if not connected. */
+    public @NotNull List<Component> components() {
+        final Minecraft client = Minecraft.getInstance();
+        final List<Component> components = new ArrayList<>();
+        if (client.getConnection() == null) {
+            return components;
+        }
+        for (final PlayerInfo info : ((PlayerTabOverlayAccessor) client.gui.hud.getTabList()).skysens$getPlayerInfos()) {
+            final Component displayName = info.getTabListDisplayName();
+            components.add(displayName == null ? Component.empty() : displayName);
+        }
+        return components;
+    }
+
 }
