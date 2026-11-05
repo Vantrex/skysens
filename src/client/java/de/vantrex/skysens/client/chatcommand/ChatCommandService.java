@@ -4,6 +4,7 @@ import de.vantrex.skysens.client.features.activity.ActivityCommand;
 import de.vantrex.skysens.client.features.dungeon.RunsCommand;
 import de.vantrex.skysens.client.features.slayer.SlayerCommand;
 import de.vantrex.skysens.client.features.volcano.VolcanoCommand;
+import de.vantrex.skysens.client.features.volcano.WarpMeCommand;
 import de.vantrex.skysens.client.features.warp.WarpToCommand;
 import de.vantrex.skysens.client.skyblock.profit.ProfitCommand;
 
@@ -65,6 +66,7 @@ public final class ChatCommandService {
         this.registry.register(new SlayerCommand());
         this.registry.register(new UptimeCommand());
         this.registry.register(new VolcanoCommand());
+        this.registry.register(new WarpMeCommand());
     }
 
     /** Handles a received chat message. Called on the client thread. */
@@ -125,7 +127,10 @@ public final class ChatCommandService {
         }
 
         final ChatCommandContext context = new ChatCommandContext(channel, sender, label,
-                List.copyOf(parts.subList(1, parts.size())), reply -> this.send(channel, reply));
+                List.copyOf(parts.subList(1, parts.size())),
+                channel == ChatChannel.PRIVATE
+                        ? reply -> this.sendPrivateMessage(sender, reply)
+                        : reply -> this.send(channel, reply));
         try {
             command.get().execute(context);
         } catch (RuntimeException e) {
@@ -137,6 +142,7 @@ public final class ChatCommandService {
         return switch (channel) {
             case COOP -> SkysensConfig.getInstance().chatCommandsCategory.coopEnabled;
             case PARTY -> SkysensConfig.getInstance().chatCommandsCategory.partyEnabled;
+            case PRIVATE -> SkysensConfig.getInstance().chatCommandsCategory.privateEnabled;
         };
     }
 
@@ -148,8 +154,12 @@ public final class ChatCommandService {
     /**
      * Sends a message to a chat channel. Messages are spaced at least {@value #MIN_SEND_GAP_MS} ms apart,
      * so a burst (e.g. several drops at once) doesn't get us muted. Safe to call from any thread.
+     * Not for {@link ChatChannel#PRIVATE}, which needs a receiver: use {@link #sendPrivateMessage(String, String)}.
      */
     public void send(@NotNull ChatChannel channel, @NotNull String message) {
+        if (channel == ChatChannel.PRIVATE) {
+            throw new IllegalArgumentException("Private messages need a receiver, use sendPrivateMessage");
+        }
         this.sendCommand(channel.getReplyCommand() + " " + Brand.uncoloredPrefix() + sanitize(message));
     }
 

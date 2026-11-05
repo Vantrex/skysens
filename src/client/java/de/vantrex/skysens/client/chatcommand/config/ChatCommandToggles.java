@@ -87,4 +87,9 @@ public class ChatCommandToggles {
     @Expose
     public boolean volcano = true;
 
+    @ConfigOption(name = "!warpme", desc = "While you are on a Crimson Isle server with an eruption you got a title for, warps the sender to you via a temporary party. Works in party, co-op and private messages; if you are in a party, the sender is told so instead")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean warpMe = false;
+
 }

@@ -21,6 +21,11 @@ public class ChatCommandsCategory {
     @Expose
     public boolean partyEnabled = true;
 
+    @ConfigOption(name = "Private Message Commands", desc = "Answer !commands sent to you via /msg. Only commands that are meant for it work there, currently !warpme")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean privateEnabled = true;
+
     @ConfigOption(name = "Only my messages", desc = "Only answer commands you sent yourself, not those of your co-op members")
     @ConfigEditorBoolean
     @Expose

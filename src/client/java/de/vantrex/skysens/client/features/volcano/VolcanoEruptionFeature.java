@@ -88,7 +88,12 @@ public class VolcanoEruptionFeature implements AfterTickFeature {
         }
         this.last = current;
         this.ticksWithoutLine = 0;
-        if (current.isErupting() && (!config().onlyCataclysmic || current == VolcanoExplosivity.CATACLYSMIC)) {
+        if (!current.isErupting()) {
+            VolcanoFoundEruption.clear();
+        } else if (!config().onlyCataclysmic || current == VolcanoExplosivity.CATACLYSMIC) {
+            if (this.server != null) {
+                VolcanoFoundEruption.set(this.server, current);
+            }
             this.notify(current);
             this.announce(current);
         }
@@ -116,6 +121,7 @@ public class VolcanoEruptionFeature implements AfterTickFeature {
             final long maxAgeMs = config().sameServerSeconds * 1000L;
             this.leftServers.values().removeIf(leftAt -> now - leftAt > maxAgeMs);
             this.leftServers.put(this.server, now);
+            VolcanoFoundEruption.clear();
         }
         this.server = null;
         this.last = null;
@@ -176,14 +182,15 @@ public class VolcanoEruptionFeature implements AfterTickFeature {
         this.lastAnnouncedServer = this.server;
         this.lastAnnounced = explosivity;
         final String message = explosivity.name() + " volcano eruption on " + this.server;
+        final boolean warpMe = SkysensConfig.getInstance().chatCommandsCategory.commands.warpMe;
         final ChatCommandService chat = ChatCommandService.getInstance();
         if (config().announce) {
             for (final ChatChannel channel : config().announceChannel.getChannels()) {
-                chat.send(channel, message);
+                chat.send(channel, warpMe ? message + " - type !warpme to get warped" : message);
             }
         }
         for (final String player : players) {
-            chat.sendPrivateMessage(player, message);
+            chat.sendPrivateMessage(player, warpMe ? message + " - reply !warpme to get warped" : message);
         }
     }
 
