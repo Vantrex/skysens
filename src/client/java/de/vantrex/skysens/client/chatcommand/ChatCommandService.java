@@ -3,6 +3,7 @@ package de.vantrex.skysens.client.chatcommand;
 import de.vantrex.skysens.client.features.activity.ActivityCommand;
 import de.vantrex.skysens.client.features.dungeon.RunsCommand;
 import de.vantrex.skysens.client.features.slayer.SlayerCommand;
+import de.vantrex.skysens.client.features.volcano.VolcanoCommand;
 import de.vantrex.skysens.client.features.warp.WarpToCommand;
 import de.vantrex.skysens.client.skyblock.profit.ProfitCommand;
 
@@ -63,6 +64,7 @@ public final class ChatCommandService {
         this.registry.register(new RunsCommand());
         this.registry.register(new SlayerCommand());
         this.registry.register(new UptimeCommand());
+        this.registry.register(new VolcanoCommand());
     }
 
     /** Handles a received chat message. Called on the client thread. */

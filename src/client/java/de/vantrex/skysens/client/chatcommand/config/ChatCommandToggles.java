@@ -82,4 +82,9 @@ public class ChatCommandToggles {
     @Expose
     public boolean slayer = false;
 
+    @ConfigOption(name = "!volcano", desc = "Sends the Blazing Volcano state and server when you are on the Crimson Isle")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean volcano = true;
+
 }
