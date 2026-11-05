@@ -1,9 +1,13 @@
 package de.vantrex.skysens.client.features.macro.node;
 
+import de.vantrex.skysens.client.features.macro.node.action.OpenUiNode;
 import de.vantrex.skysens.client.features.macro.node.action.PlaySoundNode;
 import de.vantrex.skysens.client.features.macro.node.action.SendChatNode;
 import de.vantrex.skysens.client.features.macro.node.action.SendCommandNode;
 import de.vantrex.skysens.client.features.macro.node.action.ToastNode;
+import de.vantrex.skysens.client.features.macro.node.action.ToggleOptionNode;
+import de.vantrex.skysens.client.features.macro.node.logic.IfNode;
+import de.vantrex.skysens.client.features.macro.node.logic.SwitchNode;
 import de.vantrex.skysens.client.features.macro.node.trigger.HotkeyTriggerNode;
 
 import java.util.Collection;
@@ -17,10 +21,14 @@ public final class NodeTypes {
 
     static {
         register(new HotkeyTriggerNode());
+        register(new IfNode());
+        register(new SwitchNode());
         register(new SendCommandNode());
         register(new SendChatNode());
         register(new ToastNode());
         register(new PlaySoundNode());
+        register(new OpenUiNode());
+        register(new ToggleOptionNode());
     }
 
     private NodeTypes() {

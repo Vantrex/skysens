@@ -31,6 +31,18 @@ public final class PlaceholderRegistry {
         RESOLVERS.put("heldItem.name", ctx -> ctx.heldItem().isEmpty() ? null : ctx.heldItem().getHoverName().getString());
         RESOLVERS.put("heldItem.reforge", ctx -> ctx.heldExtraAttributes()
                 .flatMap(ea -> HypixelExtraAttributes.getString(ea, "modifier")).orElse(null));
+        RESOLVERS.put("party.leader", ctx -> ctx.party().leader());
+        RESOLVERS.put("party.size", ctx -> {
+            final Integer size = ctx.party().size();
+            return size == null ? null : String.valueOf(size);
+        });
+        RESOLVERS.put("party.members", ctx -> {
+            final var names = ctx.party().memberNames();
+            return names.isEmpty() ? null : String.join(", ", names);
+        });
+        RESOLVERS.put("slayer.boss", ctx -> ctx.slayer().bossName());
+        RESOLVERS.put("slayer.tier", ctx -> ctx.slayer().tier() > 0 ? String.valueOf(ctx.slayer().tier()) : null);
+        RESOLVERS.put("container.title", ctx -> ctx.screen().containerTitle());
     }
 
     private PlaceholderRegistry() {

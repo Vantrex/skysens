@@ -95,9 +95,6 @@ public final class HotkeyTriggerNode implements NodeType {
             out.add(new NodeIssue(NodeIssue.Severity.WARNING, node.id, "No key bound, this trigger never fires"));
             return;
         }
-        if (spec.mode() != PressMode.SINGLE) {
-            out.add(new NodeIssue(NodeIssue.Severity.WARNING, node.id, "Double tap and long hold are not supported yet, this trigger never fires"));
-        }
         if (spec.chord().isPrimaryMouseButton()) {
             out.add(new NodeIssue(spec.inGuis() ? NodeIssue.Severity.ERROR : NodeIssue.Severity.INFO, node.id,
                     spec.inGuis() ? "Left/right mouse buttons cannot fire in inventories (they would break clicking)"

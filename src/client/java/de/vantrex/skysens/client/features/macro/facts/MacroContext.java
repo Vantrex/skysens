@@ -2,26 +2,33 @@ package de.vantrex.skysens.client.features.macro.facts;
 
 import de.vantrex.skysens.client.features.macro.engine.InputChord;
 import de.vantrex.skysens.client.features.macro.engine.PressMode;
-import de.vantrex.skysens.client.skyblock.item.HypixelExtraAttributes;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-/** Per-press snapshot of what placeholders and (later) conditions read. Facts are read lazily, once. */
+/**
+ * Per-press snapshot of what placeholders and conditions read. One instance per resolution, shared by every path walked
+ * for it; each facts object is created on first use. The screen is the one open at the press, even if it is closed
+ * again by "close inventory first".
+ */
 public final class MacroContext {
 
     private final InputChord chord;
     private final PressMode mode;
-    private boolean heldLoaded;
-    private ItemStack held = ItemStack.EMPTY;
-    private @Nullable CompoundTag heldExtra;
+    private final ScreenFacts screen;
+    private LocationFacts location;
+    private PartyFacts party;
+    private SlayerFacts slayer;
+    private DungeonFacts dungeon;
+    private ItemFacts items;
 
-    public MacroContext(InputChord chord, PressMode mode) {
+    public MacroContext(InputChord chord, PressMode mode, @Nullable Screen screen) {
         this.chord = chord;
         this.mode = mode;
+        this.screen = new ScreenFacts(screen);
     }
 
     public InputChord chord() {
@@ -32,27 +39,52 @@ public final class MacroContext {
         return this.mode;
     }
 
-    private void loadHeld() {
-        if (this.heldLoaded) {
-            return;
+    public LocationFacts location() {
+        if (this.location == null) {
+            this.location = new LocationFacts();
         }
-        this.heldLoaded = true;
-        final Minecraft mc = Minecraft.getInstance();
-        if (mc.player != null) {
-            this.held = mc.player.getMainHandItem();
-            this.heldExtra = HypixelExtraAttributes.getExtraAttributes(this.held).orElse(null);
+        return this.location;
+    }
+
+    public PartyFacts party() {
+        if (this.party == null) {
+            this.party = new PartyFacts();
         }
+        return this.party;
+    }
+
+    public SlayerFacts slayer() {
+        if (this.slayer == null) {
+            this.slayer = new SlayerFacts();
+        }
+        return this.slayer;
+    }
+
+    public DungeonFacts dungeon() {
+        if (this.dungeon == null) {
+            this.dungeon = new DungeonFacts();
+        }
+        return this.dungeon;
+    }
+
+    public ItemFacts items() {
+        if (this.items == null) {
+            this.items = new ItemFacts();
+        }
+        return this.items;
+    }
+
+    public ScreenFacts screen() {
+        return this.screen;
     }
 
     public ItemStack heldItem() {
-        this.loadHeld();
-        return this.held;
+        return this.items().held();
     }
 
     /** The held item's SkyBlock ExtraAttributes, read once per press. */
     public Optional<CompoundTag> heldExtraAttributes() {
-        this.loadHeld();
-        return Optional.ofNullable(this.heldExtra);
+        return this.items().heldExtraAttributes();
     }
 
 }

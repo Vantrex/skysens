@@ -2,6 +2,8 @@ package de.vantrex.skysens.client.features.macro;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import de.vantrex.skysens.client.features.macro.analysis.NodeIssue;
+import de.vantrex.skysens.client.features.macro.condition.RuleResult;
+import de.vantrex.skysens.client.features.macro.condition.Tri;
 import de.vantrex.skysens.client.features.macro.engine.ExecutionLog;
 import de.vantrex.skysens.client.features.macro.engine.ExecutionRecord;
 import de.vantrex.skysens.client.features.macro.engine.GraphWalker;
@@ -48,9 +50,14 @@ public final class MacroCommands {
         for (ExecutionRecord record : records) {
             final Resolution resolution = record.resolution();
             final GraphWalker.PathResult path = resolution.chosenPath();
-            final String color = resolution.ran() ? "§a" : resolution.outcome() == Resolution.Outcome.NO_ACTION ? "§7" : "§e";
+            final String color = resolution.ran() ? "§a" : switch (resolution.outcome()) {
+                case NO_ACTION -> "§7";
+                case NO_MATCH_UNKNOWN_STATE -> "§c";
+                default -> "§e";
+            };
             final StringBuilder line = new StringBuilder("§7[" + (now - record.time()) / 1000 + "s ago] §f" + record.chord().displayName()
-                    + (record.inGui() ? " §8(gui)" : "") + " " + color + outcomeLabel(resolution.outcome()));
+                    + " §8" + record.mode().name().toLowerCase().replace('_', ' ')
+                    + (record.inGui() ? " (gui)" : "") + " " + color + outcomeLabel(resolution.outcome()));
             if (path != null) {
                 line.append(" §7").append(path.ref().workflow().name).append(" -> ")
                         .append(NodeTypes.resolve(path.action().type).displayName())
@@ -60,6 +67,24 @@ public final class MacroCommands {
                 line.append(" §8(").append(resolution.message()).append(")");
             }
             ClientUtil.sendPrefixed(line.toString());
+            for (GraphWalker.PathResult p : resolution.paths()) {
+                for (GraphWalker.LogicStep step : p.steps()) {
+                    final StringBuilder rules = new StringBuilder("§8    " + p.ref().workflow().name + " / " + step.nodeName() + ": ");
+                    for (RuleResult result : step.results()) {
+                        rules.append(switch (result.value()) {
+                            case TRUE -> "§a";
+                            case FALSE -> "§7";
+                            case UNKNOWN -> "§c";
+                        }).append(result.ruleId()).append('=').append(result.value() == Tri.UNKNOWN ? "?" : result.value().name().toLowerCase());
+                        if (result.unknownReason() != null) {
+                            rules.append(" §8(").append(result.unknownReason()).append(')');
+                        }
+                        rules.append("§8, ");
+                    }
+                    rules.append("→ ").append(step.port() == null ? "end" : step.port());
+                    ClientUtil.sendPrefixed(rules.toString());
+                }
+            }
         }
         return 1;
     }
@@ -71,6 +96,7 @@ public final class MacroCommands {
             case ON_COOLDOWN -> "On cooldown";
             case FAILED -> "Failed";
             case NO_ACTION -> "No action";
+            case NO_MATCH_UNKNOWN_STATE -> "Unknown state";
         };
     }
 

@@ -1,10 +1,10 @@
 package de.vantrex.skysens.client.features.macro.node.action;
 
 import com.google.gson.JsonPrimitive;
-import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.features.macro.action.ActionNodeType;
 import de.vantrex.skysens.client.features.macro.action.ActionOutcome;
 import de.vantrex.skysens.client.features.macro.action.ActionParams;
+import de.vantrex.skysens.client.features.macro.action.MacroToasts;
 import de.vantrex.skysens.client.features.macro.action.placeholder.PlaceholderRenderer;
 import de.vantrex.skysens.client.features.macro.analysis.NodeIssue;
 import de.vantrex.skysens.client.features.macro.facts.MacroContext;
@@ -16,7 +16,6 @@ import de.vantrex.skysens.client.features.macro.node.param.Params;
 import de.vantrex.skysens.client.notification.Notification;
 import de.vantrex.skysens.client.notification.NotificationDisplayTypeEnum;
 import de.vantrex.skysens.client.notification.NotificationLevelEnum;
-import de.vantrex.skysens.client.notification.NotificationService;
 import net.minecraft.network.chat.Component;
 
 import java.util.ArrayList;
@@ -76,12 +75,7 @@ public final class ToastNode implements ActionNodeType {
                 .displayType(display)
                 .level(NotificationLevelEnum.IMPORTANT)
                 .build();
-        if (SkysensClient.getInstance().isOnSkyBlock()) {
-            NotificationService.getInstance().sendNotification(notification);
-        } else {
-            // Only reachable with the dev bypass: the queue never runs off SkyBlock, so show it directly.
-            NotificationService.getInstance().displayNow(notification);
-        }
+        MacroToasts.show(notification);
         return ActionOutcome.ran();
     }
 

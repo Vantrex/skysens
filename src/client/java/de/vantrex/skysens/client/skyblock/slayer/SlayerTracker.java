@@ -4,10 +4,14 @@ import de.vantrex.skysens.client.SkysensClient;
 import de.vantrex.skysens.client.core.event.EventListenerRegistry;
 import de.vantrex.skysens.client.core.feature.AfterTickFeature;
 import de.vantrex.skysens.client.core.feature.GameMessageListeningFeature;
+import de.vantrex.skysens.client.skyblock.event.LocationChangeEvent;
+import de.vantrex.skysens.client.skyblock.event.SkyblockJoinEvent;
+import de.vantrex.skysens.client.skyblock.event.SkyblockQuitEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerBossCocoonEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerBossSpawnEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerQuestEndEvent;
 import de.vantrex.skysens.client.skyblock.event.SlayerQuestStartEvent;
+import de.vantrex.skysens.client.skyblock.item.ItemIdUtil;
 import de.vantrex.skysens.client.util.ChatUtil;
 import de.vantrex.skysens.client.util.ScoreboardUtil;
 import lombok.Getter;
@@ -34,6 +38,7 @@ public class SlayerTracker implements GameMessageListeningFeature, AfterTickFeat
     private static final SlayerTracker instance = new SlayerTracker();
 
     private static final Pattern BOSS_SPAWN = Pattern.compile("^SLAYER BOSS! The (.+) spawned!$");
+    private static final Pattern BOSS_WITH_TIER = Pattern.compile("^(.+) ([IVX]+)$");
     private static final String SIDEBAR_QUEST = "Slayer Quest";
     /** The boss line below "Slayer Quest", a name and its tier, e.g. "Inferno Demonlord IV". */
     private static final Pattern SIDEBAR_BOSS = Pattern.compile("^[A-Za-z' ]+ [IVX]+$");
@@ -49,11 +54,16 @@ public class SlayerTracker implements GameMessageListeningFeature, AfterTickFeat
     private volatile boolean bossCocooned;
     /** The boss with its tier (e.g. "Revenant Horror IV"), from the spawn message or the sidebar. */
     private volatile @Nullable String boss;
+    /** The sidebar was read since the last join or island change, so "no quest" can be trusted. */
+    private volatile boolean sidebarKnown;
     private long questSeenSinceMs;
     private long questEndedByChatMs;
     private int ticks;
 
     private SlayerTracker() {
+        EventListenerRegistry.REGISTRY.registerListener(event -> this.sidebarKnown = false, SkyblockJoinEvent.class);
+        EventListenerRegistry.REGISTRY.registerListener(event -> this.sidebarKnown = false, SkyblockQuitEvent.class);
+        EventListenerRegistry.REGISTRY.registerListener(event -> this.sidebarKnown = false, LocationChangeEvent.class);
     }
 
     public boolean isQuestActive() {
@@ -70,6 +80,34 @@ public class SlayerTracker implements GameMessageListeningFeature, AfterTickFeat
 
     public @Nullable String getBoss() {
         return this.boss;
+    }
+
+    /**
+     * Whether the sidebar was read since the last SkyBlock join or island change. Until then "no quest" may just mean
+     * the state isn't known yet.
+     */
+    public boolean isSidebarKnown() {
+        return this.sidebarKnown;
+    }
+
+    /** The boss name without its tier ("Revenant Horror" for "Revenant Horror IV"), null if no boss is known. */
+    public @Nullable String getBossName() {
+        final String current = this.boss;
+        if (current == null) {
+            return null;
+        }
+        final Matcher matcher = BOSS_WITH_TIER.matcher(current);
+        return matcher.matches() ? matcher.group(1) : current;
+    }
+
+    /** The quest's tier (1-5), 0 if no boss is known or its line has no tier. */
+    public int getBossTier() {
+        final String current = this.boss;
+        if (current == null) {
+            return 0;
+        }
+        final Matcher matcher = BOSS_WITH_TIER.matcher(current);
+        return matcher.matches() ? ItemIdUtil.romanToInt(matcher.group(2)) : 0;
     }
 
     @Override
@@ -124,6 +162,7 @@ public class SlayerTracker implements GameMessageListeningFeature, AfterTickFeat
             // server switch: keep the state until the sidebar is back
             return;
         }
+        this.sidebarKnown = true;
         final long now = System.currentTimeMillis();
         final int questLine = this.indexOfQuestLine(sidebar);
         if (questLine < 0) {
