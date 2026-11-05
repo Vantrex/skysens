@@ -18,6 +18,7 @@ public final class FeatureRegistry {
     private final List<ItemRightClickFeature> itemRightClickFeature = new ArrayList<>();
     private final List<AfterTickFeature> afterTickFeature = new ArrayList<>();
     private final List<GameMessageListeningFeature> gameMessageListeningFeatures = new ArrayList<>();
+    private final List<RawGameMessageListeningFeature> rawGameMessageListeningFeatures = new ArrayList<>();
     private final List<HudRenderFeature> hudRenderFeature = new ArrayList<>();
 
     public void register(Feature feature) {
@@ -48,6 +49,9 @@ public final class FeatureRegistry {
         if (feature instanceof GameMessageListeningFeature gameMessageListeningFeature) {
             this.gameMessageListeningFeatures.add(gameMessageListeningFeature);
         }
+        if (feature instanceof RawGameMessageListeningFeature rawGameMessageListeningFeature) {
+            this.rawGameMessageListeningFeatures.add(rawGameMessageListeningFeature);
+        }
         if (feature instanceof HudRenderFeature hudRenderFeature) {
             this.hudRenderFeature.add(hudRenderFeature);
         }
@@ -64,6 +68,7 @@ public final class FeatureRegistry {
         CollectionsKt.sortBy(this.itemRightClickFeature, Feature::priority);
         CollectionsKt.sortBy(this.afterTickFeature, Feature::priority);
         CollectionsKt.sortBy(this.gameMessageListeningFeatures, Feature::priority);
+        CollectionsKt.sortBy(this.rawGameMessageListeningFeatures, Feature::priority);
         CollectionsKt.sortBy(this.hudRenderFeature, Feature::priority);
     }
 
