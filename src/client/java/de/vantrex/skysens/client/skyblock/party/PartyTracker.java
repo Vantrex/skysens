@@ -310,6 +310,7 @@ public final class PartyTracker implements GameMessageListeningFeature {
 
     /** Handles one chat message, formatting codes included. Party messages are multi-line, wrapped in dashes. */
     public void onChatMessage(@NotNull String rawMessage) {
+        PartyWarpService.getInstance().onChatMessage(ChatUtil.strip(rawMessage));
         final String self = selfName();
         if (self == null) {
             return;

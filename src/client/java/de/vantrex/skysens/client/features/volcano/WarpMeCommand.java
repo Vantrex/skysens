@@ -33,7 +33,9 @@ public class WarpMeCommand implements ChatCommand {
 
     @Override
     public boolean isEnabled() {
-        return SkysensConfig.getInstance().chatCommandsCategory.commands.warpMe;
+        // also needed on the requesting side, to auto-accept the invite
+        final var config = SkysensConfig.getInstance().chatCommandsCategory;
+        return config.commands.warpMe || config.autoAcceptWarpInvite;
     }
 
     @Override
@@ -55,7 +57,17 @@ public class WarpMeCommand implements ChatCommand {
     @Override
     public void execute(@NotNull ChatCommandContext context) {
         final var player = Minecraft.getInstance().player;
-        if (player == null || player.getName().getString().equalsIgnoreCase(context.sender())) {
+        if (player == null) {
+            return;
+        }
+        if (player.getName().getString().equalsIgnoreCase(context.sender())) {
+            // our own request in party or co-op chat; private ones are handled by WarpMeRequests
+            if (SkysensConfig.getInstance().chatCommandsCategory.autoAcceptWarpInvite) {
+                WarpMeRequests.onOwnChannelRequest();
+            }
+            return;
+        }
+        if (!SkysensConfig.getInstance().chatCommandsCategory.commands.warpMe) {
             return;
         }
         if (LocationService.getInstance().getCurrentLocation() != SkyblockLocationEnum.CRIMSON_ISLE
