@@ -36,6 +36,7 @@ public final class RepositoryRegistry {
     public static ActivePetRepository ACTIVE_PET_REPOSITORY;
     public static de.vantrex.skysens.client.skyblock.dungeon.DungeonClassRepository DUNGEON_CLASS_REPOSITORY;
     public static MacroRepository MACRO_REPOSITORY;
+    public static de.vantrex.skysens.client.skyblock.server.TransferCooldownRepository TRANSFER_COOLDOWN_REPOSITORY;
 
     private static final org.slf4j.Logger LOGGER = org.slf4j.LoggerFactory.getLogger(RepositoryRegistry.class);
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -54,6 +55,7 @@ public final class RepositoryRegistry {
         ACTIVE_PET_REPOSITORY = loadRepository(ActivePetRepository.class);
         DUNGEON_CLASS_REPOSITORY = loadRepository(de.vantrex.skysens.client.skyblock.dungeon.DungeonClassRepository.class);
         MACRO_REPOSITORY = loadRepository(MacroRepository.class);
+        TRANSFER_COOLDOWN_REPOSITORY = loadRepository(de.vantrex.skysens.client.skyblock.server.TransferCooldownRepository.class);
     }
 
     /** Re-reads MacroRepository.json from disk, discarding the in-memory state. */
@@ -110,6 +112,7 @@ public final class RepositoryRegistry {
         saveRepository(ACTIVE_PET_REPOSITORY);
         saveRepository(DUNGEON_CLASS_REPOSITORY);
         saveRepository(MACRO_REPOSITORY);
+        saveRepository(TRANSFER_COOLDOWN_REPOSITORY);
     }
 
     public static void saveRepository(Object repository) {

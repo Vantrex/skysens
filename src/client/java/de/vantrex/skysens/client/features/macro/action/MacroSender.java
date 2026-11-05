@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.features.macro.action;
 
 import de.vantrex.skysens.client.features.macro.MacroConstants;
+import de.vantrex.skysens.client.skyblock.server.TransferCooldownTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientPacketListener;
 
@@ -33,7 +34,18 @@ public final class MacroSender {
         if (command.isBlank()) {
             return ActionOutcome.failed("empty command");
         }
+        if (command.length() <= MAX_LENGTH && TransferWaitQueue.shouldWait(command)) {
+            TransferWaitQueue.enqueue(command, false);
+            return ActionOutcome.waiting(TransferCooldownTracker.getInstance().remainingMs());
+        }
         return send(command, true);
+    }
+
+    /** Sends a command that was held by {@link TransferWaitQueue}, subject to the rate limit set by the caller. */
+    static void sendNow(String command, boolean retry) {
+        if (send(command, true).isRan()) {
+            TransferWaitQueue.noteSent(command, retry);
+        }
     }
 
     public static ActionOutcome sendChat(String raw) {
@@ -61,6 +73,9 @@ public final class MacroSender {
             connection.sendChat(text);
         }
         nextAllowedAt = System.currentTimeMillis() + MacroConstants.GLOBAL_RATE_LIMIT_MS;
+        if (command) {
+            TransferWaitQueue.noteSent(text, false);
+        }
         return ActionOutcome.ran();
     }
 

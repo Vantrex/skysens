@@ -91,6 +91,7 @@ public class FeatureService {
         this.featureRegistry.register(PartyTracker.getInstance());
         this.featureRegistry.register(CoopMemberTracker.getInstance());
         this.featureRegistry.register(SlayerTracker.getInstance());
+        this.featureRegistry.register(de.vantrex.skysens.client.skyblock.server.TransferCooldownTracker.getInstance());
         this.featureRegistry.register(de.vantrex.skysens.client.skyblock.pet.PetTracker.getInstance());
         this.featureRegistry.register(de.vantrex.skysens.client.skyblock.dungeon.DungeonClassTracker.getInstance());
         this.featureRegistry.register(de.vantrex.skysens.client.skyblock.diana.DianaTracker.getInstance());

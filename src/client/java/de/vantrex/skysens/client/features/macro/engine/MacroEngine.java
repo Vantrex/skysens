@@ -9,6 +9,8 @@ import de.vantrex.skysens.client.features.macro.action.ActionParams;
 import de.vantrex.skysens.client.features.macro.action.CloseScreenStep;
 import de.vantrex.skysens.client.features.macro.action.CooldownTracker;
 import de.vantrex.skysens.client.features.macro.action.MacroSender;
+import de.vantrex.skysens.client.features.macro.action.TransferWaitQueue;
+import de.vantrex.skysens.client.skyblock.server.TransferCooldownTracker;
 import de.vantrex.skysens.client.features.macro.facts.MacroContext;
 import de.vantrex.skysens.client.features.macro.model.MacroNode;
 import de.vantrex.skysens.client.features.macro.node.param.Params;
@@ -40,6 +42,7 @@ public final class MacroEngine {
     /** Called every client tick (also off SkyBlock): resolves double tap windows and long holds. */
     public void tick() {
         this.tracker.tick(this::resolveDeferred);
+        TransferWaitQueue.pump();
     }
 
     /** action: 1 press, 0 release, 2 repeat. Cancels {@code ci} only when an action ran for this press. */
@@ -177,6 +180,11 @@ public final class MacroEngine {
         if (outcome.isRan()) {
             CooldownTracker.getInstance().start(cooldownKey, Params.getInt(node.params, ActionParams.COOLDOWN_MS, 0));
             return new Resolution(paths, chosen, Resolution.Outcome.RAN, null);
+        }
+        if (outcome.isWaiting()) {
+            this.hint("Waiting for transfer cooldown (" + formatSeconds(TransferCooldownTracker.getInstance().remainingMs()) + ")");
+            CooldownTracker.getInstance().start(cooldownKey, Params.getInt(node.params, ActionParams.COOLDOWN_MS, 0));
+            return new Resolution(paths, chosen, Resolution.Outcome.RAN, outcome.message());
         }
         ClientUtil.sendDebug("Macro \"" + workflowName + "\" failed: " + outcome.message());
         return new Resolution(paths, chosen, Resolution.Outcome.FAILED, outcome.message());
