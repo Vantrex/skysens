@@ -24,11 +24,14 @@ import net.minecraft.client.multiplayer.ClientPacketListener;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /** Parses chat channel messages, runs matching {@link ChatCommand}s and sends their replies. */
 public final class ChatCommandService {
@@ -39,6 +42,10 @@ public final class ChatCommandService {
     private static final long REPLY_DELAY_MS = 250;
     private static final long MIN_SEND_GAP_MS = 1000;
     private static final int MAX_CHAT_LENGTH = 256;
+    /** How long a sent message counts as recent for the anti-spam suffix. */
+    private static final long REPEAT_WINDOW_MS = 60_000;
+    /** What two messages may differ in and still count as the same: numbers and spaces. */
+    private static final Pattern REPEAT_IGNORED = Pattern.compile("[\\d\\s]+");
 
     @Getter
     private static final ChatCommandService instance = new ChatCommandService();
@@ -48,6 +55,8 @@ public final class ChatCommandService {
     private final List<ChatCommandBridge> bridges = List.of(new OdinChatCommandsBridge(), new SkyHanniPartyCommandsBridge());
     private long lastAnsweredAt;
     private long nextSendAt;
+    /** Recently sent messages (see {@link #isRepeat(String, long)}) with the time they were sent (ms). */
+    private final Map<String, Long> recentMessages = new HashMap<>();
 
     private ChatCommandService() {
         this.registry.register(new HelpCommand(this.registry));
@@ -161,7 +170,7 @@ public final class ChatCommandService {
         if (channel == ChatChannel.PRIVATE) {
             throw new IllegalArgumentException("Private messages need a receiver, use sendPrivateMessage");
         }
-        this.sendCommand(channel.getReplyCommand() + " " + Brand.uncoloredPrefix() + sanitize(message));
+        this.sendCommand(channel.getReplyCommand() + " ", Brand.uncoloredPrefix() + sanitize(message));
     }
 
     /**
@@ -172,20 +181,24 @@ public final class ChatCommandService {
         if (!playerName.matches("\\w{1,16}")) {
             return;
         }
-        this.sendCommand("msg " + playerName + " " + Brand.uncoloredPrefix() + sanitize(message));
+        this.sendCommand("msg " + playerName + " ", Brand.uncoloredPrefix() + sanitize(message));
     }
 
     /**
-     * Sends the command with a random anti-spam suffix (see {@link ChatUtil#withAntiSpam(String)}), so Hypixel never
-     * blocks a reply as "the same message twice". The message is shortened first, so the suffix always fits.
+     * Sends the command, e.g. {@code "pc "} followed by the message. A message that is (nearly) the same as one sent in
+     * the last {@value #REPEAT_WINDOW_MS} ms, in any channel or to any player, gets a random anti-spam suffix (see
+     * {@link ChatUtil#withAntiSpam(String)}), so Hypixel doesn't block it as "the same message twice". Other messages
+     * are sent as they are. The message is shortened first, so the suffix always fits.
      */
-    private void sendCommand(@NotNull String command) {
-        final int maxLength = MAX_CHAT_LENGTH - ChatUtil.ANTI_SPAM_SUFFIX_LENGTH;
-        final String trimmed = ChatUtil.withAntiSpam(command.length() > maxLength ? command.substring(0, maxLength) : command);
+    private void sendCommand(@NotNull String command, @NotNull String message) {
+        final int maxLength = MAX_CHAT_LENGTH - command.length() - ChatUtil.ANTI_SPAM_SUFFIX_LENGTH;
+        final String shortened = message.length() > maxLength ? message.substring(0, Math.max(0, maxLength)) : message;
 
+        final String full;
         final long delay;
         synchronized (this) {
             final long now = System.currentTimeMillis();
+            full = command + (this.isRepeat(shortened, now) ? ChatUtil.withAntiSpam(shortened) : shortened);
             final long sendAt = Math.max(now + REPLY_DELAY_MS, this.nextSendAt);
             this.nextSendAt = sendAt + MIN_SEND_GAP_MS;
             delay = sendAt - now;
@@ -193,9 +206,20 @@ public final class ChatCommandService {
         SkysensClient.SCHEDULER.schedule(() -> Minecraft.getInstance().execute(() -> {
             final ClientPacketListener connection = Minecraft.getInstance().getConnection();
             if (connection != null) {
-                connection.sendCommand(trimmed);
+                connection.sendCommand(full);
             }
         }), delay, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Whether the message is (nearly) the same as one sent in the last {@value #REPEAT_WINDOW_MS} ms, and remembers
+     * it. Messages count as the same when they only differ in case, numbers or spaces, e.g. "you're #2 in line" and
+     * "you're #3 in line". Call while synchronized on this.
+     */
+    private boolean isRepeat(String message, long now) {
+        this.recentMessages.values().removeIf(sentAt -> now - sentAt > REPEAT_WINDOW_MS);
+        final String key = REPEAT_IGNORED.matcher(message.toLowerCase(Locale.ROOT)).replaceAll("");
+        return this.recentMessages.put(key, now) != null;
     }
 
     /** Removes formatting and line breaks, and makes sure a reply can never trigger a command itself. */
