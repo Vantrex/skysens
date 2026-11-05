@@ -19,12 +19,18 @@ All extend `Feature` (`isActive()`, `priority()`; lower priority runs first).
 | `ItemRightClickFeature` | `platform/hook/UseHandlers` | Right-clicking with an item |
 | `AfterTickFeature` | `platform/hook/TickHandlers` | End of every client tick, **only while on SkyBlock** |
 | `GameMessageListeningFeature` | `platform/hook/ChatHandler` | Every incoming game (chat) message |
+| `RawGameMessageListeningFeature` | `SystemChatPacketMixin` → `ChatHandler.onRawGameMessage` | Every game message as the server sent it, before Fabric's events and other mods cancel or rewrite it |
 | `HudRenderFeature` | `platform/hook/HudHandlers` | Every frame on top of the HUD, **only while on SkyBlock** and not hidden with F1 |
 
 The dispatchers check `isActive()` first, with one exception: `GameMessageListeningFeature` is called
 unconditionally, so it must check `isActive()` and `SkysensClient.getInstance().isOnSkyBlock()` itself
 (see `ChatCommandFeature`). Messages SkySens sends itself are skipped (`ClientUtil.isSendingOwnMessage()`). Messages
 hidden by the chat filter are still delivered to the other features.
+
+`RawGameMessageListeningFeature` is also called unconditionally. Use it for parsers that need Hypixel's original
+message: other mods (Skyblocker, SkyHanni) cancel some messages ("Profile ID: ...") and rewrite others (Skyblocker
+adds prices to the `[Sacks]` hover) before `GameMessageListeningFeature` sees them. `SackTracker` and `ProfileService`
+use it. Features that react to what is actually shown in chat keep using `GameMessageListeningFeature`.
 
 ## Movable HUDs
 

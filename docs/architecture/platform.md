@@ -27,6 +27,7 @@ injection point and delegates to them.
 | `MouseMixin` | `MouseHandler` | `MouseFeature`: sensitivity |
 | `ClientPlayNetworkMixin` | `ClientPacketListener` | Strips "Don't <action>!" from titles |
 | `ServerStatsMixin` | `ClientPacketListener` | Feeds time and pong packets to `InternalStatsProvider` |
+| `SystemChatPacketMixin` | `ClientPacketListener` | `RawGameMessageListeningFeature`: system chat before Fabric's message events and other mods |
 | `ChatComponentMixin` | `ChatComponent` | Messages other mods add straight to chat (no game message event) → `DungeonRunDetector` |
 | `PlayerTabOverlayAccessor` | `PlayerTabOverlay` | `@Invoker` for the tab list entries |
 | `InventoryHudKeyActionMixin` | Inventory HUD+ `KeyAction` (`@Pseudo`, `require = 0`) | Its key bindings ran → `ActionBarLayout.markDirty()` |

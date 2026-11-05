@@ -2,7 +2,7 @@ package de.vantrex.skysens.client.skyblock.player;
 
 import de.vantrex.skysens.client.core.event.EventListenerRegistry;
 import de.vantrex.skysens.client.core.feature.AfterTickFeature;
-import de.vantrex.skysens.client.core.feature.GameMessageListeningFeature;
+import de.vantrex.skysens.client.core.feature.RawGameMessageListeningFeature;
 import de.vantrex.skysens.client.skyblock.event.ProfileChangeEvent;
 import de.vantrex.skysens.client.skyblock.event.SkyblockJoinEvent;
 import de.vantrex.skysens.client.skyblock.event.SkyblockQuitEvent;
@@ -30,9 +30,10 @@ import java.util.regex.Pattern;
  * 691d6a3b-..."). Unlike the name it isn't reused when a profile is deleted and a new one gets its name, so prefer
  * it for storing data per profile. In case the join message was missed, the "Profile: Lemon" line of the tab list is
  * read once after joining; it may take a few ticks to show up, so it is retried for a short while. The tab list has
- * no id. Client thread.
+ * no id. The messages are read as Hypixel sent them, because other mods hide them (e.g. "Profile ID: ..."). Client
+ * thread.
  */
-public final class ProfileService implements GameMessageListeningFeature, AfterTickFeature {
+public final class ProfileService implements RawGameMessageListeningFeature, AfterTickFeature {
 
     @Getter
     private static final ProfileService instance = new ProfileService();
@@ -62,7 +63,7 @@ public final class ProfileService implements GameMessageListeningFeature, AfterT
     }
 
     @Override
-    public void onGameMessage(Component message, boolean overlay) {
+    public void onRawGameMessage(Component message, boolean overlay) {
         if (overlay) {
             return;
         }
