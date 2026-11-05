@@ -112,7 +112,7 @@ Hypixel blocks some commands for a few seconds after a server switch:
   - Starts the cooldown on every server switch.
   - Corrects the remaining time from the message.
   - Fires an event when the cooldown ends.
-  - Knows which commands are affected: a default list (warp-type commands) plus commands learned from the message, saved in a repository.
+  - Knows which commands are affected: a default list (`/warp`, `/hub`, `/is`, `/bz`, `/ah`, `/lobby`, `/visit`, `/p warp` and other warp-type commands) plus commands learned from the message, saved in a repository.
 - **Option** in the general SkySens settings, not the Macros category: **"Wait for transfer cooldown"**. When on, a macro command that is known to be affected is held until the cooldown is over and then sent. Any other command, chat message or client-side action goes out at once. A macro command that still gets the cooldown message is retried once the cooldown ends.
 - **Second setting:** what happens when another press comes in while one is waiting. Either keep only the newest (the default) or queue them all.
 - **While waiting:** a red hint shows "Waiting for transfer cooldown (1.8s)".
