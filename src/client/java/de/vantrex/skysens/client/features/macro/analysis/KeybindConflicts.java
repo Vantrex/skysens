@@ -55,6 +55,11 @@ public final class KeybindConflicts {
                 if (mapping.isUnbound() || !mapping.saveString().equals(keyName)) {
                     continue;
                 }
+                // Debug mappings (Show Chunk Boundaries, Advanced Tooltips, ...) only fire while F3 is held, so they
+                // don't clash with a plain key. Only a macro on F3 itself really conflicts with them.
+                if (mapping.getCategory() == KeyMapping.Category.DEBUG && !isDebugModifierKey(spec.chord())) {
+                    continue;
+                }
                 final String mappingName = Component.translatable(mapping.getName()).getString();
                 final String keyOnly = keyOnlyName(spec.chord());
                 final String message = spec.chord().mods() == 0
@@ -70,6 +75,12 @@ public final class KeybindConflicts {
         final InputConstants.Type type = chord.device() == InputDevice.MOUSE ? InputConstants.Type.MOUSE : InputConstants.Type.KEYSYM;
         return type.getOrCreate(chord.code()).getName();
     }
+
+    private static boolean isDebugModifierKey(InputChord chord) {
+        return chord.device() == InputDevice.KEYBOARD && chord.code() == GLFW_KEY_F3;
+    }
+
+    private static final int GLFW_KEY_F3 = 292;
 
     private static String keyOnlyName(InputChord chord) {
         return new InputChord(chord.device(), chord.code(), 0).displayName();
