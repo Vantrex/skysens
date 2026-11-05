@@ -16,6 +16,8 @@ public class ChatUtil {
     private static final String ANTI_SPAM_CHARS = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
     /** Matches the suffix {@link #withAntiSpam(String)} appends, e.g. " [x7QkP3mA]". */
     public static final String ANTI_SPAM_SUFFIX_REGEX = " \\[[A-Za-z0-9]{8}]";
+    /** The length of that suffix, e.g. " [x7QkP3mA]". */
+    public static final int ANTI_SPAM_SUFFIX_LENGTH = 11;
 
     /**
      * The message with a random suffix like " [x7QkP3mA]", so Hypixel doesn't block it as a repeat of an earlier message
