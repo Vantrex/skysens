@@ -21,7 +21,7 @@ public class ChatCommandFeature implements GameMessageListeningFeature {
     @Override
     public boolean isActive() {
         final var config = SkysensConfig.getInstance().chatCommandsCategory;
-        return config.coopEnabled || config.partyEnabled;
+        return config.coopEnabled || config.partyEnabled || config.privateEnabled;
     }
 
 }

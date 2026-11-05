@@ -33,9 +33,9 @@ public interface ChatCommand {
         return true;
     }
 
-    /** The channels this command can be used in. */
+    /** The channels this command can be used in. Private messages are opt-in, so strangers can't use every command. */
     default @NotNull Set<ChatChannel> channels() {
-        return EnumSet.allOf(ChatChannel.class);
+        return EnumSet.of(ChatChannel.COOP, ChatChannel.PARTY);
     }
 
     /**

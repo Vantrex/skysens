@@ -4,6 +4,7 @@ import de.vantrex.skysens.client.features.activity.ActivityTrackingFeature;
 import de.vantrex.skysens.client.features.bazaar.BazaarDisableClickFeature;
 import de.vantrex.skysens.client.features.fishing.trophyfrog.TrophyFrogFeature;
 import de.vantrex.skysens.client.features.volcano.VolcanoEruptionFeature;
+import de.vantrex.skysens.client.features.volcano.WarpMeRequestFeature;
 import de.vantrex.skysens.client.features.witch.WitchIngredientFeature;
 import de.vantrex.skysens.client.skyblock.sack.SackTracker;
 import de.vantrex.skysens.client.skyblock.player.AfkTracker;
@@ -16,7 +17,6 @@ import de.vantrex.skysens.client.features.bazaar.BazaarHighlightFeature;
 import de.vantrex.skysens.client.chatcommand.ChatCommandFeature;
 import de.vantrex.skysens.client.features.lootshare.LootShareFeature;
 import de.vantrex.skysens.client.features.lootshare.SackProfitFeature;
-import de.vantrex.skysens.client.features.warp.WarpToFeature;
 import de.vantrex.skysens.client.features.dungeon.DungeonRunDetector;
 import de.vantrex.skysens.client.features.dungeon.DungeonRunStatsFeature;
 import de.vantrex.skysens.client.features.dungeon.DungeonNpcProfitFeature;
@@ -67,7 +67,6 @@ public class FeatureService {
         this.featureRegistry.register(new PickaxeAbilityResetNotificationFeature());
 
         this.featureRegistry.register(new ChatCommandFeature());
-        this.featureRegistry.register(new WarpToFeature());
         this.featureRegistry.register(new LootShareFeature());
         this.featureRegistry.register(new SackProfitFeature());
         this.featureRegistry.register(this.rewardChestFeature);
@@ -84,6 +83,7 @@ public class FeatureService {
         this.featureRegistry.register(new TrophyFrogFeature());
         this.featureRegistry.register(new WitchIngredientFeature());
         this.featureRegistry.register(new VolcanoEruptionFeature());
+        this.featureRegistry.register(new WarpMeRequestFeature());
         this.featureRegistry.register(CombatTracker.getInstance());
         this.featureRegistry.register(AfkTracker.getInstance());
         this.featureRegistry.register(ProfileService.getInstance());

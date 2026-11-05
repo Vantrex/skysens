@@ -21,6 +21,11 @@ public class ChatCommandsCategory {
     @Expose
     public boolean partyEnabled = true;
 
+    @ConfigOption(name = "Private Message Commands", desc = "Answer !commands sent to you via /msg. Only commands that are meant for it work there, currently !warpme")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean privateEnabled = true;
+
     @ConfigOption(name = "Only my messages", desc = "Only answer commands you sent yourself, not those of your co-op members")
     @ConfigEditorBoolean
     @Expose
@@ -31,7 +36,7 @@ public class ChatCommandsCategory {
     @Expose
     public boolean deferToOtherMods = true;
 
-    @ConfigOption(name = "Auto-accept warp invite", desc = "After you type !warpto <player> in co-op chat, accept that player's party invite automatically for 60 seconds")
+    @ConfigOption(name = "Auto-accept warp invite", desc = "After you type !warpto <player> in co-op chat, or !warpme for a volcano eruption, accept the warping player's party invite automatically for 60 seconds")
     @ConfigEditorBoolean
     @Expose
     public boolean autoAcceptWarpInvite = false;

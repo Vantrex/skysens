@@ -13,9 +13,16 @@ import java.util.regex.Pattern;
 public enum ChatChannel {
 
     COOP("Co-op", "cchat"),
-    PARTY("Party", "pc");
+    PARTY("Party", "pc"),
+    /**
+     * Private messages, e.g. "From [MVP+] Vantrex: !warpme". Only our incoming messages ("From"), never the echo of our
+     * own ("To"). Replies need the sender, so they go through {@link ChatCommandService#sendPrivateMessage}, not
+     * {@link ChatCommandService#send}. Commands opt in via {@link ChatCommand#channels()}.
+     */
+    PRIVATE("Private", "msg",
+            Pattern.compile("^From (?:\\[[^]]+] )?(\\w{1,16})(?: [^\\w\\s:]+)?: (.*)$"));
 
-    /** The text before " > " in a channel message, e.g. "Co-op". */
+    /** A display name, for channel messages also the text before " > ", e.g. "Co-op". */
     private final String prefix;
     /** The command (without slash) used to send a message to this channel. */
     private final String replyCommand;
@@ -27,10 +34,14 @@ public enum ChatChannel {
     private final Pattern pattern;
 
     ChatChannel(@NotNull String prefix, @NotNull String replyCommand) {
+        this(prefix, replyCommand, Pattern.compile("^" + Pattern.quote(prefix)
+                + " > (?:[^\\w\\s\\[]+ )?(?:\\[[^]]+] )?(\\w{1,16})(?: [^\\w\\s:]+)?: (.*)$"));
+    }
+
+    ChatChannel(@NotNull String prefix, @NotNull String replyCommand, @NotNull Pattern pattern) {
         this.prefix = prefix;
         this.replyCommand = replyCommand;
-        this.pattern = Pattern.compile("^" + Pattern.quote(prefix)
-                + " > (?:[^\\w\\s\\[]+ )?(?:\\[[^]]+] )?(\\w{1,16})(?: [^\\w\\s:]+)?: (.*)$");
+        this.pattern = pattern;
     }
 
 }
