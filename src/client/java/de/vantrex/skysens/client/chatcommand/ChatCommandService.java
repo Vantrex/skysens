@@ -15,6 +15,7 @@ import de.vantrex.skysens.client.integration.skyhanni.SkyHanniPartyCommandsBridg
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.chatcommand.config.ChatCommandsCategory;
 import de.vantrex.skysens.client.util.Brand;
+import de.vantrex.skysens.client.util.ChatUtil;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
@@ -174,8 +175,13 @@ public final class ChatCommandService {
         this.sendCommand("msg " + playerName + " " + Brand.uncoloredPrefix() + sanitize(message));
     }
 
+    /**
+     * Sends the command with a random anti-spam suffix (see {@link ChatUtil#withAntiSpam(String)}), so Hypixel never
+     * blocks a reply as "the same message twice". The message is shortened first, so the suffix always fits.
+     */
     private void sendCommand(@NotNull String command) {
-        final String trimmed = command.length() > + MAX_CHAT_LENGTH ? command.substring(0, MAX_CHAT_LENGTH) : command;
+        final int maxLength = MAX_CHAT_LENGTH - ChatUtil.ANTI_SPAM_SUFFIX_LENGTH;
+        final String trimmed = ChatUtil.withAntiSpam(command.length() > maxLength ? command.substring(0, maxLength) : command);
 
         final long delay;
         synchronized (this) {

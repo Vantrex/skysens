@@ -34,7 +34,7 @@ class WarpMeRequests {
     private static final Pattern ANNOUNCEMENT = Pattern.compile("^" + BRAND
             + " CATACLYSMIC volcano eruption on \\S+ - (?:type|reply) !warpme to get warped(?:" + ChatUtil.ANTI_SPAM_SUFFIX_REGEX + ")?$");
     /** The reply of {@link PartyWarpService} when our warp is queued. */
-    private static final Pattern QUEUED = Pattern.compile("^" + BRAND + " Warping someone else right now, you're #(\\d+) in line$");
+    private static final Pattern QUEUED = Pattern.compile("^" + BRAND + " Warping someone else right now, you're #(\\d+) in line(?:" + ChatUtil.ANTI_SPAM_SUFFIX_REGEX + ")?$");
 
     private @Nullable String lastAnnouncer;
     private long lastAnnouncedAt;
