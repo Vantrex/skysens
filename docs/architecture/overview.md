@@ -17,14 +17,17 @@ Loom splits the code into two source sets (`splitEnvironmentSourceSets()` in `bu
 2. `RepositoryRegistry.loadRepositories()` reads the JSON repositories (see
    [config-and-persistence.md](config-and-persistence.md)).
 3. `SkysensConfig.getConfig()` loads `config/skysens/config.json` through MoulConfig.
-4. Subscribes to the Hypixel Mod API location packet. That packet is the only source of `isOnSkyBlock()` and
+4. `MacroService.init()` parses the already loaded `MacroRepository` into workflows, builds the trigger index and registers
+   the macro client tick; `TransferWaitQueue.init()` registers its event listeners. **Nothing on this path may call GLFW**
+   (key names, windows), see [platform.md](platform.md#nothing-may-call-glfw-during-mod-init).
+5. Subscribes to the Hypixel Mod API location packet. That packet is the only source of `isOnSkyBlock()` and
    fires `SkyblockJoinEvent` / `SkyblockQuitEvent`. It also feeds `LocationService` (location, then zones).
-5. Adds shutdown hooks that save the config and the repositories.
-6. Registers the `/skysens` client command tree (config screen, `scale export|import|reset`,
-   `dungeon profit [reset [alltime]]`) and the dev-only `/mocklocation`.
-7. Registers the Fabric hooks in `platform/hook/` (use, tick, chat, keys). Their static init touches
+6. Adds shutdown hooks that save the config and the repositories.
+7. Registers the `/skysens` client command tree (config screen, `scale export|import|reset`,
+   `dungeon profit [reset [alltime]]`, `macros [reload|debug|log]`) and the dev-only `/mocklocation`.
+8. Registers the Fabric hooks in `platform/hook/` (use, tick, chat, keys). Their static init touches
    `FeatureService.getInstance()`, which creates and registers every feature.
-8. Starts `ProfitService`.
+9. Starts `ProfitService`.
 
 `SkysensClient.SCHEDULER` is a small daemon-thread pool for delayed work. Anything that touches Minecraft state
 must hop back with `Minecraft.getInstance().execute(...)`.

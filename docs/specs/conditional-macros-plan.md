@@ -1,5 +1,7 @@
 # Conditional Macros: Implementation Plan
 
+> **Status: implemented** on `feature/conditional-macros` (commits `1d0ad23..b9c2889`, milestones M1-M9). This is the design record; where it differs from the code, the code wins. See [../architecture/macros.md](../architecture/macros.md) for what exists.
+
 Status: plan for `docs/specs/conditional-macros.md`, branch `feature/conditional-macros`. I explored the code read-only; nothing was written. The caller saves this as `docs/specs/conditional-macros-plan.md`.
 
 Base path used below: `src/client/java/de/vantrex/skysens/client/` (abbreviated `client/`).
