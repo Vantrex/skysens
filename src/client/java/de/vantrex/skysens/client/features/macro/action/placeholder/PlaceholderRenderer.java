@@ -15,6 +15,16 @@ public final class PlaceholderRenderer {
     private PlaceholderRenderer() {
     }
 
+    /** The paths of all placeholders in the template (also those with a default). */
+    public static List<String> paths(String template) {
+        final List<String> out = new java.util.ArrayList<>();
+        final Matcher matcher = PLACEHOLDER.matcher(template);
+        while (matcher.find()) {
+            out.add(matcher.group(1));
+        }
+        return out;
+    }
+
     /** Paths without a value (and without a default) are replaced by nothing and added to unresolved. */
     public static String render(String template, MacroContext ctx, List<String> unresolved) {
         final Matcher matcher = PLACEHOLDER.matcher(template);

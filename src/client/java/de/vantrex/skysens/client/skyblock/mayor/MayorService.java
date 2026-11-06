@@ -13,7 +13,9 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,6 +36,7 @@ public final class MayorService {
     /** Lower-cased names of the perks of the mayor and the minister. */
     private volatile Set<String> activePerks = Set.of();
     private volatile boolean dataKnown;
+    private volatile Election election = Election.EMPTY;
     /** Counts successful refreshes, so a consumer can tell that the data is newer than something it saw. */
     private volatile long dataVersion;
     private volatile long nextRefreshAt;
@@ -86,8 +89,87 @@ public final class MayorService {
         return this.hasPerk("Mythological Ritual");
     }
 
+    /**
+     * The current mayor and minister with their perks (original spelling), as a snapshot.
+     *
+     * @param mayor        the mayor's name, null if the API didn't give one
+     * @param minister     the minister's name, null if none
+     * @param mayorPerks   the mayor's perks
+     * @param ministerPerks the minister's perks (usually one)
+     */
+    public record Election(@Nullable String mayor, @Nullable String minister, List<String> mayorPerks, List<String> ministerPerks) {
+        static final Election EMPTY = new Election(null, null, List.of(), List.of());
+    }
+
+    /** The mayor and minister of the last successful fetch; empty values while {@link #isDataKnown()} is false. */
+    public Election getElection() {
+        return this.election;
+    }
+
+    public @Nullable String getMayorName() {
+        return this.election.mayor();
+    }
+
+    public @Nullable String getMinisterName() {
+        return this.election.minister();
+    }
+
+    private static Election collectElection(JsonObject root) {
+        final JsonObject mayor = object(root, "mayor");
+        if (mayor == null) {
+            return Election.EMPTY;
+        }
+        final List<String> mayorPerks = new ArrayList<>();
+        final JsonElement perks = mayor.get("perks");
+        if (perks != null && perks.isJsonArray()) {
+            for (final JsonElement perk : perks.getAsJsonArray()) {
+                addOriginal(mayorPerks, perk);
+            }
+        }
+        JsonObject minister = object(mayor, "minister");
+        if (minister == null) {
+            minister = object(root, "minister");
+        }
+        final List<String> ministerPerks = new ArrayList<>();
+        String ministerName = null;
+        if (minister != null) {
+            ministerName = text(minister.get("name"));
+            addOriginal(ministerPerks, minister.get("perk"));
+        } else {
+            final JsonObject candidate = electionMinister(mayor);
+            if (candidate != null) {
+                ministerName = text(candidate.get("name"));
+                final JsonElement candidatePerks = candidate.get("perks");
+                if (candidatePerks != null && candidatePerks.isJsonArray()) {
+                    for (final JsonElement perk : candidatePerks.getAsJsonArray()) {
+                        if (perk.isJsonObject() && perk.getAsJsonObject().has("minister")
+                                && !perk.getAsJsonObject().get("minister").isJsonNull() && perk.getAsJsonObject().get("minister").getAsBoolean()) {
+                            addOriginal(ministerPerks, perk);
+                        }
+                    }
+                }
+            }
+        }
+        return new Election(text(mayor.get("name")), ministerName, List.copyOf(mayorPerks), List.copyOf(ministerPerks));
+    }
+
+    private static @Nullable String text(@Nullable JsonElement element) {
+        return element == null || element.isJsonNull() || !element.isJsonPrimitive() ? null : element.getAsString();
+    }
+
+    private static void addOriginal(List<String> out, @Nullable JsonElement perk) {
+        if (perk == null || perk.isJsonNull()) {
+            return;
+        }
+        final String name = perk.isJsonObject() ? text(perk.getAsJsonObject().get("name")) : text(perk);
+        if (name != null && !name.isBlank()) {
+            out.add(name);
+        }
+    }
+
     private void completeRefresh(@Nullable HttpResponse<String> response, @Nullable Throwable error) {
         boolean success = false;
+        Election fresh = Election.EMPTY;
         Set<String> perks = Set.of();
         try {
             if (error != null) {
@@ -102,12 +184,14 @@ public final class MayorService {
                 throw new IllegalStateException("Election API reported an unsuccessful response");
             }
             perks = collectPerks(root);
+            fresh = collectElection(root);
             success = true;
         } catch (Exception e) {
             LOGGER.warn("Could not refresh Hypixel mayor data; keeping the previous perks", e);
         } finally {
             if (success) {
                 this.activePerks = perks;
+                this.election = fresh;
                 this.dataKnown = true;
                 this.dataVersion++;
             }

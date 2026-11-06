@@ -1,7 +1,14 @@
 package de.vantrex.skysens.client.features.macro.condition;
 
 import de.vantrex.skysens.client.features.macro.condition.impl.ActivityCondition;
+import de.vantrex.skysens.client.features.macro.condition.impl.ActivePetCondition;
+import de.vantrex.skysens.client.features.macro.condition.impl.CalendarEventCondition;
 import de.vantrex.skysens.client.features.macro.condition.impl.ContainerCondition;
+import de.vantrex.skysens.client.features.macro.condition.impl.DungeonClassCondition;
+import de.vantrex.skysens.client.features.macro.condition.impl.DungeonFloorCondition;
+import de.vantrex.skysens.client.features.macro.condition.impl.MayorCondition;
+import de.vantrex.skysens.client.features.macro.condition.impl.SidebarEventCondition;
+import de.vantrex.skysens.client.features.macro.condition.impl.SkyblockTimeCondition;
 import de.vantrex.skysens.client.features.macro.condition.impl.HeldItemCondition;
 import de.vantrex.skysens.client.features.macro.condition.impl.InventoryItemCondition;
 import de.vantrex.skysens.client.features.macro.condition.impl.IslandCondition;
@@ -32,6 +39,13 @@ public final class ConditionTypes {
         register(new ItemPathCondition());
         register(new ContainerCondition());
         register(new SneakingCondition());
+        register(new MayorCondition());
+        register(new SkyblockTimeCondition());
+        register(new CalendarEventCondition());
+        register(new SidebarEventCondition());
+        register(new DungeonFloorCondition());
+        register(new DungeonClassCondition());
+        register(new ActivePetCondition());
     }
 
     private ConditionTypes() {

@@ -14,6 +14,9 @@ import java.util.List;
  */
 public interface ConditionType {
 
+    /** Prefix of a validate() problem that is only a WARNING; every other problem is an ERROR. */
+    String WARN = "warn:";
+
     /** Persisted as the rule "type". Never rename. */
     String id();
 

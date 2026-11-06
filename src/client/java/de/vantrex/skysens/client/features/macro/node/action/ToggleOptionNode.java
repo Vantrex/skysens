@@ -87,7 +87,7 @@ public final class ToggleOptionNode implements ActionNodeType {
     @Override
     public void validate(MacroNode node, List<NodeIssue> out) {
         if (Params.getString(node.params, "option", "").isBlank()) {
-            out.add(new NodeIssue(NodeIssue.Severity.WARNING, node.id, "No option chosen"));
+            out.add(new NodeIssue(NodeIssue.Severity.ERROR, node.id, "No option chosen"));
         }
     }
 

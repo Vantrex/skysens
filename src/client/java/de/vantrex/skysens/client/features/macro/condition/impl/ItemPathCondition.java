@@ -70,7 +70,7 @@ public final class ItemPathCondition implements ConditionType {
         });
     }
 
-    private static String text(Tag tag) {
+    public static String text(Tag tag) {
         return tag.asString().orElseGet(tag::toString);
     }
 

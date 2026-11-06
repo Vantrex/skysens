@@ -75,7 +75,11 @@ public final class IfNode implements LogicNodeType {
             }
             final List<String> problems = new ArrayList<>();
             type.validate(rule.params(), problems);
-            problems.forEach(p -> out.add(new NodeIssue(NodeIssue.Severity.WARNING, nodeId, type.displayName() + ": " + p)));
+            for (String p : problems) {
+                final boolean warn = p.startsWith(ConditionType.WARN);
+                out.add(new NodeIssue(warn ? NodeIssue.Severity.WARNING : NodeIssue.Severity.ERROR, nodeId,
+                        type.displayName() + ": " + (warn ? p.substring(ConditionType.WARN.length()) : p)));
+            }
             if (rule.negate() && type.trackerBacked()) {
                 out.add(new NodeIssue(NodeIssue.Severity.INFO, nodeId,
                         "Negated \"" + type.displayName() + "\" doesn't match while the state is unknown (e.g. right after joining)"));

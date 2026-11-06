@@ -7,6 +7,7 @@ import de.vantrex.skysens.client.features.macro.MacroService;
 import de.vantrex.skysens.client.features.macro.editor.canvas.CanvasView;
 import de.vantrex.skysens.client.features.macro.editor.details.NodeDetailsPanel;
 import de.vantrex.skysens.client.features.macro.editor.field.DropdownControl;
+import de.vantrex.skysens.client.features.macro.editor.field.FieldUi;
 import de.vantrex.skysens.client.features.macro.editor.field.KeybindParamField;
 import de.vantrex.skysens.client.features.macro.editor.history.EditorCommand;
 import de.vantrex.skysens.client.features.macro.editor.history.WorkflowCommands;
@@ -327,6 +328,7 @@ public class MacroEditorScreen extends Screen {
         }
         this.picker.render(g, mouseX, mouseY);
 
+        HoverTip.render(g, this.sw, this.sh);
         this.tutorial.render(g, realMouseX, realMouseY, this.sw, this.sh);
         this.shortcuts.render(g, this.sw, this.sh);
         g.pose().popMatrix();
@@ -351,6 +353,25 @@ public class MacroEditorScreen extends Screen {
         final int mid = this.winY + 1 + HEADER_HEIGHT / 2;
         final String name = workflow == null ? "Macro editor" : workflow.name;
         UiText.draw(g, UiText.ellipsize(name, this.nameMaxW, UiText.Weight.SEMIBOLD), this.contentX + 12, mid - 4, Theme.TEXT, UiText.Weight.SEMIBOLD);
+
+        // keybind conflict chip: the trigger keys of this macro that vanilla or another mod also uses
+        if (workflow != null) {
+            final var conflicts = this.state.validation().conflicts(workflow);
+            if (!conflicts.isEmpty()) {
+                final String text = conflicts.size() + (conflicts.size() == 1 ? " keybind conflict" : " keybind conflicts");
+                final int nameW = Math.min(this.nameMaxW, UiText.width(name, UiText.Weight.SEMIBOLD));
+                final int cw = UiText.width(text) + 14;
+                final int cx = this.contentX + 12 + nameW + 10;
+                if (cx + cw < this.undoButton[0] - 8) {
+                    final boolean over = RenderUtil.inside(mx, my, cx, mid - 8, cw, 16);
+                    RenderUtil.roundedRect(g, cx, mid - 8, cw, 16, 8, RenderUtil.withAlpha(FieldUi.AMBER, over ? 0.35f : 0.22f));
+                    UiText.draw(g, text, cx + 7, mid - 4, FieldUi.AMBER);
+                    if (over) {
+                        HoverTip.setIssues(conflicts, mx, my);
+                    }
+                }
+            }
+        }
 
         // Undo | Redo
         this.historyButton(g, this.undoButton, "Undo", this.state.history().canUndo(), mx, my);

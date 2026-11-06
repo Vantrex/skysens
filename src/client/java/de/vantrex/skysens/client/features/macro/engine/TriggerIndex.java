@@ -83,6 +83,11 @@ public final class TriggerIndex {
         return new TriggerIndex(map, count);
     }
 
+    /** Every binding group, in no particular order. */
+    public java.util.Collection<BindingGroup> groups() {
+        return this.byChord.values();
+    }
+
     /** The group bound to the chord, null when none. */
     public @Nullable BindingGroup lookup(InputChord chord) {
         return this.byChord.get(chord);

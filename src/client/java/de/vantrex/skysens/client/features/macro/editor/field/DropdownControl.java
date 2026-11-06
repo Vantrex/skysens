@@ -85,6 +85,23 @@ public final class DropdownControl {
         open = null;
     }
 
+    /** Sets the on-screen position the popover is anchored to, for callers that draw their own button. */
+    public void anchor(int x, int y, int w) {
+        this.x = x;
+        this.y = y;
+        this.w = w;
+    }
+
+    /** Opens the popover (closing any other). Call after {@link #anchor}. */
+    public void openPopover() {
+        closeActive();
+        open = this;
+        this.scroll = 0;
+        this.hover = -1;
+        this.filter.setText("");
+        this.filter.setFocused(this.hasFilter());
+    }
+
     public boolean isOpen() {
         return open == this;
     }

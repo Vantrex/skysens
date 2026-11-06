@@ -59,7 +59,7 @@ public final class SendChatNode implements ActionNodeType {
     @Override
     public void validate(MacroNode node, List<NodeIssue> out) {
         if (Params.getString(node.params, "message", "").isBlank()) {
-            out.add(new NodeIssue(NodeIssue.Severity.WARNING, node.id, "No message set"));
+            out.add(new NodeIssue(NodeIssue.Severity.ERROR, node.id, "No message set"));
         }
     }
 

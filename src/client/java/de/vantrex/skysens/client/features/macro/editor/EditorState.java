@@ -1,6 +1,8 @@
 package de.vantrex.skysens.client.features.macro.editor;
 
 import de.vantrex.skysens.client.features.macro.MacroService;
+import de.vantrex.skysens.client.features.macro.analysis.GraphValidator;
+import de.vantrex.skysens.client.features.macro.analysis.ValidationResult;
 import de.vantrex.skysens.client.features.macro.editor.history.CommandHistory;
 import de.vantrex.skysens.client.features.macro.engine.ExecutionLog;
 import de.vantrex.skysens.client.features.macro.engine.ExecutionRecord;
@@ -38,6 +40,9 @@ public final class EditorState {
     private long toastTime;
     private final CommandHistory history = new CommandHistory(this);
     private int epoch;
+    private int revision;
+    private int validatedRevision = -1;
+    private ValidationResult validation = ValidationResult.EMPTY;
 
     public EditorState() {
         // Own list (the workflow objects are shared): reordering, adding and deleting only reach MacroService on commit.
@@ -77,6 +82,7 @@ public final class EditorState {
 
     /** Called after an undo or redo: drops selections that no longer exist. */
     public void historyChanged() {
+        this.revision++;
         this.epoch++;
         this.selectedWire = null;
         if (this.current == null) {
@@ -104,7 +110,22 @@ public final class EditorState {
         return this.dirty;
     }
 
+    /** Counts every edit and history step; cached analysis results are recomputed when it moves. */
+    public int revision() {
+        return this.revision;
+    }
+
+    /** The issues of the working copy, recomputed only after an edit or history step (never every frame). */
+    public ValidationResult validation() {
+        if (this.validatedRevision != this.revision) {
+            this.validatedRevision = this.revision;
+            this.validation = GraphValidator.validate(this.workflows);
+        }
+        return this.validation;
+    }
+
     public void markDirty() {
+        this.revision++;
         this.dirty = true;
     }
 

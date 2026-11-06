@@ -1,7 +1,10 @@
 package de.vantrex.skysens.client.features.macro.editor.list;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import de.vantrex.skysens.client.features.macro.analysis.NodeIssue;
+import de.vantrex.skysens.client.features.macro.analysis.ValidationResult;
 import de.vantrex.skysens.client.features.macro.editor.EditorState;
+import de.vantrex.skysens.client.features.macro.editor.HoverTip;
 import de.vantrex.skysens.client.features.macro.editor.clipboard.MacroClipboard;
 import de.vantrex.skysens.client.features.macro.editor.edit.GraphEdit;
 import de.vantrex.skysens.client.features.macro.editor.field.FieldUi;
@@ -203,9 +206,19 @@ public final class MacroListPanel {
             this.renameField.render(g, mx, my);
             return;
         }
-        final String name = UiText.ellipsize(workflow.name, this.x + this.w - PAD - textX - 2);
+        final var issues = this.state.validation().issues(workflow);
+        final var worst = ValidationResult.worst(issues);
+        final String name = UiText.ellipsize(workflow.name, this.x + this.w - PAD - textX - 2 - (worst == null ? 0 : 14));
         UiText.draw(g, name, textX, ry + (ROW_HEIGHT - 2 - 9) / 2, workflow.active ? Theme.TEXT : Theme.TEXT_MUTED,
                 selected ? UiText.Weight.SEMIBOLD : UiText.Weight.REGULAR);
+        if (worst != null) {
+            final int dx = this.x + this.w - PAD - 6;
+            final int dy = ry + (ROW_HEIGHT - 2) / 2;
+            RenderUtil.circle(g, dx, dy, 4, worst == NodeIssue.Severity.ERROR ? Theme.DANGER : FieldUi.AMBER);
+            if (!this.dragging && this.menuFor == null && Math.hypot(mx - dx, my - dy) <= 6) {
+                HoverTip.setIssues(issues.stream().filter(i -> i.severity() != NodeIssue.Severity.INFO).toList(), mx, my);
+            }
+        }
     }
 
     /** The context menu; drawn last so it sits above the canvas and sidebar. */

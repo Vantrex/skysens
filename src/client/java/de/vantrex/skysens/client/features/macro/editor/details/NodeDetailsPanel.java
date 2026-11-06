@@ -170,18 +170,7 @@ public final class NodeDetailsPanel {
     }
 
     private void refreshIssues(MacroNode node, Workflow workflow) {
-        final long now = System.currentTimeMillis();
-        if (this.issuesStale || now - this.issuesTime >= ISSUE_REFRESH_MS) {
-            final List<NodeIssue> own = new ArrayList<>();
-            for (NodeIssue issue : MacroService.getInstance().issues(workflow)) {
-                if (issue.nodeId().equals(node.id)) {
-                    own.add(issue);
-                }
-            }
-            this.issues = own;
-            this.issuesTime = now;
-            this.issuesStale = false;
-        }
+        this.issues = this.state.validation().forNode(workflow, node.id);
     }
 
     // ------------------------------------------------------------------ rendering

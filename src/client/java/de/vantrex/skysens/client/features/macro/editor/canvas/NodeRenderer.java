@@ -1,5 +1,6 @@
 package de.vantrex.skysens.client.features.macro.editor.canvas;
 
+import de.vantrex.skysens.client.features.macro.analysis.NodeIssue;
 import de.vantrex.skysens.client.features.macro.editor.Highlight;
 import de.vantrex.skysens.client.features.macro.model.MacroNode;
 import de.vantrex.skysens.client.features.macro.node.NodeCategory;
@@ -8,6 +9,8 @@ import de.vantrex.skysens.client.ui.render.RenderUtil;
 import de.vantrex.skysens.client.ui.render.Theme;
 import de.vantrex.skysens.client.ui.render.UiText;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
+
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -21,12 +24,19 @@ public final class NodeRenderer {
     public static final int GREEN = 0xFF3FB950;
     public static final int AMBER = 0xFFE3A52B;
 
+    public static final int BADGE_RADIUS = 7;
+    public static final int BADGE_INSET = 4;
     private static final int ICON_WIDTH = 28;
     private static final int RADIUS = 6;
     private static final int LABEL_MAX = 56;
     private static final float DISABLED_ALPHA = 0.4f;
 
     private NodeRenderer() {
+    }
+
+    /** Centre of the issue badge relative to the node origin. */
+    public static int[] badgeCenter(NodeLayout layout) {
+        return new int[]{layout.w - BADGE_INSET, BADGE_INSET - 2};
     }
 
     public static int categoryColor(NodeCategory category) {
@@ -49,20 +59,21 @@ public final class NodeRenderer {
      */
     public static void render(GuiGraphicsExtractor g, NodeLayout layout, boolean selected, boolean hovered,
                               Highlight.Kind highlight, float highlightStrength, boolean inputConnected,
-                              Set<String> outputsConnected) {
+                              Set<String> outputsConnected, NodeIssue.@Nullable Severity issue) {
         final MacroNode node = layout.node;
         g.pose().pushMatrix();
         g.pose().translate(node.x, node.y);
         if (layout.sticky) {
             StickyNoteRenderer.render(g, layout, selected, hovered);
         } else {
-            renderCard(g, layout, selected, hovered, highlight, highlightStrength, inputConnected, outputsConnected);
+            renderCard(g, layout, selected, hovered, highlight, highlightStrength, inputConnected, outputsConnected, issue);
         }
         g.pose().popMatrix();
     }
 
     private static void renderCard(GuiGraphicsExtractor g, NodeLayout layout, boolean selected, boolean hovered,
-                                   Highlight.Kind highlight, float strength, boolean inputConnected, Set<String> outputsConnected) {
+                                   Highlight.Kind highlight, float strength, boolean inputConnected, Set<String> outputsConnected,
+                                   NodeIssue.@Nullable Severity issue) {
         final MacroNode node = layout.node;
         final float alpha = node.disabled ? DISABLED_ALPHA : 1f;
         final int w = layout.w;
@@ -124,6 +135,13 @@ public final class NodeRenderer {
         if (selected) {
             RenderUtil.roundedRing(g, -2, -2, w + 4, h + 4, RADIUS + 2, Theme.ACCENT);
             RenderUtil.roundedRing(g, -1, -1, w + 2, h + 2, RADIUS + 1, Theme.ACCENT);
+        }
+        if (issue != null) {
+            final int bx = w - BADGE_INSET;
+            final int by = BADGE_INSET - 2;
+            RenderUtil.circle(g, bx, by, BADGE_RADIUS + 1, Theme.POPOVER | 0xFF000000);
+            RenderUtil.circle(g, bx, by, BADGE_RADIUS, issue == NodeIssue.Severity.ERROR ? Theme.DANGER : AMBER);
+            UiText.drawCentered(g, "!", bx, by - 4, 0xFFFFFFFF, UiText.Weight.SEMIBOLD);
         }
     }
 

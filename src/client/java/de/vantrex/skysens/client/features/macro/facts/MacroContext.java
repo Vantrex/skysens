@@ -24,6 +24,10 @@ public final class MacroContext {
     private SlayerFacts slayer;
     private DungeonFacts dungeon;
     private ItemFacts items;
+    private MayorFacts mayor;
+    private TimeFacts time;
+    private SidebarFacts sidebar;
+    private PetFacts pet;
 
     public MacroContext(InputChord chord, PressMode mode, @Nullable Screen screen) {
         this.chord = chord;
@@ -72,6 +76,34 @@ public final class MacroContext {
             this.items = new ItemFacts();
         }
         return this.items;
+    }
+
+    public MayorFacts mayor() {
+        if (this.mayor == null) {
+            this.mayor = new MayorFacts();
+        }
+        return this.mayor;
+    }
+
+    public TimeFacts time() {
+        if (this.time == null) {
+            this.time = new TimeFacts();
+        }
+        return this.time;
+    }
+
+    public SidebarFacts sidebar() {
+        if (this.sidebar == null) {
+            this.sidebar = new SidebarFacts();
+        }
+        return this.sidebar;
+    }
+
+    public PetFacts pet() {
+        if (this.pet == null) {
+            this.pet = new PetFacts();
+        }
+        return this.pet;
     }
 
     public ScreenFacts screen() {

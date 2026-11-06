@@ -83,6 +83,8 @@ public final class PetTracker implements GameMessageListeningFeature, AfterTickF
     private static final int PLAYER_SLOTS = 36;
 
     private volatile @Nullable Pet activePet;
+    /** True once the per-profile pet was restored for the current profile; reset when the profile is lost (quit). */
+    private volatile boolean stateKnown;
     private final Map<String, Pet> knownPets = new LinkedHashMap<>();
 
     /** Last pets menu click: the pet and whether the click despawns it. Client thread only. */
@@ -97,7 +99,10 @@ public final class PetTracker implements GameMessageListeningFeature, AfterTickF
 
     private PetTracker() {
         EventListenerRegistry.REGISTRY.registerListener(this::onProfileChange, ProfileChangeEvent.class);
-        EventListenerRegistry.REGISTRY.registerListener(event -> this.pendingTab = null, SkyblockQuitEvent.class);
+        EventListenerRegistry.REGISTRY.registerListener(event -> {
+            this.pendingTab = null;
+            this.stateKnown = false;
+        }, SkyblockQuitEvent.class);
     }
 
     // ---------------------------------------------------------------- read API
@@ -105,6 +110,14 @@ public final class PetTracker implements GameMessageListeningFeature, AfterTickF
     /** The active pet, empty if there is none or it isn't known. */
     public @NotNull Optional<Pet> getActivePet() {
         return Optional.ofNullable(this.activePet);
+    }
+
+    /**
+     * Whether the active pet is known: false until the saved pet of the current profile was restored on the
+     * {@link ProfileChangeEvent}, and again after leaving SkyBlock. While false, "no pet" does not mean there is none.
+     */
+    public boolean isStateKnown() {
+        return this.stateKnown;
     }
 
     public boolean hasActivePet() {
@@ -348,6 +361,7 @@ public final class PetTracker implements GameMessageListeningFeature, AfterTickF
         }
         // restored silently: it is only what we saw last, the tab list has the final word
         this.activePet = event.getNewProfile() == null ? null : RepositoryRegistry.ACTIVE_PET_REPOSITORY.get(event.getNewProfile());
+        this.stateKnown = event.getNewProfile() != null;
         this.lastNonTabChangeMs = 0;
     }
 

@@ -30,6 +30,7 @@ public final class ParamFields {
         return switch (spec.kind()) {
             case TEXT, TEMPLATE_TEXT, INT -> new TextParamField(spec, params, ctx);
             case TEXT_MULTILINE -> new MultiLineParamField(spec, params, ctx);
+            case TEXT_CHOICES -> new TextSuggestParamField(spec, params, ctx, choices);
             case BOOL -> new BoolParamField(spec, params, ctx);
             case ENUM -> ChoiceParamField.single(spec, params, ctx, choices);
             case ENUM_MULTI -> ChoiceParamField.multi(spec, params, ctx, choices, "None selected");

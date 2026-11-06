@@ -2,6 +2,9 @@ package de.vantrex.skysens.client.features.macro.editor.canvas;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import de.vantrex.skysens.client.features.macro.editor.EditorState;
+import de.vantrex.skysens.client.features.macro.analysis.NodeIssue;
+import de.vantrex.skysens.client.features.macro.analysis.ValidationResult;
+import de.vantrex.skysens.client.features.macro.editor.HoverTip;
 import de.vantrex.skysens.client.features.macro.editor.Highlight;
 import de.vantrex.skysens.client.features.macro.editor.clipboard.MacroClipboard;
 import de.vantrex.skysens.client.features.macro.editor.edit.GraphEdit;
@@ -301,7 +304,7 @@ public final class CanvasView {
         for (NodeLayout layout : this.layouts.values()) {
             if (layout.sticky && this.onScreen(layout)) {
                 NodeRenderer.render(g, layout, this.state.selectedNodes().contains(layout.node.id),
-                        layout.node.id.equals(this.hoveredNode), null, 0f, false, Set.of());
+                        layout.node.id.equals(this.hoveredNode), null, 0f, false, Set.of(), null);
             }
         }
         g.pose().popMatrix();
@@ -343,6 +346,7 @@ public final class CanvasView {
             }
         }
 
+        final Map<String, List<NodeIssue>> issuesByNode = this.state.validation().byNode(workflow);
         // nodes
         g.pose().pushMatrix();
         g.pose().translate(originX, originY);
@@ -354,10 +358,12 @@ public final class CanvasView {
             final Highlight.Kind kind = highlight.node(layout.node.id);
             NodeRenderer.render(g, layout, this.state.selectedNodes().contains(layout.node.id),
                     layout.node.id.equals(this.hoveredNode), kind, highlight.strength(),
-                    connectedInputs.contains(layout.node.id), connectedOutputs.getOrDefault(layout.node.id, Set.of()));
+                    connectedInputs.contains(layout.node.id), connectedOutputs.getOrDefault(layout.node.id, Set.of()),
+                    ValidationResult.worst(issuesByNode.getOrDefault(layout.node.id, List.of())));
         }
         g.pose().popMatrix();
 
+        this.issueTooltip(mx, my, issuesByNode);
         // "x" button on the middle of a hovered or selected wire
         final Connection marked = this.state.selectedWire() != null ? this.state.selectedWire() : this.hoveredWire;
         if (marked != null && this.mode == Mode.IDLE) {
@@ -407,6 +413,28 @@ public final class CanvasView {
             RenderUtil.rect(g, sx1, sy2 - 1, sx2 - sx1, 1, border);
             RenderUtil.rect(g, sx1, sy1, 1, sy2 - sy1, border);
             RenderUtil.rect(g, sx2 - 1, sy1, 1, sy2 - sy1, border);
+        }
+    }
+
+    /** Lists a node's issues in a tooltip while the mouse is over its badge (only ERROR / WARNING nodes have a badge). */
+    private void issueTooltip(int mx, int my, Map<String, List<NodeIssue>> issuesByNode) {
+        if (this.mode != Mode.IDLE || !this.contains(mx, my) || this.controls.contains(mx, my)) {
+            return;
+        }
+        final double zoom = this.viewport.zoom;
+        final double reach = Math.max(8.0, (NodeRenderer.BADGE_RADIUS + 1) * zoom);
+        for (NodeLayout layout : this.layouts.values()) {
+            final List<NodeIssue> issues = issuesByNode.get(layout.node.id);
+            if (layout.sticky || issues == null || ValidationResult.worst(issues) == null) {
+                continue;
+            }
+            final int[] c = NodeRenderer.badgeCenter(layout);
+            final double sx = this.x + this.viewport.toScreenX(layout.node.x + c[0]);
+            final double sy = this.y + this.viewport.toScreenY(layout.node.y + c[1]);
+            if (Math.hypot(mx - sx, my - sy) <= reach) {
+                HoverTip.setIssues(issues, mx, my);
+                return;
+            }
         }
     }
 

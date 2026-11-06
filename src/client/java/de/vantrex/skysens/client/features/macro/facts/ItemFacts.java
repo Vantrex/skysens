@@ -1,15 +1,23 @@
 package de.vantrex.skysens.client.features.macro.facts;
 
 import de.vantrex.skysens.client.skyblock.item.HypixelExtraAttributes;
+import de.vantrex.skysens.client.features.macro.node.param.Choice;
+import de.vantrex.skysens.client.util.ChatUtil;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.component.ItemLore;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -18,6 +26,9 @@ import java.util.regex.Pattern;
  */
 public final class ItemFacts {
 
+    private static final List<String> RARITIES = List.of("COMMON", "UNCOMMON", "RARE", "EPIC", "LEGENDARY", "MYTHIC", "DIVINE",
+            "SPECIAL", "VERY_SPECIAL", "ULTIMATE", "SUPREME");
+    private static final Pattern RARITY_LINE = Pattern.compile("^(?:a\\s+)?(COMMON|UNCOMMON|RARE|EPIC|LEGENDARY|MYTHIC|DIVINE|VERY SPECIAL|SPECIAL|ULTIMATE|SUPREME)(?:\\s|$)");
     private static final int GLOB_CACHE_SIZE = 64;
     private static final Map<String, Pattern> GLOBS = new LinkedHashMap<>(16, 0.75f, true) {
         @Override
@@ -79,6 +90,54 @@ public final class ItemFacts {
             GLOBS.put(glob, pattern);
         }
         return pattern.matcher(id).matches();
+    }
+
+    /** SkyBlock item rarities as stored in params (enum style names) and their labels. */
+    public static List<Choice> rarityChoices() {
+        final List<Choice> out = new ArrayList<>();
+        for (String rarity : RARITIES) {
+            out.add(new Choice(rarity, PetFacts.titleCase(rarity)));
+        }
+        return out;
+    }
+
+    public static boolean isRarity(String name) {
+        return RARITIES.contains(name);
+    }
+
+    /**
+     * The SkyBlock rarity of an item, read from the last lore line that starts with one (e.g. "LEGENDARY SWORD"),
+     * as an enum style name ("LEGENDARY", "VERY_SPECIAL"); null if the lore has none.
+     */
+    public static @Nullable String rarityOf(ItemStack stack) {
+        final ItemLore lore = stack.get(DataComponents.LORE);
+        if (lore == null) {
+            return null;
+        }
+        final List<Component> lines = lore.lines();
+        for (int i = lines.size() - 1; i >= 0; i--) {
+            final Matcher matcher = RARITY_LINE.matcher(ChatUtil.strip(lines.get(i).getString()).trim());
+            if (matcher.find()) {
+                return matcher.group(1).replace(' ', '_');
+            }
+        }
+        return null;
+    }
+
+    /** All non-empty stacks of the inventory (main inventory, hotbar and offhand). */
+    public List<ItemStack> inventoryStacks() {
+        final List<ItemStack> out = new ArrayList<>();
+        final Minecraft mc = Minecraft.getInstance();
+        if (mc.player == null) {
+            return out;
+        }
+        final Inventory inventory = mc.player.getInventory();
+        for (int slot = 0; slot < inventory.getContainerSize(); slot++) {
+            if ((slot < 36 || slot == Inventory.SLOT_OFFHAND) && !inventory.getItem(slot).isEmpty()) {
+                out.add(inventory.getItem(slot));
+            }
+        }
+        return out;
     }
 
     /** How many items in the inventory (main inventory, hotbar and offhand) have a SkyBlock id matching the glob. */

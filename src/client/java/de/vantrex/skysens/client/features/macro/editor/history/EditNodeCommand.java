@@ -20,6 +20,13 @@ public final class EditNodeCommand implements EditorCommand {
 
     public static final long MERGE_MS = 1000L;
 
+    private static boolean breakNextMerge;
+
+    /** The next recorded edit becomes its own undo step even if it would merge with the previous one. */
+    public static void breakMerge() {
+        breakNextMerge = true;
+    }
+
     /** The editable state of a node. */
     public record Snapshot(@Nullable String name, JsonObject params) {
 
@@ -84,6 +91,10 @@ public final class EditNodeCommand implements EditorCommand {
 
     @Override
     public boolean mergeWith(EditorCommand next) {
+        if (breakNextMerge) {
+            breakNextMerge = false;
+            return false;
+        }
         if (next instanceof EditNodeCommand other && other.workflow == this.workflow && other.nodeId.equals(this.nodeId)
                 && other.field.equals(this.field) && other.time - this.time <= MERGE_MS) {
             this.after = other.after;

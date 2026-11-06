@@ -1,6 +1,9 @@
 package de.vantrex.skysens.client.features.macro;
 
+import de.vantrex.skysens.client.features.macro.analysis.GraphValidator;
 import de.vantrex.skysens.client.features.macro.analysis.KeybindConflicts;
+import de.vantrex.skysens.client.features.macro.analysis.ValidationResult;
+import de.vantrex.skysens.client.skyblock.mayor.MayorService;
 import de.vantrex.skysens.client.features.macro.analysis.NodeIssue;
 import de.vantrex.skysens.client.features.macro.engine.MacroEngine;
 import de.vantrex.skysens.client.util.ClientUtil;
@@ -15,6 +18,7 @@ import de.vantrex.skysens.client.features.macro.node.NodeType;
 import de.vantrex.skysens.client.features.macro.node.NodeTypes;
 import de.vantrex.skysens.client.persistence.RepositoryRegistry;
 import lombok.Getter;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -33,6 +37,12 @@ public final class MacroService {
     @Getter
     private TriggerIndex triggerIndex = TriggerIndex.EMPTY;
     private final Map<String, Long> lastConflictAnnounced = new HashMap<>();
+    /**
+     * Computed lazily (null = stale): validation builds messages with key names, which come from GLFW, and the first
+     * parse runs during mod init, before GLFW is initialised. Calling GLFW that early crashes the game on startup.
+     */
+    private @Nullable ValidationResult validation;
+    private boolean usesMayor;
 
     public static MacroService getInstance() {
         return INSTANCE;
@@ -41,7 +51,12 @@ public final class MacroService {
     /** Parses the loaded repository. Call after RepositoryRegistry.loadRepositories(). */
     public void init() {
         this.parse();
-        ClientTickEvents.END_CLIENT_TICK.register(client -> MacroEngine.getInstance().tick());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            MacroEngine.getInstance().tick();
+            if (this.usesMayor) {
+                MayorService.getInstance().refreshIfNeeded();
+            }
+        });
     }
 
     /** Re-reads the repository file from disk (discarding unsaved in-memory changes) and parses it again. */
@@ -84,6 +99,8 @@ public final class MacroService {
 
     private void rebuildIndex() {
         this.triggerIndex = TriggerIndex.build(this.workflows);
+        this.validation = null;
+        this.usesMayor = this.workflows.stream().anyMatch(wf -> wf.active && wf.nodes.stream().anyMatch(n -> n.params.toString().contains("\"type\":\"mayor\"")));
     }
 
     public int nodeCount() {
@@ -95,24 +112,16 @@ public final class MacroService {
                 .filter(node -> !NodeTypes.isKnown(node.type)).count();
     }
 
-    /** All issues of a workflow: node validation plus wires pointing at nodes that do not exist. */
+    /** All issues of a workflow from the last parse/commit (validation, overlaps, keybind conflicts). */
     public List<NodeIssue> issues(Workflow workflow) {
-        final List<NodeIssue> out = new ArrayList<>();
-        final Set<String> ids = new HashSet<>();
-        for (MacroNode node : workflow.nodes) {
-            ids.add(node.id);
-            final NodeType type = NodeTypes.resolve(node.type);
-            type.validate(node, out);
+        return this.validation().issues(workflow);
+    }
+
+    public ValidationResult validation() {
+        if (this.validation == null) {
+            this.validation = GraphValidator.validate(this.workflows);
         }
-        if (workflow.active) {
-            out.addAll(KeybindConflicts.forWorkflow(workflow));
-        }
-        for (Connection connection : workflow.connections) {
-            if (!ids.contains(connection.from) || !ids.contains(connection.to)) {
-                out.add(new NodeIssue(NodeIssue.Severity.WARNING, connection.from, "Wire " + connection.from + " to " + connection.to + " points at a missing node"));
-            }
-        }
-        return out;
+        return this.validation;
     }
 
 }

@@ -92,11 +92,11 @@ public final class HotkeyTriggerNode implements NodeType {
     public void validate(MacroNode node, List<NodeIssue> out) {
         final Spec spec = spec(node);
         if (spec == null) {
-            out.add(new NodeIssue(NodeIssue.Severity.WARNING, node.id, "No key bound, this trigger never fires"));
+            out.add(new NodeIssue(NodeIssue.Severity.ERROR, node.id, "No key bound, this trigger never fires"));
             return;
         }
         if (spec.chord().isPrimaryMouseButton()) {
-            out.add(new NodeIssue(spec.inGuis() ? NodeIssue.Severity.ERROR : NodeIssue.Severity.INFO, node.id,
+            out.add(new NodeIssue(spec.inGuis() ? NodeIssue.Severity.ERROR : NodeIssue.Severity.WARNING, node.id,
                     spec.inGuis() ? "Left/right mouse buttons cannot fire in inventories (they would break clicking)"
                             : "Left/right mouse buttons are blocked for attacking/using whenever an action runs"));
         }

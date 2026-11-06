@@ -65,7 +65,7 @@ public final class KeybindConflicts {
                 final String message = spec.chord().mods() == 0
                         ? keyOnly + " is also bound to " + mappingName + ": that binding only works when no macro action runs"
                         : spec.chord().displayName() + " also triggers " + mappingName + " (it ignores modifiers): that binding only works when no macro action runs";
-                out.add(new NodeIssue(NodeIssue.Severity.WARNING, node.id, message));
+                out.add(new NodeIssue(NodeIssue.Severity.WARNING, node.id, message, NodeIssue.Kind.KEYBIND));
             }
         }
         return out;
