@@ -4,6 +4,7 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import de.vantrex.skysens.client.features.macro.analysis.NodeIssue;
 import de.vantrex.skysens.client.features.macro.condition.RuleResult;
 import de.vantrex.skysens.client.features.macro.condition.Tri;
+import de.vantrex.skysens.client.features.macro.editor.MacroEditorScreen;
 import de.vantrex.skysens.client.features.macro.engine.ExecutionLog;
 import de.vantrex.skysens.client.features.macro.engine.ExecutionRecord;
 import de.vantrex.skysens.client.features.macro.engine.GraphWalker;
@@ -25,6 +26,10 @@ public final class MacroCommands {
 
     public static LiteralArgumentBuilder<FabricClientCommandSource> node() {
         return ClientCommands.literal("macros")
+                .executes(context -> {
+                    MacroEditorScreen.open();
+                    return 1;
+                })
                 .then(ClientCommands.literal("reload")
                         .executes(context -> reload()))
                 .then(ClientCommands.literal("debug")

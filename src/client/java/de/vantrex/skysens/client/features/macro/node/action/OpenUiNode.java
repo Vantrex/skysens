@@ -6,6 +6,7 @@ import de.vantrex.skysens.client.features.macro.action.ActionOutcome;
 import de.vantrex.skysens.client.features.macro.action.ActionParams;
 import de.vantrex.skysens.client.features.macro.action.SkysensScreenTarget;
 import de.vantrex.skysens.client.features.macro.analysis.NodeIssue;
+import de.vantrex.skysens.client.features.macro.editor.MacroEditorScreen;
 import de.vantrex.skysens.client.features.macro.facts.MacroContext;
 import de.vantrex.skysens.client.features.macro.model.MacroNode;
 import de.vantrex.skysens.client.features.macro.node.param.Choice;
@@ -59,8 +60,6 @@ public final class OpenUiNode implements ActionNodeType {
         final SkysensScreenTarget target = Params.getEnum(node.params, "target", SkysensScreenTarget.class, null);
         if (target == null) {
             out.add(new NodeIssue(NodeIssue.Severity.ERROR, node.id, "Unknown screen " + Params.getString(node.params, "target", "")));
-        } else if (target == SkysensScreenTarget.MACRO_EDITOR) {
-            out.add(new NodeIssue(NodeIssue.Severity.WARNING, node.id, "The macro editor does not exist yet"));
         }
     }
 
@@ -75,9 +74,7 @@ public final class OpenUiNode implements ActionNodeType {
             case CONFIG -> mc.schedule(() -> mc.gui.setScreen(new SkysensConfigScreen(null)));
             case HUD_EDITOR -> HudEditorScreen.open();
             case WARP_MENU -> WarpToMenuScreen.open();
-            case MACRO_EDITOR -> {
-                return ActionOutcome.failed("the macro editor is not available yet");
-            }
+            case MACRO_EDITOR -> MacroEditorScreen.open();
         }
         return ActionOutcome.ran();
     }

@@ -3,7 +3,9 @@ package de.vantrex.skysens.client.features.macro.config;
 import com.google.gson.annotations.Expose;
 import de.vantrex.skysens.client.config.annotation.ConfigMasterToggle;
 import de.vantrex.skysens.client.notification.NotificationLevelEnum;
+import de.vantrex.skysens.client.features.macro.editor.MacroEditorScreen;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorBoolean;
+import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorButton;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorDropdown;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigEditorSlider;
 import io.github.notenoughupdates.moulconfig.annotations.ConfigOption;
@@ -16,6 +18,10 @@ public class MacroCategory {
     @ConfigMasterToggle
     @Expose
     public boolean enabled = true;
+
+    @ConfigOption(name = "Macro Editor", desc = "Open the macro editor: your macros, the canvas and the executions log. Also /skysens macros")
+    @ConfigEditorButton(buttonText = "Open Editor")
+    public Runnable openEditor = MacroEditorScreen::open;
 
     @ConfigOption(name = "Several Matches Warning", desc = "Where to warn when a key press matched several branches or workflows (only the first one runs)")
     @ConfigEditorDropdown

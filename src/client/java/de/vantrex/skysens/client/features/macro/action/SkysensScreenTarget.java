@@ -5,7 +5,6 @@ public enum SkysensScreenTarget {
     CONFIG("SkySens config"),
     HUD_EDITOR("HUD editor"),
     WARP_MENU("Warp menu"),
-    /** Not available before the editor exists. */
     MACRO_EDITOR("Macro editor");
 
     private final String displayName;
