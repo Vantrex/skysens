@@ -6,7 +6,7 @@ Everything is stored under `<minecraft>/config/skysens/`:
 |---|---|---|
 | `config.json` | `SkysensConfig` (MoulConfig `ManagedConfig`) | All options |
 | `sensitivity.json` | `SensitivityService` | Per-location/zone mouse sensitivity |
-| `repositories/<ClassName>.json` | `RepositoryRegistry` | `SimpleKeyValueRepository`, `ProfitRepository`, `CoopRepository`, `BazaarOrderRepository`, `DungeonRunRepository`, `SlayerRngRepository`, `TrophyFrogRepository`, `WitchIngredientRepository` |
+| `repositories/<ClassName>.json` | `RepositoryRegistry` | `SimpleKeyValueRepository`, `ProfitRepository`, `CoopRepository`, `BazaarOrderRepository`, `DungeonRunRepository`, `SlayerRngRepository`, `TrophyFrogRepository`, `WitchIngredientRepository`, `ActivePetRepository`, `DungeonClassRepository`, `TransferCooldownRepository`, `MacroRepository` |
 | `repositories/ActivityTracker.json` | `ActivityTracker` | Activity timeline (saved by the tracker itself) |
 
 ## Options (MoulConfig)
@@ -78,6 +78,57 @@ To add one:
 
 For small values that don't deserve their own class (buff expiry times, …), use
 `RepositoryRegistry.KEY_VALUE_REPOSITORY.put/get`.
+
+**Saving:** repositories are written in the shutdown hook, or earlier with `RepositoryRegistry.saveRepository(obj)` where
+losing a crash's worth of changes would hurt (the macro editor does this on every commit).
+
+### Tolerant loading
+
+`loadRepository` must not take the client down for a hand-edited or damaged file. If the JSON can't be parsed
+(`JsonParseException`/`IllegalStateException`), the file is copied to `repositories/<ClassName>.json.broken-<epoch millis>`,
+a warning is logged and the repository starts empty (a missing file also gives an empty instance). A file that parses but has
+the wrong shape for a nested value is the repository's own business: `MacroRepository` keeps raw `JsonObject`s and parses them
+defensively. A real `IOException` (unreadable file) still fails loudly. Tell users to send the `.broken-*` file when a bug
+report says "my data is gone".
+
+### Repositories added for trackers and macros
+
+| Repository | Content | Written by |
+|---|---|---|
+| `ActivePetRepository` | `activePets`: profile name -> last seen active pet (`type`, `name`, `rarity`, `level`, `heldItem`, `skin`, `uuid`, `candyUsed`) | `PetTracker`, restored silently on `ProfileChangeEvent` |
+| `DungeonClassRepository` | `selectedClasses`: profile -> `DungeonClass` name; `classLevels`: `"<profile>:<CLASS>"` -> last seen level | `DungeonClassTracker` |
+| `TransferCooldownRepository` | `learnedCommands`: command roots learned from the "You may only use this command after Ns on the server!" message | `TransferCooldownTracker` |
+| `MacroRepository` | `version` (int) and `workflows` (list of raw workflow JSON objects) | `MacroService.commit` (macro editor) |
+
+`MacroRepository` is versioned JSON: nodes, ports and params are persisted *by id/name* (`trigger.hotkey`, `logic.switch`,
+condition ids like `dungeon.floor`, enum constants such as `SINGLE`/`DOUBLE_TAP`), and keys or whole nodes that this version
+does not know are kept (`extra`, `UnknownNode`) and written back, so a downgrade or a newer shared macro loses nothing. The
+class name, `version`, `workflows` and every id/enum name inside the workflows are part of the persisted format: **never
+rename**. Format details, the clipboard envelope and how to evolve the version: [macros.md](macros.md#data-model-and-json).
+Pet, class and learned-command repositories are best-effort caches: tracker state is rebuilt from the game after a rejoin
+(see [skyblock-and-integrations.md](skyblock-and-integrations.md#known-vs-unknown)), the saved value is only what was
+seen last.
+
+## Macro, transfer cooldown and dev options
+
+All persisted names below are JSON keys in `config.json`; don't rename them.
+
+| Option | Path | Default | Notes |
+|---|---|---|---|
+| Enable Macros | `macroCategory.enabled` | on | Master toggle. Off: `MacroFeature.isActive()` is false, no key is touched |
+| Open Editor | `macroCategory.openEditor` | n/a | Button, no `@Expose`, not saved. Same as `/skysens macros` |
+| Several Matches Warning | `macroCategory.multipleMatchWarning` | `CHAT` | `MatchWarningDisplay`: `CHAT`, `TOAST`, `OFF` |
+| Several Matches Warning Level | `macroCategory.multipleMatchWarningLevel` | `IMPORTANT` | Level of that toast |
+| Show Blocked Hint | `macroCategory.showBlockedHint` | on | Red hint for cooldown, rate limit, unknown state, transfer wait |
+| Execution Log Size | `macroCategory.executionLogSize` | 50 | Slider 10-200, in memory only |
+| (hidden) | `macroCategory.macroTutorialSeen` | off | Set when the editor tour was shown; `@Expose` without `@ConfigOption` |
+| Wait for Transfer Cooldown | `generalCategory.waitForTransferCooldown` | off | Hold transfer-limited macro commands until the cooldown is over |
+| Transfer Cooldown Queue | `generalCategory.transferCooldownQueueMode` | `KEEP_NEWEST` | `TransferCooldownQueueMode`: `KEEP_NEWEST` or `QUEUE_ALL` |
+| Macros Outside SkyBlock | `devCategory.macroIgnoreSkyBlock` | off | Dev client only (`isDevelopmentEnvironment()`); lets macros fire off SkyBlock for offline testing |
+
+The Macros category is a feature-owned category (`features/macro/config/MacroCategory`, "Macros" in the sidebar). The wait
+options live in General because the transfer cooldown is generic SkyBlock knowledge, not a macro detail. Macro timings (double
+tap 250 ms, long hold 450 ms, rate limit 500 ms, warning throttle 10 s) are constants in `MacroConstants`, deliberately not options.
 
 ## Compatibility rule
 

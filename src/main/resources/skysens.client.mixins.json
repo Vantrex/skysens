@@ -9,6 +9,7 @@
     "HandledScreenMixin",
     "LivingEntityMixin",
     "MouseMixin",
+    "KeyboardHandlerMixin",
     "ClientPlayNetworkMixin",
     "EntityRenderStateMixin",
     "EntityRenderDispatcherMixin",

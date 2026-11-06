@@ -53,6 +53,16 @@ public class GeneralCategory {
     @Expose
     public boolean holdNotificationsDuringSlayerQuest;
 
+    @ConfigOption(name = "Wait for Transfer Cooldown", desc = "Hypixel blocks /warp, /hub and similar commands for a few seconds after a server switch. When on, a macro command like that is held until the cooldown is over and then sent. Other commands, chat messages and client-side actions are never delayed")
+    @ConfigEditorBoolean
+    @Expose
+    public boolean waitForTransferCooldown;
+
+    @ConfigOption(name = "Transfer Cooldown Queue", desc = "What happens when a macro command comes in while another one waits for the transfer cooldown: keep only the newest, or queue all of them and send them one by one")
+    @ConfigEditorDropdown
+    @Expose
+    public TransferCooldownQueueMode transferCooldownQueueMode = TransferCooldownQueueMode.KEEP_NEWEST;
+
     @ConfigOption(name = "Profit Tracker", desc = "Session and all-time profit of drops and reward chests, shown by !profit")
     @Accordion
     @Expose

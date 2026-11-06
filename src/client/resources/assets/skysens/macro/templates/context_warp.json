@@ -1,0 +1,146 @@
+{
+  "format": "skysens-macro",
+  "version": 1,
+  "kind": "workflows",
+  "workflows": [
+    {
+      "id": "wf_context_warp",
+      "name": "Context warp",
+      "active": false,
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1.0
+      },
+      "nodes": [
+        {
+          "id": "note",
+          "type": "note.sticky",
+          "x": 0,
+          "y": -110,
+          "w": 420,
+          "h": 90,
+          "params": {
+            "text": "Bind a key. On your Private Island it goes to the Hub, in the Hub to the Forge, anywhere else back to your island. Unknown state (right after joining) does nothing.",
+            "color": "YELLOW"
+          }
+        },
+        {
+          "id": "t",
+          "type": "trigger.hotkey",
+          "x": 0,
+          "y": 0,
+          "params": {
+            "input": {
+              "device": "KEYBOARD",
+              "code": -1,
+              "mods": []
+            },
+            "mode": "SINGLE",
+            "inGuis": false
+          }
+        },
+        {
+          "id": "sw",
+          "type": "logic.switch",
+          "x": 240,
+          "y": -10,
+          "params": {
+            "rules": [
+              {
+                "id": "r_island",
+                "name": "Island",
+                "combinator": "AND",
+                "conditions": [
+                  {
+                    "id": "c_island",
+                    "type": "island",
+                    "negate": false,
+                    "params": {
+                      "islands": [
+                        "PRIVATE_ISLAND"
+                      ]
+                    }
+                  }
+                ]
+              },
+              {
+                "id": "r_hub",
+                "name": "Hub",
+                "combinator": "AND",
+                "conditions": [
+                  {
+                    "id": "c_hub",
+                    "type": "island",
+                    "negate": false,
+                    "params": {
+                      "islands": [
+                        "HUB"
+                      ]
+                    }
+                  }
+                ]
+              }
+            ],
+            "fallback": true
+          }
+        },
+        {
+          "id": "a_hub",
+          "type": "action.command",
+          "x": 520,
+          "y": -30,
+          "params": {
+            "command": "/hub",
+            "closeScreenFirst": false,
+            "cooldownMs": 1000
+          }
+        },
+        {
+          "id": "a_forge",
+          "type": "action.command",
+          "x": 520,
+          "y": 40,
+          "params": {
+            "command": "/warp forge",
+            "closeScreenFirst": false,
+            "cooldownMs": 1000
+          }
+        },
+        {
+          "id": "a_home",
+          "type": "action.command",
+          "x": 520,
+          "y": 110,
+          "params": {
+            "command": "/is",
+            "closeScreenFirst": false,
+            "cooldownMs": 1000
+          }
+        }
+      ],
+      "connections": [
+        {
+          "from": "t",
+          "port": "main",
+          "to": "sw"
+        },
+        {
+          "from": "sw",
+          "port": "rule:r_island",
+          "to": "a_hub"
+        },
+        {
+          "from": "sw",
+          "port": "rule:r_hub",
+          "to": "a_forge"
+        },
+        {
+          "from": "sw",
+          "port": "fallback",
+          "to": "a_home"
+        }
+      ]
+    }
+  ]
+}

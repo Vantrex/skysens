@@ -40,6 +40,7 @@ reference mixins; mixins mostly loop over the feature lists in `FeatureRegistry`
 | Mixins, Fabric hooks, access widener | [docs/architecture/platform.md](docs/architecture/platform.md) |
 | Config options, the config screen, saved data | [docs/architecture/config-and-persistence.md](docs/architecture/config-and-persistence.md) |
 | `!commands` in party/co-op chat | [docs/architecture/chat-commands.md](docs/architecture/chat-commands.md) |
+| Conditional macros (nodes, conditions, engine, editor) | [docs/architecture/macros.md](docs/architecture/macros.md) |
 | Location/zones, prices, profit, SkyHanni/Odin integration | [docs/architecture/skyblock-and-integrations.md](docs/architecture/skyblock-and-integrations.md) |
 
 ## Rules that are easy to break

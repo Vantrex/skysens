@@ -20,6 +20,7 @@ All extend `Feature` (`isActive()`, `priority()`; lower priority runs first).
 | `AfterTickFeature` | `platform/hook/TickHandlers` | End of every client tick, **only while on SkyBlock** |
 | `GameMessageListeningFeature` | `platform/hook/ChatHandler` | Every incoming game (chat) message |
 | `RawGameMessageListeningFeature` | `SystemChatPacketMixin` → `ChatHandler.onRawGameMessage` | Every game message as the server sent it, before Fabric's events and other mods cancel or rewrite it |
+| `RawInputFeature` | `KeyboardHandlerMixin` (`keyPress`), `MouseMixin` (`onButton`) | Raw key and mouse button events (press, release, repeat) at the head of the handler, before screens and key mappings. Cancelling `ci` swallows the event. Used by `MacroFeature` |
 | `HudRenderFeature` | `platform/hook/HudHandlers` | Every frame on top of the HUD, **only while on SkyBlock** and not hidden with F1 |
 
 The dispatchers check `isActive()` first, with one exception: `GameMessageListeningFeature` is called
@@ -31,6 +32,12 @@ hidden by the chat filter are still delivered to the other features.
 message: other mods (Skyblocker, SkyHanni) cancel some messages ("Profile ID: ...") and rewrite others (Skyblocker
 adds prices to the `[Sacks]` hover) before `GameMessageListeningFeature` sees them. `SackTracker` and `ProfileService`
 use it. Features that react to what is actually shown in chat keep using `GameMessageListeningFeature`.
+
+`RawInputFeature` sees **every** key/button event of the game window, also off SkyBlock, in any screen and while typing
+into text fields, so the dispatcher only checks `isActive()` and the feature has to gate itself (SkyBlock, open screen,
+focused text field; see `MacroGate`). Cancel only when you really handled the event: the contract is "consume the key
+only when an action ran", otherwise other bindings and mods must still receive it. `action` is the GLFW action
+(1 press, 0 release, 2 repeat). See [platform.md](platform.md#raw-input-hooks).
 
 ## Movable HUDs
 
@@ -54,6 +61,15 @@ element is moved.
 A feature that other code needs to reach is kept as a field on `FeatureService` (e.g. `getRewardChestFeature()`) or
 is a singleton (`DungeonRunDetector.getInstance()`, `CombatTracker`, `AfkTracker`, `SlayerTracker`).
 
+### Larger features: macros
+
+Most features are one class plus config. The conditional macros (`features/macro/`) are the biggest one and show how
+a feature can have its own sub-architecture: `MacroFeature` is a thin `RawInputFeature` that hands every key event to
+`MacroEngine`; the model, node/condition registries, engine, actions, analysis and editor screen are plain packages
+below it, with their own explicit registries (`NodeTypes`, `ConditionTypes`, `PlaceholderRegistry`). The macro engine
+reads game state only through the shared trackers in `skyblock/` (party, slayer, dungeon class, pet, sidebar events, mayor,
+calendar, transfer cooldown). Developer guide: [macros.md](macros.md); user guide: [../features/macros.md](../features/macros.md).
+
 ## Events
 
 For things that happen outside Minecraft's call graph there's a tiny synchronous bus in `core/event/`:
@@ -75,6 +91,13 @@ Listeners are matched by exact event class (no inheritance) and run on the firin
 | `CoopMemberJoinEvent`, `CoopMemberQuitEvent` | `CoopMemberTracker` ("<name> joined/left SkyBlock." in chat) |
 | `CoopMembersUpdateEvent` | `CoopMemberTracker` (co-op widget in the tab list on the private island changed) |
 | `SackItemsAddedEvent`, `SackItemsRemovedEvent` | `SackTracker` in `skyblock/sack/` (the "[Sacks] +N items, -N items." chat message, one event per direction) |
+| `PetChangeEvent`, `PetLevelUpEvent`, `PetsMenuUpdateEvent` | `PetTracker` (chat, autopet, /pets menu, tab list; real changes only) |
+| `DungeonClassChangeEvent`, `DungeonClassLevelUpEvent`, `DungeonPartyClassesUpdateEvent` | `DungeonClassTracker` (own class and the run party's classes; real changes only) |
+| `DianaRitualChangeEvent`, `DianaDoingChangeEvent`, `GriffinBurrowDugEvent`, `MythologicalMobSpawnEvent`, `DianaTreasureEvent` | `DianaTracker` |
+| `SidebarEventChangeEvent`, `MiningEventChangeEvent`, `JacobsContestChangeEvent`, `KuudraTierChangeEvent`, `GardenVisitorsChangeEvent` | `SidebarEventTracker` (never on the first read after joining) |
+| `SkyblockCalendarEventChangeEvent` | `SkyblockEventCalendar` (event window starts/ends, checked once a second on SkyBlock) |
+| `SlayerQuestStartEvent`, `SlayerBossSpawnEvent`, `SlayerBossCocoonEvent`, `SlayerQuestEndEvent` | `SlayerTracker` |
+| `TransferCooldownStartEvent`, `TransferCooldownEndEvent`, `TransferCooldownDeniedEvent` | `TransferCooldownTracker` (server switch, cooldown over, "You may only use this command after Ns" message) |
 
 Domain events go in `skyblock/event/`. An event that only matters inside one feature stays in that feature's
 package (like `DungeonRunCompleteEvent`).

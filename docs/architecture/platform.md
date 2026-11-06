@@ -24,13 +24,38 @@ injection point and delegates to them.
 | `ItemInHandRendererMixin` | `ItemInHandRenderer` | `HeldItemRenderFeature`: held item transform |
 | `MinecraftMixin` | `Minecraft` | `CameraFeature`: perspective cycling |
 | `HudMixin` | `Hud` | `CameraFeature`: forced crosshair |
-| `MouseMixin` | `MouseHandler` | `MouseFeature`: sensitivity |
+| `MouseMixin` | `MouseHandler` | `MouseFeature`: sensitivity (`turnPlayer` redirect); `RawInputFeature`: `onButton` HEAD inject, see [Raw input hooks](#raw-input-hooks) |
+| `KeyboardHandlerMixin` | `KeyboardHandler` | `RawInputFeature`: `keyPress` HEAD inject, see [Raw input hooks](#raw-input-hooks) |
 | `ClientPlayNetworkMixin` | `ClientPacketListener` | Strips "Don't <action>!" from titles |
 | `ServerStatsMixin` | `ClientPacketListener` | Feeds time and pong packets to `InternalStatsProvider` |
 | `SystemChatPacketMixin` | `ClientPacketListener` | `RawGameMessageListeningFeature`: system chat before Fabric's message events and other mods |
 | `ChatComponentMixin` | `ChatComponent` | Messages other mods add straight to chat (no game message event) → `DungeonRunDetector` |
 | `PlayerTabOverlayAccessor` | `PlayerTabOverlay` | `@Invoker` for the tab list entries |
 | `InventoryHudKeyActionMixin` | Inventory HUD+ `KeyAction` (`@Pseudo`, `require = 0`) | Its key bindings ran → `ActionBarLayout.markDirty()` |
+
+## Raw input hooks
+
+`KeyboardHandlerMixin` (`KeyboardHandler.keyPress`) and the `onButton` inject in `MouseMixin` (`MouseHandler.onButton`) are
+`@At("HEAD")` and `cancellable`. They run before screens, `EditBox` focus handling and `KeyMapping`s see the event, and
+dispatch to every active `RawInputFeature` (`FeatureRegistry.getRawInputFeature()`, sorted by priority) until one cancels
+`ci`. Events from other GLFW windows are ignored (`window != minecraft.getWindow().handle()`).
+
+- Why not `KeyMapping.consumeClick()` from a tick hook (like `KeyHandlers`)? By then vanilla has already processed the
+  press, so a key could not be *passed through when nothing ran*. Raw HEAD injects can.
+- **Contract:** cancel only when the feature really handled the event (the macros: only when an action ran). Releases
+  are never cancelled; a cancelled press must have its repeats cancelled too, otherwise vanilla sees a repeat without a press
+  (`InputTracker.consume/isConsumed` does this for macros).
+- The hook sits on the hottest path of the client. Look up cheaply first and do real work only for matching keys.
+- The signatures were checked against 26.2 (`keyPress(long, int, KeyEvent)`, `onButton(long, MouseButtonInfo, int)`).
+  After a Minecraft update `defaultRequire = 1` fails startup if they changed.
+
+### Nothing may call GLFW during mod init
+
+`onInitializeClient` runs before the window and GLFW are initialised. Anything that ends in GLFW at that point
+(`InputConstants.Key.getDisplayName()`, `GLFW.glfwGetKeyName`, building key names for messages) crashes the game on
+startup. `MacroService.init()` parses the saved macros on that path, so the macro validation (which builds messages with
+key names) is **lazy** (`MacroService.validation()`), and the keybind conflict chat lines are skipped while there is no
+player. Keep new init-time code free of key names, screens and window calls.
 
 ## Adding a mixin
 

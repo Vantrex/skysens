@@ -1,0 +1,90 @@
+{
+  "format": "skysens-macro",
+  "version": 1,
+  "kind": "workflows",
+  "workflows": [
+    {
+      "id": "wf_quick_tour",
+      "name": "Quick tour",
+      "active": false,
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1.0
+      },
+      "nodes": [
+        {
+          "id": "n1",
+          "type": "note.sticky",
+          "x": 0,
+          "y": -120,
+          "w": 260,
+          "h": 110,
+          "params": {
+            "text": "Macros run top to bottom in the list. When several macros match the same key, the first one that reaches an action wins.",
+            "color": "BLUE"
+          }
+        },
+        {
+          "id": "n2",
+          "type": "note.sticky",
+          "x": 280,
+          "y": -120,
+          "w": 260,
+          "h": 110,
+          "params": {
+            "text": "If an If or Switch cannot decide (state unknown), or the path hits a disabled node, nothing runs and the key keeps its normal job.",
+            "color": "PINK"
+          }
+        },
+        {
+          "id": "n3",
+          "type": "note.sticky",
+          "x": 560,
+          "y": -120,
+          "w": 260,
+          "h": 110,
+          "params": {
+            "text": "Texts can use placeholders such as {{ player }}, {{ island }} or {{ party.leader }}. Select a node and press D to disable it.",
+            "color": "GREEN"
+          }
+        },
+        {
+          "id": "t",
+          "type": "trigger.hotkey",
+          "x": 0,
+          "y": 40,
+          "params": {
+            "input": {
+              "device": "KEYBOARD",
+              "code": -1,
+              "mods": []
+            },
+            "mode": "SINGLE",
+            "inGuis": false
+          }
+        },
+        {
+          "id": "hello",
+          "type": "action.toast",
+          "x": 240,
+          "y": 40,
+          "params": {
+            "title": "Hello {{ player }}",
+            "subtitle": "You are on {{ island }}",
+            "display": "DEFAULT",
+            "closeScreenFirst": false,
+            "cooldownMs": 0
+          }
+        }
+      ],
+      "connections": [
+        {
+          "from": "t",
+          "port": "main",
+          "to": "hello"
+        }
+      ]
+    }
+  ]
+}

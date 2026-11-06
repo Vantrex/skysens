@@ -1,0 +1,129 @@
+{
+  "format": "skysens-macro",
+  "version": 1,
+  "kind": "workflows",
+  "workflows": [
+    {
+      "id": "wf_menu_key",
+      "name": "Menu key",
+      "active": false,
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1.0
+      },
+      "nodes": [
+        {
+          "id": "note",
+          "type": "note.sticky",
+          "x": 0,
+          "y": -100,
+          "w": 380,
+          "h": 90,
+          "params": {
+            "text": "Bind the SAME key in all three Hotkey nodes. A quick press opens /storage, a double tap /pets and holding the key /wardrobe.",
+            "color": "YELLOW"
+          }
+        },
+        {
+          "id": "t1",
+          "type": "trigger.hotkey",
+          "x": 0,
+          "y": 0,
+          "params": {
+            "input": {
+              "device": "KEYBOARD",
+              "code": -1,
+              "mods": []
+            },
+            "mode": "SINGLE",
+            "inGuis": false
+          },
+          "name": "Press"
+        },
+        {
+          "id": "a1",
+          "type": "action.command",
+          "x": 260,
+          "y": 0,
+          "params": {
+            "command": "/storage",
+            "closeScreenFirst": false,
+            "cooldownMs": 0
+          }
+        },
+        {
+          "id": "t2",
+          "type": "trigger.hotkey",
+          "x": 0,
+          "y": 90,
+          "params": {
+            "input": {
+              "device": "KEYBOARD",
+              "code": -1,
+              "mods": []
+            },
+            "mode": "DOUBLE_TAP",
+            "inGuis": false
+          },
+          "name": "Double tap"
+        },
+        {
+          "id": "a2",
+          "type": "action.command",
+          "x": 260,
+          "y": 90,
+          "params": {
+            "command": "/pets",
+            "closeScreenFirst": false,
+            "cooldownMs": 0
+          }
+        },
+        {
+          "id": "t3",
+          "type": "trigger.hotkey",
+          "x": 0,
+          "y": 180,
+          "params": {
+            "input": {
+              "device": "KEYBOARD",
+              "code": -1,
+              "mods": []
+            },
+            "mode": "LONG_HOLD",
+            "inGuis": false
+          },
+          "name": "Hold"
+        },
+        {
+          "id": "a3",
+          "type": "action.command",
+          "x": 260,
+          "y": 180,
+          "params": {
+            "command": "/wardrobe",
+            "closeScreenFirst": false,
+            "cooldownMs": 0
+          }
+        }
+      ],
+      "connections": [
+        {
+          "from": "t1",
+          "port": "main",
+          "to": "a1"
+        },
+        {
+          "from": "t2",
+          "port": "main",
+          "to": "a2"
+        },
+        {
+          "from": "t3",
+          "port": "main",
+          "to": "a3"
+        }
+      ]
+    }
+  ]
+}

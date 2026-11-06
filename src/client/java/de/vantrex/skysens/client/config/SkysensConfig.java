@@ -11,6 +11,7 @@ import de.vantrex.skysens.client.features.bazaar.config.BazaarCategory;
 import de.vantrex.skysens.client.features.fishing.config.FishingCategory;
 import de.vantrex.skysens.client.chatcommand.config.ChatCommandsCategory;
 import de.vantrex.skysens.client.config.categories.general.GeneralCategory;
+import de.vantrex.skysens.client.features.macro.config.MacroCategory;
 import de.vantrex.skysens.client.features.mining.config.MiningCategory;
 import de.vantrex.skysens.client.config.categories.qol.QolCategory;
 import de.vantrex.skysens.client.features.slayer.config.SlayerCategory;
@@ -81,6 +82,10 @@ public class SkysensConfig extends Config {
     @Category(name = "Misc", desc = "Year of the Witch ingredients, Crimson Isle volcano eruptions")
     @Expose
     public MiscCategory miscCategory = new MiscCategory();
+
+    @Category(name = "Macros", desc = "Hotkeys whose action depends on the game state")
+    @Expose
+    public MacroCategory macroCategory = new MacroCategory();
 
     @Category(name = "Dev", desc = "Debugging and diagnostics")
     @Expose

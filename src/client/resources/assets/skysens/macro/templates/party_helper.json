@@ -1,0 +1,147 @@
+{
+  "format": "skysens-macro",
+  "version": 1,
+  "kind": "workflows",
+  "workflows": [
+    {
+      "id": "wf_party_helper",
+      "name": "Party helper",
+      "active": false,
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1.0
+      },
+      "nodes": [
+        {
+          "id": "note",
+          "type": "note.sticky",
+          "x": 0,
+          "y": -110,
+          "w": 440,
+          "h": 90,
+          "params": {
+            "text": "Bind a key. As party leader it warps the party. As a member it tells the party you are ready. Outside a party it shows a hint.",
+            "color": "YELLOW"
+          }
+        },
+        {
+          "id": "t",
+          "type": "trigger.hotkey",
+          "x": 0,
+          "y": 0,
+          "params": {
+            "input": {
+              "device": "KEYBOARD",
+              "code": -1,
+              "mods": []
+            },
+            "mode": "SINGLE",
+            "inGuis": false
+          }
+        },
+        {
+          "id": "lead",
+          "type": "logic.if",
+          "x": 220,
+          "y": 0,
+          "params": {
+            "combinator": "AND",
+            "conditions": [
+              {
+                "id": "c_lead",
+                "type": "party",
+                "negate": false,
+                "params": {
+                  "check": "IS_LEADER"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "warp",
+          "type": "action.command",
+          "x": 480,
+          "y": -20,
+          "params": {
+            "command": "/p warp",
+            "closeScreenFirst": false,
+            "cooldownMs": 3000
+          }
+        },
+        {
+          "id": "in",
+          "type": "logic.if",
+          "x": 480,
+          "y": 70,
+          "params": {
+            "combinator": "AND",
+            "conditions": [
+              {
+                "id": "c_in",
+                "type": "party",
+                "negate": false,
+                "params": {
+                  "check": "IN_PARTY"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "ready",
+          "type": "action.chat",
+          "x": 740,
+          "y": 50,
+          "params": {
+            "channel": "PARTY",
+            "message": "{{ player }} is ready",
+            "closeScreenFirst": false,
+            "cooldownMs": 0
+          }
+        },
+        {
+          "id": "none",
+          "type": "action.toast",
+          "x": 740,
+          "y": 130,
+          "params": {
+            "title": "Not in a party",
+            "subtitle": "",
+            "display": "DEFAULT",
+            "closeScreenFirst": false,
+            "cooldownMs": 0
+          }
+        }
+      ],
+      "connections": [
+        {
+          "from": "t",
+          "port": "main",
+          "to": "lead"
+        },
+        {
+          "from": "lead",
+          "port": "true",
+          "to": "warp"
+        },
+        {
+          "from": "lead",
+          "port": "false",
+          "to": "in"
+        },
+        {
+          "from": "in",
+          "port": "true",
+          "to": "ready"
+        },
+        {
+          "from": "in",
+          "port": "false",
+          "to": "none"
+        }
+      ]
+    }
+  ]
+}

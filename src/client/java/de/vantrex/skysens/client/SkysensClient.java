@@ -22,6 +22,8 @@ import de.vantrex.skysens.client.features.sensitivity.SensitivityService;
 import de.vantrex.skysens.client.util.ClientUtil;
 import lombok.Getter;
 import net.fabricmc.api.ClientModInitializer;
+import de.vantrex.skysens.client.features.macro.MacroCommands;
+import de.vantrex.skysens.client.features.macro.MacroService;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommands;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -65,6 +67,8 @@ public class SkysensClient implements ClientModInitializer {
         this.createConfigDirectory();
         RepositoryRegistry.loadRepositories();
         SkysensConfig.getConfig(); // creating the config loads it from disk
+        MacroService.getInstance().init();
+        de.vantrex.skysens.client.features.macro.action.TransferWaitQueue.init();
         this.locationService = LocationService.getInstance();
         this.initHypixelApiHandler();
         Runtime.getRuntime().addShutdownHook(new Thread(SkysensConfig.getConfig()::saveToFile));
@@ -93,6 +97,8 @@ public class SkysensClient implements ClientModInitializer {
         api.subscribeToEventPacket(ClientboundLocationPacket.class);
         api.createHandler(ClientboundLocationPacket.class, packet -> {
             this.serverName = packet.getServerName();
+            final String switchedTo = this.serverName;
+            Minecraft.getInstance().execute(() -> de.vantrex.skysens.client.skyblock.server.TransferCooldownTracker.getInstance().onServerSwitch(switchedTo));
             var serverType = (GameType) packet.getServerType()
                     .filter(serverType1 -> serverType1 instanceof GameType)
                     .orElse(null);
@@ -151,6 +157,7 @@ public class SkysensClient implements ClientModInitializer {
                                 });
                                 return 1;
                             }))
+                    .then(MacroCommands.node())
                     .then(ClientCommands.literal("hud")
                             .executes(context -> {
                                 HudEditorScreen.open();
