@@ -9,6 +9,7 @@ import de.vantrex.skysens.client.features.macro.action.MacroToasts;
 import de.vantrex.skysens.client.features.macro.analysis.NodeIssue;
 import de.vantrex.skysens.client.features.macro.facts.MacroContext;
 import de.vantrex.skysens.client.features.macro.model.MacroNode;
+import de.vantrex.skysens.client.features.macro.node.param.Choice;
 import de.vantrex.skysens.client.features.macro.node.param.ParamKind;
 import de.vantrex.skysens.client.features.macro.node.param.ParamSpec;
 import de.vantrex.skysens.client.features.macro.node.param.Params;
@@ -30,9 +31,9 @@ public final class ToggleOptionNode implements ActionNodeType {
     /** Toggle options by path. Built on first use: walking the config tree is not cheap. */
     private static @Nullable Map<String, OptionNode> toggles;
 
-    private static synchronized @Nullable OptionNode find(String path) {
+    private static synchronized Map<String, OptionNode> toggles() {
         if (toggles == null) {
-            final Map<String, OptionNode> map = new HashMap<>();
+            final Map<String, OptionNode> map = new java.util.LinkedHashMap<>();
             for (OptionNode option : ConfigTree.allLeaves(ConfigTree.build())) {
                 if (option.kind() == OptionKind.TOGGLE && option.get() instanceof Boolean) {
                     map.put(option.option().getPath(), option);
@@ -40,7 +41,22 @@ public final class ToggleOptionNode implements ActionNodeType {
             }
             toggles = map;
         }
-        return toggles.get(path);
+        return toggles;
+    }
+
+    private static @Nullable OptionNode find(String path) {
+        return toggles().get(path);
+    }
+
+    /** Every flippable option as (config path, "Category > Option" label), for the editor's option picker. */
+    public static List<Choice> choices() {
+        final List<Choice> out = new java.util.ArrayList<>();
+        toggles().forEach((path, option) -> {
+            final String crumb = option.breadcrumb();
+            out.add(new Choice(path, crumb.isEmpty() ? option.name() : crumb + " › " + option.name()));
+        });
+        out.sort(java.util.Comparator.comparing(Choice::label, String.CASE_INSENSITIVE_ORDER));
+        return out;
     }
 
     @Override

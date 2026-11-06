@@ -1,12 +1,17 @@
 package de.vantrex.skysens.client.features.macro.editor.canvas;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import de.vantrex.skysens.client.features.macro.editor.EditorState;
 import de.vantrex.skysens.client.features.macro.editor.Highlight;
+import de.vantrex.skysens.client.features.macro.editor.edit.GraphEdit;
+import de.vantrex.skysens.client.features.macro.editor.picker.NodePicker;
 import de.vantrex.skysens.client.features.macro.model.Connection;
 import de.vantrex.skysens.client.features.macro.model.MacroNode;
 import de.vantrex.skysens.client.features.macro.model.ViewportState;
 import de.vantrex.skysens.client.features.macro.model.Workflow;
 import de.vantrex.skysens.client.features.macro.node.NodeCategory;
+import de.vantrex.skysens.client.features.macro.node.Port;
+import net.minecraft.client.Minecraft;
 import de.vantrex.skysens.client.ui.render.RenderUtil;
 import de.vantrex.skysens.client.ui.render.Theme;
 import de.vantrex.skysens.client.ui.render.UiText;
@@ -21,6 +26,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 
 /**
  * The canvas of one workflow (view only): grid, wires, nodes, pan, zoom and rectangle selection.
@@ -36,7 +42,15 @@ public final class CanvasView {
     private static final int DRAG_THRESHOLD = 3;
     private static final int ADD_BUTTON = 28;
 
-    private enum Mode { IDLE, PAN, SELECT }
+    private enum Mode { IDLE, PAN, SELECT, DRAG_NODES, WIRE }
+
+    /** A port under the mouse. */
+    private record PortHit(String nodeId, String portId, boolean output) {
+    }
+
+    /** Everything the picker needs to open: screen anchor, whether only nodes with an input fit, and the request. */
+    public record PickerOpen(int anchorX, int anchorY, boolean needInput, NodePicker.Request request) {
+    }
 
     private final EditorState state;
     private final Viewport viewport = new Viewport();
@@ -60,6 +74,26 @@ public final class CanvasView {
     private Set<String> selectBase = Set.of();
     private @Nullable String hoveredNode;
     private Map<String, NodeLayout> layouts = Map.of();
+    private int rightInset;
+    private @Nullable Consumer<PickerOpen> pickerRequester;
+
+    // node drag
+    private Map<String, int[]> dragStart = Map.of();
+    private @Nullable String dragAnchor;
+    private double dragWorldX;
+    private double dragWorldY;
+    private double dragScreenX;
+    private double dragScreenY;
+    private boolean dragMoved;
+    private @Nullable String collapseTo;
+
+    // wire drag
+    private @Nullable String wireNode;
+    private @Nullable String wirePort;
+    private boolean wirePickedUp;
+    private double wireMouseX;
+    private double wireMouseY;
+    private @Nullable Connection hoveredWire;
 
     public CanvasView(EditorState state) {
         this.state = state;
@@ -82,9 +116,18 @@ public final class CanvasView {
         return new int[]{this.x, this.y, this.w, this.h};
     }
 
-    /** The (disabled in view-only mode) "+" button in the top right corner; used as an anchor by the tutorial. */
+    /** The "+" button in the top right corner (left of the details panel when it is open); also the tutorial's anchor. */
     public int[] addButtonRect() {
-        return new int[]{this.x + this.w - ADD_BUTTON - 8, this.y + 8, ADD_BUTTON, ADD_BUTTON};
+        return new int[]{this.x + this.w - this.rightInset - ADD_BUTTON - 8, this.y + 8, ADD_BUTTON, ADD_BUTTON};
+    }
+
+    /** Width of the details panel covering the right edge, so the "+" button stays visible. */
+    public void setRightInset(int rightInset) {
+        this.rightInset = rightInset;
+    }
+
+    public void setPickerRequester(Consumer<PickerOpen> requester) {
+        this.pickerRequester = requester;
     }
 
     public void setSpaceDown(boolean down) {
@@ -185,19 +228,21 @@ public final class CanvasView {
 
         if (this.shown == null) {
             UiText.drawCentered(g, "No macros yet", this.x + this.w / 2, this.y + this.h / 2 - 10, Theme.TEXT_MUTED, UiText.Weight.SEMIBOLD);
-            UiText.drawCentered(g, "Creating macros arrives with the next editor update", this.x + this.w / 2, this.y + this.h / 2 + 4, Theme.TEXT_FAINT);
+            UiText.drawCentered(g, "Create one with the + in the macro list", this.x + this.w / 2, this.y + this.h / 2 + 4, Theme.TEXT_FAINT);
         } else if (this.shown.nodes.isEmpty()) {
-            UiText.drawCentered(g, "This macro has no nodes", this.x + this.w / 2, this.y + this.h / 2 - 4, Theme.TEXT_FAINT);
+            UiText.drawCentered(g, "This macro has no nodes. Press Tab or + to add one", this.x + this.w / 2, this.y + this.h / 2 - 4, Theme.TEXT_FAINT);
         }
-        this.renderAddButton(g);
+        if (this.shown != null) {
+            this.renderAddButton(g, mx, my);
+        }
         this.controls.render(g, mx, my, this.viewport.zoom, this.x, this.w);
     }
 
-    private void renderAddButton(GuiGraphicsExtractor g) {
+    private void renderAddButton(GuiGraphicsExtractor g, int mx, int my) {
         final int[] r = this.addButtonRect();
-        final int border = RenderUtil.withAlpha(Theme.POPOVER_BORDER, 0.6f);
-        RenderUtil.roundedRectWithBorder(g, r[0], r[1], r[2], r[3], 5, RenderUtil.withAlpha(Theme.POPOVER | 0xFF000000, 0.6f), border);
-        final int color = RenderUtil.withAlpha(Theme.TEXT_MUTED, 0.5f);
+        final boolean hover = RenderUtil.inside(mx, my, r[0], r[1], r[2], r[3]);
+        RenderUtil.roundedRectWithBorder(g, r[0], r[1], r[2], r[3], 5, Theme.POPOVER | 0xFF000000, hover ? Theme.ACCENT : Theme.POPOVER_BORDER);
+        final int color = hover ? Theme.TEXT : Theme.TEXT_MUTED;
         RenderUtil.rect(g, r[0] + r[2] / 2 - 5, r[1] + r[3] / 2, 11, 1, color);
         RenderUtil.rect(g, r[0] + r[2] / 2, r[1] + r[3] / 2 - 5, 1, 11, color);
     }
@@ -214,7 +259,12 @@ public final class CanvasView {
         final Highlight highlight = this.state.highlightFor(workflow, System.currentTimeMillis());
 
         final boolean overControls = this.controls.contains(mx, my);
-        this.hoveredNode = this.mode == Mode.IDLE && !overControls && this.contains(mx, my) ? this.nodeAt(this.worldX(mx), this.worldY(my)) : null;
+        final int[] addRect = this.addButtonRect();
+        final boolean overAdd = RenderUtil.inside(mx, my, addRect[0], addRect[1], addRect[2], addRect[3]);
+        final boolean interactive = this.mode == Mode.IDLE && !overControls && !overAdd && this.contains(mx, my);
+        final PortHit hoveredPort = interactive ? this.portAt(mx, my) : null;
+        this.hoveredNode = interactive ? this.nodeAt(this.worldX(mx), this.worldY(my)) : null;
+        this.hoveredWire = interactive && hoveredPort == null && this.hoveredNode == null ? this.wireAt(mx, my) : null;
 
         final Map<String, Set<String>> connectedOutputs = new HashMap<>();
         final Set<String> connectedInputs = new HashSet<>();
@@ -260,7 +310,10 @@ public final class CanvasView {
                 if (!WireRenderer.visible(x1, y1, x2, y2, zoom, this.x, this.y, this.w, this.h)) {
                     continue;
                 }
-                if (kind == null) {
+                final boolean selectedWire = c == this.state.selectedWire();
+                if (selectedWire || c == this.hoveredWire) {
+                    WireRenderer.draw(g, x1, y1, x2, y2, zoom, thickness + 1, (selectedWire ? Theme.ACCENT : Theme.TEXT_MUTED) | 0xFF000000);
+                } else if (kind == null) {
                     WireRenderer.draw(g, x1, y1, x2, y2, zoom, thickness, plain);
                 } else {
                     final int color = RenderUtil.lerpColor(highlight.strength(), plain, NodeRenderer.highlightColor(kind));
@@ -284,6 +337,44 @@ public final class CanvasView {
         }
         g.pose().popMatrix();
 
+        // "x" button on the middle of a hovered or selected wire
+        final Connection marked = this.state.selectedWire() != null ? this.state.selectedWire() : this.hoveredWire;
+        if (marked != null && this.mode == Mode.IDLE) {
+            final double[] mid = this.wireMid(marked);
+            if (mid != null) {
+                final int cx = (int) Math.round(mid[0]);
+                final int cy = (int) Math.round(mid[1]);
+                final boolean over = Math.hypot(mx - mid[0], my - mid[1]) <= 8;
+                final int color = over ? Theme.DANGER : Theme.TEXT_MUTED;
+                RenderUtil.circle(g, cx, cy, 8, over ? Theme.DANGER : Theme.POPOVER_BORDER);
+                RenderUtil.circle(g, cx, cy, 7, Theme.POPOVER | 0xFF000000);
+                for (int i = -2; i <= 2; i++) {
+                    RenderUtil.rect(g, cx + i, cy + i, 1, 1, color);
+                    RenderUtil.rect(g, cx + i, cy - i, 1, 1, color);
+                }
+            }
+        }
+
+        // port feedback and the wire being dragged
+        if (hoveredPort != null) {
+            this.portRing(g, hoveredPort, Theme.ACCENT);
+        }
+        if (this.mode == Mode.WIRE && this.wireNode != null) {
+            final NodeLayout from = this.layouts.get(this.wireNode);
+            if (from != null) {
+                final int idx = from.outputIndex(this.wirePort);
+                if (idx >= 0) {
+                    final double x1 = this.x + this.viewport.toScreenX(from.node.x + from.w);
+                    final double y1 = this.y + this.viewport.toScreenY(from.node.y + from.outputY(idx));
+                    WireRenderer.draw(g, x1, y1, this.wireMouseX, this.wireMouseY, zoom, thickness + 1, Theme.ACCENT | 0xFF000000);
+                }
+            }
+            final String target = this.wireTarget(this.wireMouseX, this.wireMouseY);
+            if (target != null) {
+                this.portRing(g, new PortHit(target, "main", false), Theme.ACCENT);
+            }
+        }
+
         if (this.mode == Mode.SELECT && this.selectMoved) {
             final int sx1 = (int) Math.round(this.x + this.viewport.toScreenX(Math.min(this.selectStartX, this.selectEndX)));
             final int sy1 = (int) Math.round(this.y + this.viewport.toScreenY(Math.min(this.selectStartY, this.selectEndY)));
@@ -298,6 +389,29 @@ public final class CanvasView {
         }
     }
 
+    private void portRing(GuiGraphicsExtractor g, PortHit hit, int color) {
+        final NodeLayout layout = this.layouts.get(hit.nodeId());
+        if (layout == null) {
+            return;
+        }
+        final double[] p = this.portScreen(layout, hit);
+        if (p == null) {
+            return;
+        }
+        final int r = (int) Math.round((NodeLayout.PORT_RADIUS + 3) * this.viewport.zoom);
+        RenderUtil.roundedRing(g, (int) Math.round(p[0]) - r, (int) Math.round(p[1]) - r, 2 * r, 2 * r, r, color);
+    }
+
+    private @Nullable double[] portScreen(NodeLayout layout, PortHit hit) {
+        if (hit.output()) {
+            final int idx = layout.outputIndex(hit.portId());
+            return idx < 0 ? null : new double[]{this.x + this.viewport.toScreenX(layout.node.x + layout.w),
+                    this.y + this.viewport.toScreenY(layout.node.y + layout.outputY(idx))};
+        }
+        return layout.inputs.isEmpty() ? null : new double[]{this.x + this.viewport.toScreenX(layout.node.x),
+                this.y + this.viewport.toScreenY(layout.node.y + layout.inputY())};
+    }
+
     private boolean onScreen(NodeLayout layout) {
         final double zoom = this.viewport.zoom;
         final double sx = this.viewport.toScreenX(layout.node.x);
@@ -306,7 +420,7 @@ public final class CanvasView {
         return sx + layout.w * zoom + margin >= 0 && sx - margin <= this.w && sy + layout.h * zoom + margin >= 0 && sy - margin <= this.h;
     }
 
-    // ------------------------------------------------------------------ input
+    // ------------------------------------------------------------------ hit testing
 
     private double worldX(double mx) {
         return this.viewport.toWorldX(mx - this.x);
@@ -332,7 +446,90 @@ public final class CanvasView {
         return null;
     }
 
-    public boolean mouseClicked(double mx, double my, int button, boolean additive) {
+    private @Nullable PortHit portAt(double mx, double my) {
+        final double reach = Math.max(8, (NodeLayout.PORT_RADIUS + 4) * this.viewport.zoom);
+        final List<NodeLayout> all = new ArrayList<>(this.layouts.values());
+        for (int n = all.size() - 1; n >= 0; n--) {
+            final NodeLayout layout = all.get(n);
+            if (layout.sticky) {
+                continue;
+            }
+            for (Port port : layout.outputs) {
+                final double[] p = this.portScreen(layout, new PortHit(layout.node.id, port.id(), true));
+                if (p != null && Math.hypot(mx - p[0], my - p[1]) <= reach) {
+                    return new PortHit(layout.node.id, port.id(), true);
+                }
+            }
+            if (!layout.inputs.isEmpty()) {
+                final PortHit hit = new PortHit(layout.node.id, layout.inputs.get(0).id(), false);
+                final double[] p = this.portScreen(layout, hit);
+                if (p != null && Math.hypot(mx - p[0], my - p[1]) <= reach) {
+                    return hit;
+                }
+            }
+        }
+        return null;
+    }
+
+    private @Nullable double[] wireEnds(Connection c) {
+        final NodeLayout from = this.layouts.get(c.from);
+        final NodeLayout to = this.layouts.get(c.to);
+        if (from == null || to == null || to.inputs.isEmpty()) {
+            return null;
+        }
+        final int idx = from.outputIndex(c.port);
+        if (idx < 0) {
+            return null;
+        }
+        return new double[]{this.x + this.viewport.toScreenX(from.node.x + from.w), this.y + this.viewport.toScreenY(from.node.y + from.outputY(idx)),
+                this.x + this.viewport.toScreenX(to.node.x), this.y + this.viewport.toScreenY(to.node.y + to.inputY())};
+    }
+
+    private @Nullable double[] wireMid(Connection c) {
+        final double[] e = this.wireEnds(c);
+        return e == null ? null : WireRenderer.pointAt(e[0], e[1], e[2], e[3], this.viewport.zoom, 0.5);
+    }
+
+    private @Nullable Connection wireAt(double mx, double my) {
+        if (this.shown == null) {
+            return null;
+        }
+        Connection best = null;
+        double bestDistance = 6;
+        for (Connection c : this.shown.connections) {
+            final double[] e = this.wireEnds(c);
+            if (e == null || !WireRenderer.visible(e[0], e[1], e[2], e[3], this.viewport.zoom, this.x, this.y, this.w, this.h)) {
+                continue;
+            }
+            final double d = WireRenderer.distance(e[0], e[1], e[2], e[3], this.viewport.zoom, mx, my);
+            if (d <= bestDistance) {
+                bestDistance = d;
+                best = c;
+            }
+        }
+        return best;
+    }
+
+    /** The node a dragged wire would connect to at this screen point: an input port or the node body. */
+    private @Nullable String wireTarget(double mx, double my) {
+        final PortHit port = this.portAt(mx, my);
+        String id = port != null && !port.output() ? port.nodeId() : null;
+        if (id == null) {
+            final String body = this.nodeAt(this.worldX(mx), this.worldY(my));
+            final NodeLayout layout = body == null ? null : this.layouts.get(body);
+            if (layout != null && !layout.sticky && !layout.inputs.isEmpty()) {
+                id = body;
+            }
+        }
+        return id == null || id.equals(this.wireNode) ? null : id;
+    }
+
+    private static boolean altDown() {
+        final var window = Minecraft.getInstance().getWindow();
+        return InputConstants.isKeyDown(window, InputConstants.KEY_LALT) || InputConstants.isKeyDown(window, InputConstants.KEY_RALT);
+    }
+
+    public boolean mouseClicked(double mx, double my, int button, boolean additive, boolean doubleClick) {
         this.sync();
         if (!this.contains(mx, my)) {
             return false;
@@ -346,6 +543,11 @@ public final class CanvasView {
             if (this.controls.contains(mx, my)) {
                 return true;
             }
+            final int[] add = this.addButtonRect();
+            if (this.shown != null && RenderUtil.inside(mx, my, add[0], add[1], add[2], add[3])) {
+                this.openPicker(add[0] + add[2] - 260, add[1] + add[3] + 4, null);
+                return true;
+            }
         }
         this.lastMouseX = mx;
         this.lastMouseY = my;
@@ -353,21 +555,76 @@ public final class CanvasView {
             this.mode = Mode.PAN;
             return true;
         }
-        if (button != 0) {
+        if (button != 0 || this.shown == null) {
             return false;
         }
+
+        // wires: the x button, ports
+        final Connection marked = this.state.selectedWire() != null ? this.state.selectedWire() : this.hoveredWire;
+        if (marked != null) {
+            final double[] mid = this.wireMid(marked);
+            if (mid != null && Math.hypot(mx - mid[0], my - mid[1]) <= 8) {
+                this.shown.connections.remove(marked);
+                this.state.setSelectedWire(null);
+                this.state.markDirty();
+                return true;
+            }
+        }
+        final PortHit port = this.portAt(mx, my);
+        if (port != null) {
+            if (port.output()) {
+                this.startWire(port.nodeId(), port.portId(), false, mx, my);
+                return true;
+            }
+            // pick the wire up by its input end: it disconnects and can be dropped somewhere else
+            Connection incoming = null;
+            for (Connection c : this.shown.connections) {
+                if (c.to.equals(port.nodeId())) {
+                    incoming = c;
+                }
+            }
+            if (incoming != null) {
+                this.shown.connections.remove(incoming);
+                this.state.markDirty();
+                this.startWire(incoming.from, incoming.port, true, mx, my);
+                return true;
+            }
+        }
+
         final String hit = this.nodeAt(this.worldX(mx), this.worldY(my));
         if (hit != null) {
-            if (additive) {
-                if (!this.state.selectedNodes().remove(hit)) {
-                    this.state.selectedNodes().add(hit);
-                }
-            } else {
-                this.state.selectedNodes().clear();
-                this.state.selectedNodes().add(hit);
+            this.state.setSelectedWire(null);
+            final Set<String> selection = this.state.selectedNodes();
+            this.collapseTo = null;
+            if (doubleClick) {
+                selection.clear();
+                selection.add(hit);
+                this.state.setDetailsNode(hit);
+                return true;
             }
+            if (additive) {
+                if (!selection.remove(hit)) {
+                    selection.add(hit);
+                } else {
+                    return true;
+                }
+            } else if (!selection.contains(hit)) {
+                selection.clear();
+                selection.add(hit);
+            } else if (selection.size() > 1) {
+                this.collapseTo = hit;
+            }
+            this.beginNodeDrag(hit, mx, my);
             return true;
         }
+
+        final Connection wire = this.wireAt(mx, my);
+        if (wire != null) {
+            this.state.selectedNodes().clear();
+            this.state.setSelectedWire(wire);
+            return true;
+        }
+
         this.mode = Mode.SELECT;
         this.selectStartX = this.worldX(mx);
         this.selectStartY = this.worldY(my);
@@ -378,11 +635,66 @@ public final class CanvasView {
         return true;
     }
 
+    private void startWire(String nodeId, String portId, boolean pickedUp, double mx, double my) {
+        this.mode = Mode.WIRE;
+        this.wireNode = nodeId;
+        this.wirePort = portId;
+        this.wirePickedUp = pickedUp;
+        this.wireMouseX = mx;
+        this.wireMouseY = my;
+        this.state.setSelectedWire(null);
+    }
+
+    private void beginNodeDrag(String anchor, double mx, double my) {
+        this.mode = Mode.DRAG_NODES;
+        this.dragAnchor = anchor;
+        this.dragMoved = false;
+        this.dragWorldX = this.worldX(mx);
+        this.dragWorldY = this.worldY(my);
+        this.dragScreenX = mx;
+        this.dragScreenY = my;
+        this.dragStart = new HashMap<>();
+        if (this.shown != null) {
+            for (MacroNode node : this.shown.nodes) {
+                if (this.state.selectedNodes().contains(node.id)) {
+                    this.dragStart.put(node.id, new int[]{node.x, node.y});
+                }
+            }
+        }
+    }
+
     public boolean mouseDragged(double mx, double my) {
         if (this.mode == Mode.PAN) {
             this.viewport.pan(mx - this.lastMouseX, my - this.lastMouseY);
             this.lastMouseX = mx;
             this.lastMouseY = my;
+            return true;
+        }
+        if (this.mode == Mode.WIRE) {
+            this.wireMouseX = mx;
+            this.wireMouseY = my;
+            return true;
+        }
+        if (this.mode == Mode.DRAG_NODES && this.shown != null) {
+            if (!this.dragMoved && Math.hypot(mx - this.dragScreenX, my - this.dragScreenY) < DRAG_THRESHOLD) {
+                return true;
+            }
+            this.dragMoved = true;
+            double dx = this.worldX(mx) - this.dragWorldX;
+            double dy = this.worldY(my) - this.dragWorldY;
+            final int[] anchor = this.dragStart.get(this.dragAnchor);
+            if (anchor != null && !altDown()) {
+                dx = Math.round((anchor[0] + dx) / 10.0) * 10 - anchor[0];
+                dy = Math.round((anchor[1] + dy) / 10.0) * 10 - anchor[1];
+            }
+            for (MacroNode node : this.shown.nodes) {
+                final int[] start = this.dragStart.get(node.id);
+                if (start != null) {
+                    node.x = (int) Math.round(start[0] + dx);
+                    node.y = (int) Math.round(start[1] + dy);
+                }
+            }
+            this.state.markDirty();
             return true;
         }
         if (this.mode == Mode.SELECT) {
@@ -411,13 +723,149 @@ public final class CanvasView {
         return false;
     }
 
-    public boolean mouseReleased() {
+    public boolean mouseReleased(double mx, double my) {
         final boolean wasActive = this.mode != Mode.IDLE;
-        if (this.mode == Mode.SELECT && !this.selectMoved && this.selectBase.isEmpty()) {
-            this.state.selectedNodes().clear();
-        }
+        final Mode finished = this.mode;
         this.mode = Mode.IDLE;
+        if (finished == Mode.SELECT && !this.selectMoved && this.selectBase.isEmpty()) {
+            this.state.selectedNodes().clear();
+            this.state.setSelectedWire(null);
+            this.state.setDetailsNode(null);
+        } else if (finished == Mode.DRAG_NODES && !this.dragMoved && this.collapseTo != null) {
+            this.state.selectedNodes().clear();
+            this.state.selectedNodes().add(this.collapseTo);
+        } else if (finished == Mode.WIRE) {
+            this.finishWire(mx, my);
+        }
+        this.collapseTo = null;
         return wasActive;
+    }
+
+    private void finishWire(double mx, double my) {
+        final Workflow workflow = this.shown;
+        final String fromNode = this.wireNode;
+        final String fromPort = this.wirePort;
+        this.wireNode = null;
+        if (workflow == null || fromNode == null || fromPort == null) {
+            return;
+        }
+        final String target = this.wireTarget(mx, my);
+        if (target != null) {
+            final GraphEdit.ConnectResult result = GraphEdit.connect(workflow, fromNode, fromPort, target);
+            if (result == GraphEdit.ConnectResult.OK) {
+                this.state.markDirty();
+            } else {
+                this.state.toast(GraphEdit.describe(result), true);
+            }
+            return;
+        }
+        if (!this.contains(mx, my) || this.controls.contains(mx, my)) {
+            return;
+        }
+        if (this.wirePickedUp) {
+            return; // dropped on empty canvas: the wire stays disconnected
+        }
+        // new wire dropped on empty canvas: pick a node and connect it
+        final NodePicker.Request request = new NodePicker.Request(this.worldX(mx), this.worldY(my) - NodeLayout.HEIGHT / 2.0, fromNode, fromPort);
+        if (this.pickerRequester != null) {
+            this.pickerRequester.accept(new PickerOpen((int) mx + 8, (int) my - 20, true, request));
+        }
+    }
+
+    // ------------------------------------------------------------------ editing commands
+
+    /**
+     * Opens the node picker (Tab, the "+" button). With exactly one node selected that has a free output, the new node
+     * is placed to its right and wired from it; otherwise it goes to the cursor (or the canvas centre).
+     */
+    public void openPicker(int anchorX, int anchorY, @Nullable double[] cursor) {
+        if (this.shown == null || this.pickerRequester == null) {
+            return;
+        }
+        NodePicker.Request request = null;
+        if (this.state.selectedNodes().size() == 1) {
+            final NodeLayout layout = this.layouts.get(this.state.selectedNodes().iterator().next());
+            if (layout != null && !layout.sticky) {
+                for (Port out : layout.outputs) {
+                    final boolean used = this.shown.connections.stream().anyMatch(c -> c.from.equals(layout.node.id) && c.port.equals(out.id()));
+                    if (!used) {
+                        final double wy = layout.node.y + layout.outputY(layout.outputIndex(out.id())) - NodeLayout.HEIGHT / 2.0;
+                        request = new NodePicker.Request(layout.node.x + layout.w + 60, wy, layout.node.id, out.id());
+                        break;
+                    }
+                }
+            }
+        }
+        if (request == null) {
+            final double wx = cursor != null ? this.worldX(cursor[0]) : this.viewport.toWorldX(this.w / 2.0) - NodeLayout.WIDTH / 2.0;
+            final double wy = cursor != null ? this.worldY(cursor[1]) : this.viewport.toWorldY(this.h / 2.0) - NodeLayout.HEIGHT / 2.0;
+            request = new NodePicker.Request(wx, wy, null, null);
+        }
+        this.pickerRequester.accept(new PickerOpen(anchorX, anchorY, request.fromNode() != null, request));
+    }
+
+    /** Creates the node the picker chose, selects it and wires it if the request has a source. */
+    public void place(NodePicker.Entry entry, NodePicker.Request request) {
+        if (this.shown == null) {
+            return;
+        }
+        final int px = (int) Math.round(request.worldX() / 10.0) * 10;
+        final int py = (int) Math.round(request.worldY() / 10.0) * 10;
+        final MacroNode node = entry.condition() != null
+                ? GraphEdit.addConditionNode(this.shown, entry.condition(), px, py)
+                : GraphEdit.addNode(this.shown, entry.node(), px, py);
+        if (request.fromNode() != null && request.fromPort() != null) {
+            final GraphEdit.ConnectResult result = GraphEdit.connect(this.shown, request.fromNode(), request.fromPort(), node.id);
+            if (result != GraphEdit.ConnectResult.OK) {
+                this.state.toast(GraphEdit.describe(result), true);
+            }
+        }
+        this.state.selectedNodes().clear();
+        this.state.selectedNodes().add(node.id);
+        this.state.setSelectedWire(null);
+        this.state.markDirty();
+    }
+
+    /** Delete / Backspace: the selected wire, or else the selected nodes with their wires. */
+    public boolean deleteSelection() {
+        if (this.shown == null) {
+            return false;
+        }
+        final Connection wire = this.state.selectedWire();
+        if (wire != null) {
+            this.shown.connections.remove(wire);
+            this.state.setSelectedWire(null);
+            this.state.markDirty();
+            return true;
+        }
+        final Set<String> ids = new LinkedHashSet<>(this.state.selectedNodes());
+        if (ids.isEmpty()) {
+            return false;
+        }
+        GraphEdit.deleteNodes(this.shown, ids);
+        if (this.state.detailsNode() != null && ids.contains(this.state.detailsNode())) {
+            this.state.setDetailsNode(null);
+        }
+        this.state.selectedNodes().clear();
+        this.layouts = Map.of();
+        this.state.markDirty();
+        return true;
+    }
+
+    public void selectAll() {
+        if (this.shown != null) {
+            this.state.selectedNodes().clear();
+            this.shown.nodes.forEach(n -> this.state.selectedNodes().add(n.id));
+        }
+    }
+
+    /** Enter: opens the details of the single selected node. */
+    public boolean openDetailsOfSelection() {
+        if (this.state.selectedNodes().size() == 1) {
+            this.state.setDetailsNode(this.state.selectedNodes().iterator().next());
+            return true;
+        }
+        return false;
     }
 
     /** Wheel: pans (Shift: horizontally) or, with Ctrl, zooms at the cursor. */

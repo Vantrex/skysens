@@ -20,15 +20,25 @@ public final class EditorState {
     /** How long the highlight of the last press takes to fade out. */
     public static final long HIGHLIGHT_FADE_MS = 15_000L;
 
+    /** How long a toast ("Saved", "Connection would create a cycle") stays visible. */
+    public static final long TOAST_MS = 2500L;
+
     private final List<Workflow> workflows;
     private @Nullable Workflow current;
     private Tab tab = Tab.EDITOR;
     private final Set<String> selectedNodes = new LinkedHashSet<>();
     private @Nullable ExecutionRecord pinned;
     private boolean viewportDirty;
+    private boolean dirty;
+    private @Nullable String detailsNode;
+    private @Nullable Connection selectedWire;
+    private String toast = "";
+    private boolean toastError;
+    private long toastTime;
 
     public EditorState() {
-        this.workflows = MacroService.getInstance().getWorkflows();
+        // Own list (the workflow objects are shared): reordering, adding and deleting only reach MacroService on commit.
+        this.workflows = new java.util.ArrayList<>(MacroService.getInstance().getWorkflows());
         this.current = this.workflows.isEmpty() ? null : this.workflows.get(0);
     }
 
@@ -47,7 +57,58 @@ public final class EditorState {
         }
         this.current = workflow;
         this.selectedNodes.clear();
+        this.selectedWire = null;
+        this.detailsNode = null;
         return true;
+    }
+
+    /** Whether the workflows were edited since the last save (the viewport alone is tracked by {@link #viewportDirty()}). */
+    public boolean dirty() {
+        return this.dirty;
+    }
+
+    public void markDirty() {
+        this.dirty = true;
+    }
+
+    public void clearDirty() {
+        this.dirty = false;
+    }
+
+    /** Id of the node whose details panel is open, or null. */
+    public @Nullable String detailsNode() {
+        return this.detailsNode;
+    }
+
+    public void setDetailsNode(@Nullable String nodeId) {
+        this.detailsNode = nodeId;
+    }
+
+    public @Nullable Connection selectedWire() {
+        return this.selectedWire;
+    }
+
+    public void setSelectedWire(@Nullable Connection wire) {
+        this.selectedWire = wire;
+    }
+
+    public void toast(String text, boolean error) {
+        this.toast = text;
+        this.toastError = error;
+        this.toastTime = System.currentTimeMillis();
+    }
+
+    /** The current toast text, or an empty string once it has expired. */
+    public String toastText() {
+        return System.currentTimeMillis() - this.toastTime < TOAST_MS ? this.toast : "";
+    }
+
+    public boolean toastIsError() {
+        return this.toastError;
+    }
+
+    public long toastAge() {
+        return System.currentTimeMillis() - this.toastTime;
     }
 
     public Tab tab() {

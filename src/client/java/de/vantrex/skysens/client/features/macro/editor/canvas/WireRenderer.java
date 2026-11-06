@@ -56,4 +56,27 @@ public final class WireRenderer {
         }
     }
 
+    /** Point of the wire's bezier at t (0..1), in screen units. */
+    public static double[] pointAt(double x1, double y1, double x2, double y2, double zoom, double t) {
+        final double offset = Math.max(40, Math.abs(x2 - x1) / 2) * zoom;
+        final double c1x = x1 + offset;
+        final double c2x = x2 - offset;
+        final double u = 1 - t;
+        final double b0 = u * u * u;
+        final double b1 = 3 * u * u * t;
+        final double b2 = 3 * u * t * t;
+        final double b3 = t * t * t;
+        return new double[]{b0 * x1 + b1 * c1x + b2 * c2x + b3 * x2, (b0 + b1) * y1 + (b2 + b3) * y2};
+    }
+
+    /** Smallest distance from (px, py) to the wire, sampled. */
+    public static double distance(double x1, double y1, double x2, double y2, double zoom, double px, double py) {
+        double best = Double.MAX_VALUE;
+        for (int i = 0; i <= 32; i++) {
+            final double[] p = pointAt(x1, y1, x2, y2, zoom, i / 32.0);
+            best = Math.min(best, Math.hypot(p[0] - px, p[1] - py));
+        }
+        return best;
+    }
+
 }

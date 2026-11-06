@@ -4,6 +4,10 @@ import com.mojang.blaze3d.platform.InputConstants;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.features.macro.MacroService;
 import de.vantrex.skysens.client.features.macro.editor.canvas.CanvasView;
+import de.vantrex.skysens.client.features.macro.editor.details.NodeDetailsPanel;
+import de.vantrex.skysens.client.features.macro.editor.field.DropdownControl;
+import de.vantrex.skysens.client.features.macro.editor.field.KeybindParamField;
+import de.vantrex.skysens.client.features.macro.editor.picker.NodePicker;
 import de.vantrex.skysens.client.features.macro.editor.executions.ExecutionsPanel;
 import de.vantrex.skysens.client.features.macro.editor.list.MacroListPanel;
 import de.vantrex.skysens.client.features.macro.model.Workflow;
@@ -16,6 +20,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -40,12 +45,16 @@ public class MacroEditorScreen extends Screen {
 
     private final @Nullable Screen parent;
     private final EditorState state = new EditorState();
-    private final MacroListPanel list = new MacroListPanel(this.state, this::toggleActive);
+    private final MacroListPanel list = new MacroListPanel(this.state, this::toggleActive, this.state::markDirty);
     private final CanvasView canvas = new CanvasView(this.state);
+    private final NodeDetailsPanel details = new NodeDetailsPanel(this.state);
+    private final NodePicker picker = new NodePicker();
     private final ExecutionsPanel executions = new ExecutionsPanel(this.state, workflow -> this.state.select(workflow));
     private final TutorialOverlay tutorial = new TutorialOverlay(this::anchor, this::tutorialFinished);
 
     private boolean tutorialChecked;
+    private int lastMouseX;
+    private int lastMouseY;
 
     // layout, in virtual units
     private int sw;
@@ -87,6 +96,8 @@ public class MacroEditorScreen extends Screen {
     @Override
     protected void init() {
         UiScale.begin();
+        this.canvas.setPickerRequester(open -> this.picker.open(open.anchorX(), open.anchorY(), open.needInput(), open.request()));
+        this.picker.setOnChoose(this.canvas::place);
         this.layoutAll();
         if (!this.tutorialChecked) {
             this.tutorialChecked = true;
@@ -115,9 +126,10 @@ public class MacroEditorScreen extends Screen {
     public void removed() {
         this.canvas.setSpaceDown(false);
         this.canvas.storeViewport();
-        if (this.state.viewportDirty()) {
-            MacroService.getInstance().commit(this.state.workflows());
-            this.state.clearViewportDirty();
+        DropdownControl.closeActive();
+        KeybindParamField.cancelCapture();
+        if (this.state.dirty() || this.state.viewportDirty()) {
+            this.save(false);
         }
         SkysensConfig.getConfig().saveToFile();
         UiScale.end();
@@ -135,10 +147,21 @@ public class MacroEditorScreen extends Screen {
         SkysensConfig.getConfig().saveToFile();
     }
 
+    /** Writes the working copy into the repository and rebuilds the trigger index (Ctrl+S and when the screen closes). */
+    private void save(boolean announce) {
+        MacroService.getInstance().commit(this.state.workflows());
+        this.state.clearDirty();
+        this.state.clearViewportDirty();
+        if (announce) {
+            this.state.toast("Saved", false);
+        }
+    }
+
     /** Active toggle (list knob and header): flips, then saves the repository and rebuilds the trigger index. */
     private void toggleActive(Workflow workflow) {
         workflow.active = !workflow.active;
         MacroService.getInstance().commit(this.state.workflows());
+        this.state.clearDirty();
         OptionWidget.playClick();
     }
 
@@ -178,6 +201,13 @@ public class MacroEditorScreen extends Screen {
         } else {
             this.canvas.layout(this.contentX, this.bodyY, this.contentW, this.bodyH);
         }
+        final int[] c = this.canvas.rect();
+        this.details.layout(c[0], c[1], c[2], c[3]);
+        this.canvas.setRightInset(this.detailsShown() ? this.details.width() : 0);
+    }
+
+    private boolean detailsShown() {
+        return this.state.tab() == EditorState.Tab.EDITOR && this.details.isOpen();
     }
 
     private int[] anchor(TutorialOverlay.Anchor anchor) {
@@ -187,7 +217,7 @@ public class MacroEditorScreen extends Screen {
             case ADD_BUTTON -> this.canvas.addButtonRect();
             case CANVAS -> canvasRect;
             case DETAILS -> {
-                final int width = Math.min(220, canvasRect[2]);
+                final int width = Math.min(NodeDetailsPanel.WIDTH, canvasRect[2]);
                 yield new int[]{canvasRect[0] + canvasRect[2] - width, canvasRect[1], width, canvasRect[3]};
             }
             case LOGIC_NODE -> {
@@ -206,6 +236,8 @@ public class MacroEditorScreen extends Screen {
         final boolean modal = this.tutorial.isOpen();
         final int realMouseX = (int) (rawMouseX / f);
         final int realMouseY = (int) (rawMouseY / f);
+        this.lastMouseX = realMouseX;
+        this.lastMouseY = realMouseY;
         final int mouseX = modal ? -10000 : realMouseX;
         final int mouseY = modal ? -10000 : realMouseY;
         Theme.update();
@@ -232,9 +264,33 @@ public class MacroEditorScreen extends Screen {
             RenderUtil.rect(g, this.canvas.rect()[0] - 1, this.bodyY, 1, this.bodyH, Theme.DIVIDER);
         }
         this.canvas.render(g, mouseX, mouseY);
+        if (this.detailsShown()) {
+            this.details.render(g, mouseX, mouseY);
+        }
+        this.renderToast(g);
+        this.list.renderOverlay(g, mouseX, mouseY);
+        final DropdownControl dropdown = DropdownControl.active();
+        if (dropdown != null) {
+            dropdown.renderPopover(g, mouseX, mouseY);
+        }
+        this.picker.render(g, mouseX, mouseY);
 
         this.tutorial.render(g, realMouseX, realMouseY, this.sw, this.sh);
         g.pose().popMatrix();
+    }
+
+    private void renderToast(GuiGraphicsExtractor g) {
+        final String text = this.state.toastText();
+        if (text.isEmpty()) {
+            return;
+        }
+        final float fade = Math.min(1f, (EditorState.TOAST_MS - this.state.toastAge()) / 400f);
+        final int tw = UiText.width(text) + 24;
+        final int tx = this.contentX + this.contentW / 2 - tw / 2;
+        final int ty = this.bodyY + this.bodyH - 36;
+        final int accent = this.state.toastIsError() ? Theme.DANGER : Theme.ACCENT;
+        RenderUtil.roundedRectWithBorder(g, tx, ty, tw, 24, 6, RenderUtil.withAlpha(Theme.POPOVER | 0xFF000000, fade), RenderUtil.withAlpha(accent, fade));
+        UiText.drawCentered(g, text, tx + tw / 2, ty + 8, RenderUtil.withAlpha(Theme.TEXT, fade));
     }
 
     private void renderHeader(GuiGraphicsExtractor g, int mx, int my) {
@@ -315,16 +371,39 @@ public class MacroEditorScreen extends Screen {
         if (this.tutorial.isOpen()) {
             return this.tutorial.mouseClicked(mx, my, e.button());
         }
+        // key capture takes the next mouse button, side buttons included
+        if (KeybindParamField.isCapturing()) {
+            return KeybindParamField.captureMouse(e);
+        }
+        final DropdownControl dropdown = DropdownControl.active();
+        if (dropdown != null) {
+            dropdown.popoverClicked(mx, my);
+            return true;
+        }
+        if (this.picker.isOpen()) {
+            return this.picker.mouseClicked(mx, my, e.button());
+        }
+        if (this.list.menuOpen()) {
+            return this.list.menuClicked(mx, my);
+        }
         if (e.button() == 0 && this.headerClicked(mx, my)) {
             return true;
         }
-        if (this.list.mouseClicked(mx, my, e.button())) {
+        if (this.detailsShown() && this.details.contains(mx, my)) {
+            this.list.mouseClicked(-1, -1, 0, false); // commits a running rename
+            final boolean handled = this.details.mouseClicked(mx, my, e.button());
+            this.layoutAll();
+            return handled;
+        }
+        if (this.list.mouseClicked(mx, my, e.button(), doubleClick)) {
             return true;
         }
         if (this.state.tab() == EditorState.Tab.EXECUTIONS && this.executions.mouseClicked(mx, my, e.button())) {
             return true;
         }
-        if (this.canvas.mouseClicked(mx, my, e.button(), e.hasShiftDown() || e.hasControlDown())) {
+        if (this.canvas.mouseClicked(mx, my, e.button(), e.hasShiftDown() || e.hasControlDown(), doubleClick)) {
+            this.details.blur();
+            this.layoutAll();
             return true;
         }
         return super.mouseClicked(e, doubleClick);
@@ -336,12 +415,17 @@ public class MacroEditorScreen extends Screen {
             return true;
         }
         final float f = UiScale.factor();
-        return this.canvas.mouseDragged(e.x() / f, e.y() / f) || super.mouseDragged(e, dragX, dragY);
+        final double mx = e.x() / f;
+        final double my = e.y() / f;
+        return this.list.mouseDragged(mx, my) || this.canvas.mouseDragged(mx, my) || super.mouseDragged(e, dragX, dragY);
     }
 
     @Override
     public boolean mouseReleased(MouseButtonEvent e) {
-        this.canvas.mouseReleased();
+        final float f = UiScale.factor();
+        this.list.mouseReleased();
+        this.canvas.mouseReleased(e.x() / f, e.y() / f);
+        this.layoutAll();
         return super.mouseReleased(e);
     }
 
@@ -353,6 +437,17 @@ public class MacroEditorScreen extends Screen {
         final float f = UiScale.factor();
         final double mx = rawX / f;
         final double my = rawY / f;
+        final DropdownControl dropdown = DropdownControl.active();
+        if (dropdown != null) {
+            dropdown.mouseScrolled(mx, my, scrollY);
+            return true;
+        }
+        if (this.picker.isOpen()) {
+            return this.picker.mouseScrolled(mx, my, scrollY);
+        }
+        if (this.detailsShown() && this.details.mouseScrolled(mx, my, scrollY)) {
+            return true;
+        }
         if (this.list.mouseScrolled(mx, my, scrollY)) {
             return true;
         }
@@ -368,11 +463,72 @@ public class MacroEditorScreen extends Screen {
         if (this.tutorial.isOpen()) {
             return this.tutorial.keyPressed(e.key());
         }
+        if (KeybindParamField.isCapturing()) {
+            return KeybindParamField.captureKey(e);
+        }
+        final DropdownControl dropdown = DropdownControl.active();
+        if (dropdown != null) {
+            return dropdown.keyPressed(e);
+        }
+        if (this.picker.isOpen()) {
+            return this.picker.keyPressed(e);
+        }
+        if (this.list.menuOpen()) {
+            if (e.isEscape()) {
+                this.list.closeMenu();
+            }
+            return true;
+        }
+        if (this.list.isEditing()) {
+            return this.list.keyPressed(e);
+        }
+        if (e.key() == InputConstants.KEY_S && e.hasControlDown()) {
+            this.canvas.storeViewport();
+            this.save(true);
+            return true;
+        }
+        if (this.detailsShown() && this.details.isTextFocused()) {
+            if (e.isEscape()) {
+                this.details.blur();
+                return true;
+            }
+            return this.details.keyPressed(e) || true;
+        }
         if (e.isEscape()) {
-            this.onClose();
+            if (this.detailsShown()) {
+                this.details.close();
+                this.layoutAll();
+            } else {
+                this.onClose();
+            }
             return true;
         }
         switch (e.key()) {
+            case InputConstants.KEY_TAB -> {
+                if (this.state.tab() == EditorState.Tab.EDITOR && this.state.current() != null) {
+                    final boolean over = this.canvas.contains(this.lastMouseX, this.lastMouseY);
+                    this.canvas.openPicker(this.lastMouseX, this.lastMouseY, over ? new double[]{this.lastMouseX, this.lastMouseY} : null);
+                }
+                return true;
+            }
+            case InputConstants.KEY_DELETE, InputConstants.KEY_BACKSPACE -> {
+                if (this.state.tab() == EditorState.Tab.EDITOR && this.canvas.deleteSelection()) {
+                    this.layoutAll();
+                    return true;
+                }
+            }
+            case InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
+                if (this.canvas.openDetailsOfSelection()) {
+                    this.layoutAll();
+                    return true;
+                }
+            }
+            case InputConstants.KEY_A -> {
+                if (e.hasControlDown()) {
+                    this.canvas.selectAll();
+                    return true;
+                }
+            }
             case InputConstants.KEY_SPACE -> {
                 this.canvas.setSpaceDown(true);
                 return true;
@@ -395,11 +551,35 @@ public class MacroEditorScreen extends Screen {
 
     @Override
     public boolean keyReleased(KeyEvent e) {
+        if (KeybindParamField.isCapturing()) {
+            return KeybindParamField.captureKeyRelease(e);
+        }
         if (e.key() == InputConstants.KEY_SPACE) {
             this.canvas.setSpaceDown(false);
             return true;
         }
         return super.keyReleased(e);
+    }
+
+    @Override
+    public boolean charTyped(CharacterEvent e) {
+        if (this.tutorial.isOpen() || KeybindParamField.isCapturing()) {
+            return true;
+        }
+        final DropdownControl dropdown = DropdownControl.active();
+        if (dropdown != null) {
+            return dropdown.charTyped(e);
+        }
+        if (this.picker.isOpen()) {
+            return this.picker.charTyped(e);
+        }
+        if (this.list.isEditing()) {
+            return this.list.charTyped(e);
+        }
+        if (this.detailsShown() && this.details.charTyped(e)) {
+            return true;
+        }
+        return super.charTyped(e);
     }
 
     private static boolean controlDown() {

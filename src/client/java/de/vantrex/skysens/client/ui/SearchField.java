@@ -11,6 +11,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.util.Util;
 
 import java.util.function.Consumer;
+import java.util.function.IntPredicate;
 
 /** Small self-drawn single-line text input used for the settings search. */
 public final class SearchField {
@@ -24,9 +25,43 @@ public final class SearchField {
     private boolean selectAll;
     private long focusMillis;
     private final Consumer<String> onChange;
+    private String placeholder = "Search settings…";
+    private int maxLength = 64;
+    private boolean showHint = true;
+    private IntPredicate charFilter = cp -> true;
+    private Runnable onEnter;
 
     public SearchField(Consumer<String> onChange) {
         this.onChange = onChange;
+    }
+
+    /** Hint shown while the field is empty. */
+    public SearchField placeholder(String placeholder) {
+        this.placeholder = placeholder;
+        return this;
+    }
+
+    public SearchField maxLength(int maxLength) {
+        this.maxLength = maxLength;
+        return this;
+    }
+
+    /** Hides the "Ctrl F" chip (it only makes sense for the settings search). */
+    public SearchField noHint() {
+        this.showHint = false;
+        return this;
+    }
+
+    /** Only code points accepted by the filter can be typed or pasted. */
+    public SearchField charFilter(IntPredicate charFilter) {
+        this.charFilter = charFilter;
+        return this;
+    }
+
+    /** Called when Enter is pressed while the field is focused. */
+    public SearchField onEnter(Runnable onEnter) {
+        this.onEnter = onEnter;
+        return this;
     }
 
     public void layout(int x, int y, int w, int h) {
@@ -77,9 +112,8 @@ public final class SearchField {
         int chipH = lh + 2;
         int chipX = x + w - chipW - 3;
         int chipY = y + (h - chipH) / 2;
-        String placeholder = "Search settings…";
         // only show the hint chip when the placeholder still fits next to it
-        boolean showChip = text.isEmpty() && !focused && chipX - 4 - tx >= UiText.width(placeholder);
+        boolean showChip = showHint && text.isEmpty() && !focused && chipX - 4 - tx >= UiText.width(placeholder);
         if (showChip) {
             RenderUtil.roundedRect(g, chipX, chipY, chipW, chipH, 3, Theme.BORDER);
             UiText.draw(g, hint, chipX + HINT_PAD, chipY + 2, Theme.TEXT_FAINT);
@@ -139,6 +173,12 @@ public final class SearchField {
         // same modifier helper as vanilla EditBox (Cmd on macOS, Ctrl elsewhere)
         boolean word = e.hasControlDownWithQuirk();
         switch (e.key()) {
+            case InputConstants.KEY_RETURN, InputConstants.KEY_NUMPADENTER -> {
+                if (onEnter != null) {
+                    onEnter.run();
+                }
+                return true;
+            }
             case InputConstants.KEY_BACKSPACE -> {
                 if (selectAll) {
                     replaceAll("");
@@ -192,17 +232,17 @@ public final class SearchField {
     }
 
     public boolean charTyped(CharacterEvent e) {
-        if (!focused || !e.isAllowedChatCharacter()) {
+        if (!focused || !e.isAllowedChatCharacter() || !charFilter.test(e.codepoint())) {
             return false;
         }
         insert(e.codepointAsString());
         return true;
     }
 
-    private static String sanitize(String s) {
+    private String sanitize(String s) {
         StringBuilder sb = new StringBuilder();
         for (char c : s.toCharArray()) {
-            if (c >= 32 && c != 127) {
+            if (c >= 32 && c != 127 && charFilter.test(c)) {
                 sb.append(c);
             }
         }
@@ -212,7 +252,7 @@ public final class SearchField {
     private void insert(String s) {
         // check the length before clearing a selection, otherwise an over-long paste would empty the field
         // without notifying the listener (results would still show the old query)
-        if ((selectAll ? 0 : text.length()) + s.length() > 64) {
+        if ((selectAll ? 0 : text.length()) + s.length() > maxLength) {
             return;
         }
         if (selectAll) {
@@ -220,7 +260,7 @@ public final class SearchField {
             caret = 0;
             selectAll = false;
         }
-        if (text.length() + s.length() > 64) {
+        if (text.length() + s.length() > maxLength) {
             return;
         }
         text = text.substring(0, caret) + s + text.substring(caret);
