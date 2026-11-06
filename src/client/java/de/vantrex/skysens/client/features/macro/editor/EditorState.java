@@ -1,6 +1,7 @@
 package de.vantrex.skysens.client.features.macro.editor;
 
 import de.vantrex.skysens.client.features.macro.MacroService;
+import de.vantrex.skysens.client.features.macro.editor.history.CommandHistory;
 import de.vantrex.skysens.client.features.macro.engine.ExecutionLog;
 import de.vantrex.skysens.client.features.macro.engine.ExecutionRecord;
 import de.vantrex.skysens.client.features.macro.engine.GraphWalker;
@@ -35,6 +36,8 @@ public final class EditorState {
     private String toast = "";
     private boolean toastError;
     private long toastTime;
+    private final CommandHistory history = new CommandHistory(this);
+    private int epoch;
 
     public EditorState() {
         // Own list (the workflow objects are shared): reordering, adding and deleting only reach MacroService on commit.
@@ -60,6 +63,40 @@ public final class EditorState {
         this.selectedWire = null;
         this.detailsNode = null;
         return true;
+    }
+
+    /** Undo and redo stacks of this editor session. */
+    public CommandHistory history() {
+        return this.history;
+    }
+
+    /** Counts undo and redo steps; panels that cache node data rebuild when it changes. */
+    public int epoch() {
+        return this.epoch;
+    }
+
+    /** Called after an undo or redo: drops selections that no longer exist. */
+    public void historyChanged() {
+        this.epoch++;
+        this.selectedWire = null;
+        if (this.current == null) {
+            this.selectedNodes.clear();
+            this.detailsNode = null;
+            return;
+        }
+        final java.util.Set<String> ids = new java.util.HashSet<>();
+        this.current.nodes.forEach(n -> ids.add(n.id));
+        this.selectedNodes.retainAll(ids);
+        if (this.detailsNode != null && !ids.contains(this.detailsNode)) {
+            this.detailsNode = null;
+        }
+    }
+
+    /** Makes the workflow the shown one if it is not (undoing a step that belongs to another macro). */
+    public void show(Workflow workflow) {
+        if (workflow != this.current && this.workflows.contains(workflow)) {
+            this.select(workflow);
+        }
     }
 
     /** Whether the workflows were edited since the last save (the viewport alone is tracked by {@link #viewportDirty()}). */

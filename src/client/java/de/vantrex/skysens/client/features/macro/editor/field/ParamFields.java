@@ -29,6 +29,7 @@ public final class ParamFields {
         final Supplier<List<Choice>> choices = spec.choices() != null ? spec.choices() : List::of;
         return switch (spec.kind()) {
             case TEXT, TEMPLATE_TEXT, INT -> new TextParamField(spec, params, ctx);
+            case TEXT_MULTILINE -> new MultiLineParamField(spec, params, ctx);
             case BOOL -> new BoolParamField(spec, params, ctx);
             case ENUM -> ChoiceParamField.single(spec, params, ctx, choices);
             case ENUM_MULTI -> ChoiceParamField.multi(spec, params, ctx, choices, "None selected");

@@ -23,7 +23,7 @@ import java.util.Locale;
 import java.util.function.BiConsumer;
 
 /**
- * The node picker popover: a search box on top and the node types grouped as Triggers, Logic, Conditions and Actions.
+ * The node picker popover: a search box on top and the node types grouped as Triggers, Logic, Conditions, Actions and Notes.
  * A condition entry creates an If node pre-filled with that one rule. Arrow keys move, Enter chooses, Esc closes.
  * Opened with Tab, the "+" button or by dropping a wire on empty canvas (then only nodes with an input are listed).
  */
@@ -43,7 +43,7 @@ public final class NodePicker {
     private static final int SEARCH_H = 24;
     private static final int ROW_H = 24;
     private static final int HEADER_H = 16;
-    private static final String[] GROUPS = {"Triggers", "Logic", "Conditions", "Actions"};
+    private static final String[] GROUPS = {"Triggers", "Logic", "Conditions", "Actions", "Notes"};
 
     private final SearchField search = new SearchField(text -> this.refilter()).placeholder("Search nodes…").noHint();
     private boolean open;
@@ -92,6 +92,7 @@ public final class NodePicker {
                 case TRIGGER -> "Triggers";
                 case LOGIC -> "Logic";
                 case ACTION -> "Actions";
+                case NOTE -> "Notes";
                 default -> null;
             };
             if (group != null) {
@@ -109,6 +110,7 @@ public final class NodePicker {
         return switch (type.category()) {
             case TRIGGER -> "Starts the macro";
             case LOGIC -> "Splits the path by conditions";
+            case NOTE -> "A note for yourself";
             default -> "Does something";
         };
     }

@@ -3,14 +3,24 @@ package de.vantrex.skysens.client.features.macro.editor.canvas;
 import com.mojang.blaze3d.platform.InputConstants;
 import de.vantrex.skysens.client.features.macro.editor.EditorState;
 import de.vantrex.skysens.client.features.macro.editor.Highlight;
+import de.vantrex.skysens.client.features.macro.editor.clipboard.MacroClipboard;
 import de.vantrex.skysens.client.features.macro.editor.edit.GraphEdit;
+import de.vantrex.skysens.client.features.macro.editor.history.AddNodesCommand;
+import de.vantrex.skysens.client.features.macro.editor.history.ConnectCommand;
+import de.vantrex.skysens.client.features.macro.editor.history.DeleteNodesCommand;
+import de.vantrex.skysens.client.features.macro.editor.history.DisconnectCommand;
+import de.vantrex.skysens.client.features.macro.editor.history.MoveNodesCommand;
+import de.vantrex.skysens.client.features.macro.editor.history.ToggleDisabledCommand;
 import de.vantrex.skysens.client.features.macro.editor.picker.NodePicker;
 import de.vantrex.skysens.client.features.macro.model.Connection;
 import de.vantrex.skysens.client.features.macro.model.MacroNode;
 import de.vantrex.skysens.client.features.macro.model.ViewportState;
 import de.vantrex.skysens.client.features.macro.model.Workflow;
 import de.vantrex.skysens.client.features.macro.node.NodeCategory;
+import de.vantrex.skysens.client.features.macro.node.NodeTypes;
 import de.vantrex.skysens.client.features.macro.node.Port;
+import de.vantrex.skysens.client.features.macro.node.note.StickyNoteNode;
+import de.vantrex.skysens.client.features.macro.model.MacroDocument;
 import net.minecraft.client.Minecraft;
 import de.vantrex.skysens.client.ui.render.RenderUtil;
 import de.vantrex.skysens.client.ui.render.Theme;
@@ -42,7 +52,7 @@ public final class CanvasView {
     private static final int DRAG_THRESHOLD = 3;
     private static final int ADD_BUTTON = 28;
 
-    private enum Mode { IDLE, PAN, SELECT, DRAG_NODES, WIRE }
+    private enum Mode { IDLE, PAN, SELECT, DRAG_NODES, WIRE, RESIZE }
 
     /** A port under the mouse. */
     private record PortHit(String nodeId, String portId, boolean output) {
@@ -94,6 +104,17 @@ public final class CanvasView {
     private double wireMouseX;
     private double wireMouseY;
     private @Nullable Connection hoveredWire;
+    /** The wire picked up by its input end; it is out of the list while dragged and restored (or replaced) on release. */
+    private @Nullable Connection pickedWire;
+    private int pickedWireIndex;
+
+    // sticky note resize
+    private @Nullable String resizeNode;
+    private int[] resizeBefore = new int[4];
+    private int resizeStartW;
+    private int resizeStartH;
+    private double resizeWorldX;
+    private double resizeWorldY;
 
     public CanvasView(EditorState state) {
         this.state = state;
@@ -564,11 +585,23 @@ public final class CanvasView {
         if (marked != null) {
             final double[] mid = this.wireMid(marked);
             if (mid != null && Math.hypot(mx - mid[0], my - mid[1]) <= 8) {
-                this.shown.connections.remove(marked);
-                this.state.setSelectedWire(null);
-                this.state.markDirty();
+                this.disconnect(marked);
                 return true;
             }
+        }
+        final NodeLayout handle = this.resizeHandleAt(mx, my);
+        if (handle != null) {
+            this.mode = Mode.RESIZE;
+            this.resizeNode = handle.node.id;
+            this.resizeBefore = MoveNodesCommand.bounds(handle.node);
+            this.resizeStartW = handle.w;
+            this.resizeStartH = handle.h;
+            this.resizeWorldX = this.worldX(mx);
+            this.resizeWorldY = this.worldY(my);
+            this.state.selectedNodes().clear();
+            this.state.selectedNodes().add(handle.node.id);
+            this.state.setSelectedWire(null);
+            return true;
         }
         final PortHit port = this.portAt(mx, my);
         if (port != null) {
@@ -584,8 +617,9 @@ public final class CanvasView {
                 }
             }
             if (incoming != null) {
+                this.pickedWireIndex = this.shown.connections.indexOf(incoming);
                 this.shown.connections.remove(incoming);
-                this.state.markDirty();
+                this.pickedWire = incoming;
                 this.startWire(incoming.from, incoming.port, true, mx, my);
                 return true;
             }
@@ -675,6 +709,20 @@ public final class CanvasView {
             this.wireMouseY = my;
             return true;
         }
+        if (this.mode == Mode.RESIZE && this.shown != null) {
+            final MacroNode node = GraphEdit.find(this.shown, this.resizeNode);
+            if (node != null) {
+                double w = this.resizeStartW + this.worldX(mx) - this.resizeWorldX;
+                double h = this.resizeStartH + this.worldY(my) - this.resizeWorldY;
+                if (!altDown()) {
+                    w = Math.round(w / 10.0) * 10;
+                    h = Math.round(h / 10.0) * 10;
+                }
+                node.w = (int) Math.max(StickyNoteNode.MIN_W, w);
+                node.h = (int) Math.max(StickyNoteNode.MIN_H, h);
+            }
+            return true;
+        }
         if (this.mode == Mode.DRAG_NODES && this.shown != null) {
             if (!this.dragMoved && Math.hypot(mx - this.dragScreenX, my - this.dragScreenY) < DRAG_THRESHOLD) {
                 return true;
@@ -734,6 +782,10 @@ public final class CanvasView {
         } else if (finished == Mode.DRAG_NODES && !this.dragMoved && this.collapseTo != null) {
             this.state.selectedNodes().clear();
             this.state.selectedNodes().add(this.collapseTo);
+        } else if (finished == Mode.DRAG_NODES && this.dragMoved) {
+            this.recordMove();
+        } else if (finished == Mode.RESIZE) {
+            this.recordResize();
         } else if (finished == Mode.WIRE) {
             this.finishWire(mx, my);
         }
@@ -745,31 +797,109 @@ public final class CanvasView {
         final Workflow workflow = this.shown;
         final String fromNode = this.wireNode;
         final String fromPort = this.wirePort;
+        final Connection picked = this.pickedWire;
+        final int pickedIndex = this.pickedWireIndex;
         this.wireNode = null;
+        this.pickedWire = null;
         if (workflow == null || fromNode == null || fromPort == null) {
             return;
         }
         final String target = this.wireTarget(mx, my);
         if (target != null) {
-            final GraphEdit.ConnectResult result = GraphEdit.connect(workflow, fromNode, fromPort, target);
+            if (picked != null && target.equals(picked.to)) {
+                this.restore(workflow, picked, pickedIndex); // dropped back where it was
+                return;
+            }
+            final GraphEdit.ConnectResult result = GraphEdit.check(workflow, fromNode, fromPort, target);
+            if (picked != null) {
+                this.restore(workflow, picked, pickedIndex); // the new wire replaces it, as one undo step
+            }
             if (result == GraphEdit.ConnectResult.OK) {
-                this.state.markDirty();
+                this.state.history().execute(new ConnectCommand(workflow, new Connection(fromNode, fromPort, target)));
             } else {
                 this.state.toast(GraphEdit.describe(result), true);
             }
             return;
         }
         if (!this.contains(mx, my) || this.controls.contains(mx, my)) {
+            if (picked != null) {
+                this.restore(workflow, picked, pickedIndex);
+            }
             return;
         }
-        if (this.wirePickedUp) {
-            return; // dropped on empty canvas: the wire stays disconnected
+        if (picked != null) {
+            // dropped on empty canvas: the wire stays disconnected
+            this.restore(workflow, picked, pickedIndex);
+            this.state.history().execute(new DisconnectCommand(workflow, picked, pickedIndex));
+            return;
         }
         // new wire dropped on empty canvas: pick a node and connect it
         final NodePicker.Request request = new NodePicker.Request(this.worldX(mx), this.worldY(my) - NodeLayout.HEIGHT / 2.0, fromNode, fromPort);
         if (this.pickerRequester != null) {
             this.pickerRequester.accept(new PickerOpen((int) mx + 8, (int) my - 20, true, request));
         }
+    }
+
+    private void restore(Workflow workflow, Connection wire, int index) {
+        workflow.connections.add(Math.max(0, Math.min(index, workflow.connections.size())), wire);
+    }
+
+    private void disconnect(Connection wire) {
+        if (this.shown != null) {
+            this.state.history().execute(new DisconnectCommand(this.shown, wire, this.shown.connections.indexOf(wire)));
+        }
+    }
+
+    /** One undo step for a whole drag. */
+    private void recordMove() {
+        if (this.shown == null) {
+            return;
+        }
+        final Map<String, int[]> before = new HashMap<>();
+        final Map<String, int[]> after = new HashMap<>();
+        boolean changed = false;
+        for (MacroNode node : this.shown.nodes) {
+            final int[] start = this.dragStart.get(node.id);
+            if (start != null) {
+                before.put(node.id, new int[]{start[0], start[1], node.w, node.h});
+                after.put(node.id, MoveNodesCommand.bounds(node));
+                changed |= start[0] != node.x || start[1] != node.y;
+            }
+        }
+        if (changed) {
+            this.state.history().record(new MoveNodesCommand(this.shown, before, after, before.size() == 1 ? "Move node" : "Move nodes"));
+        }
+    }
+
+    private void recordResize() {
+        final MacroNode node = this.shown == null ? null : GraphEdit.find(this.shown, this.resizeNode);
+        this.resizeNode = null;
+        if (node == null) {
+            return;
+        }
+        final int[] after = MoveNodesCommand.bounds(node);
+        if (java.util.Arrays.equals(after, this.resizeBefore)) {
+            return;
+        }
+        this.state.history().record(new MoveNodesCommand(this.shown, Map.of(node.id, this.resizeBefore), Map.of(node.id, after), "Resize note"));
+    }
+
+    /** The sticky note whose bottom right corner handle is under the mouse. */
+    private @Nullable NodeLayout resizeHandleAt(double mx, double my) {
+        final double size = Math.max(10, StickyNoteRenderer.HANDLE * this.viewport.zoom);
+        final List<NodeLayout> all = new ArrayList<>(this.layouts.values());
+        for (int i = all.size() - 1; i >= 0; i--) {
+            final NodeLayout layout = all.get(i);
+            if (!layout.sticky) {
+                continue;
+            }
+            final double right = this.x + this.viewport.toScreenX(layout.node.x + layout.w);
+            final double bottom = this.y + this.viewport.toScreenY(layout.node.y + layout.h);
+            if (mx <= right + 2 && mx >= right - size && my <= bottom + 2 && my >= bottom - size) {
+                return layout;
+            }
+        }
+        return null;
     }
 
     // ------------------------------------------------------------------ editing commands
@@ -804,7 +934,7 @@ public final class CanvasView {
         this.pickerRequester.accept(new PickerOpen(anchorX, anchorY, request.fromNode() != null, request));
     }
 
-    /** Creates the node the picker chose, selects it and wires it if the request has a source. */
+    /** Creates the node the picker chose, selects it and wires it if the request has a source. One undo step. */
     public void place(NodePicker.Entry entry, NodePicker.Request request) {
         if (this.shown == null) {
             return;
@@ -812,18 +942,19 @@ public final class CanvasView {
         final int px = (int) Math.round(request.worldX() / 10.0) * 10;
         final int py = (int) Math.round(request.worldY() / 10.0) * 10;
         final MacroNode node = entry.condition() != null
-                ? GraphEdit.addConditionNode(this.shown, entry.condition(), px, py)
-                : GraphEdit.addNode(this.shown, entry.node(), px, py);
+                ? GraphEdit.createConditionNode(entry.condition(), px, py)
+                : GraphEdit.createNode(entry.node(), px, py);
+        final List<Connection> wires = new ArrayList<>();
         if (request.fromNode() != null && request.fromPort() != null) {
-            final GraphEdit.ConnectResult result = GraphEdit.connect(this.shown, request.fromNode(), request.fromPort(), node.id);
-            if (result != GraphEdit.ConnectResult.OK) {
-                this.state.toast(GraphEdit.describe(result), true);
+            final MacroNode from = GraphEdit.find(this.shown, request.fromNode());
+            final boolean portExists = from != null && NodeTypes.resolve(from.type).outputs(from).stream().anyMatch(p -> p.id().equals(request.fromPort()));
+            if (portExists && !NodeTypes.resolve(node.type).inputs(node).isEmpty()) {
+                wires.add(new Connection(request.fromNode(), request.fromPort(), node.id));
+            } else {
+                this.state.toast(GraphEdit.describe(GraphEdit.ConnectResult.NO_PORT), true);
             }
         }
-        this.state.selectedNodes().clear();
-        this.state.selectedNodes().add(node.id);
-        this.state.setSelectedWire(null);
-        this.state.markDirty();
+        this.state.history().execute(new AddNodesCommand(this.shown, List.of(node), wires, "Add node"));
     }
 
     /** Delete / Backspace: the selected wire, or else the selected nodes with their wires. */
@@ -833,22 +964,96 @@ public final class CanvasView {
         }
         final Connection wire = this.state.selectedWire();
         if (wire != null) {
-            this.shown.connections.remove(wire);
-            this.state.setSelectedWire(null);
-            this.state.markDirty();
+            this.disconnect(wire);
             return true;
         }
         final Set<String> ids = new LinkedHashSet<>(this.state.selectedNodes());
         if (ids.isEmpty()) {
             return false;
         }
-        GraphEdit.deleteNodes(this.shown, ids);
-        if (this.state.detailsNode() != null && ids.contains(this.state.detailsNode())) {
-            this.state.setDetailsNode(null);
-        }
-        this.state.selectedNodes().clear();
+        this.state.history().execute(new DeleteNodesCommand(this.shown, ids));
         this.layouts = Map.of();
-        this.state.markDirty();
+        return true;
+    }
+
+    /** Whether no drag or wire gesture is running (undo is refused mid-gesture). */
+    public boolean isIdle() {
+        return this.mode == Mode.IDLE;
+    }
+
+    /** Ctrl+C. */
+    public boolean copySelection() {
+        if (this.shown == null || this.state.selectedNodes().isEmpty()) {
+            return false;
+        }
+        MacroClipboard.copyNodes(this.shown, this.state.selectedNodes());
+        final int n = this.state.selectedNodes().size();
+        this.state.toast("Copied " + n + (n == 1 ? " node" : " nodes"), false);
+        return true;
+    }
+
+    /** Ctrl+X. */
+    public boolean cutSelection() {
+        if (!this.copySelection()) {
+            return false;
+        }
+        this.state.setSelectedWire(null);
+        return this.deleteSelection();
+    }
+
+    /** Ctrl+V: pastes at the cursor (or the canvas centre when the cursor is elsewhere). Failures become toasts. */
+    public boolean paste(double mx, double my) {
+        if (this.shown == null) {
+            return false;
+        }
+        final MacroDocument doc;
+        try {
+            doc = MacroClipboard.read();
+        } catch (Exception e) {
+            this.state.toast(MacroClipboard.describeFailure(e), true);
+            return true;
+        }
+        final boolean inside = this.contains(mx, my);
+        final double wx = inside ? this.worldX(mx) : this.viewport.toWorldX(this.w / 2.0);
+        final double wy = inside ? this.worldY(my) : this.viewport.toWorldY(this.h / 2.0);
+        final MacroClipboard.Pasted pasted = MacroClipboard.nodesFor(doc, wx, wy);
+        if (pasted.nodes().isEmpty()) {
+            this.state.toast("The clipboard has no nodes to paste", true);
+            return true;
+        }
+        this.state.history().execute(new AddNodesCommand(this.shown, pasted.nodes(), pasted.connections(), "Paste"));
+        return true;
+    }
+
+    /** Ctrl+D: copies the selection next to itself. */
+    public boolean duplicateSelection() {
+        if (this.shown == null || this.state.selectedNodes().isEmpty()) {
+            return false;
+        }
+        final MacroClipboard.Pasted pasted = MacroClipboard.duplicateNodes(this.shown, this.state.selectedNodes());
+        if (pasted.nodes().isEmpty()) {
+            return false;
+        }
+        this.state.history().execute(new AddNodesCommand(this.shown, pasted.nodes(), pasted.connections(), "Duplicate"));
+        return true;
+    }
+
+    /** D: disables the selected nodes, or enables them when they all are disabled already. Sticky notes are skipped. */
+    public boolean toggleDisabledOnSelection() {
+        if (this.shown == null) {
+            return false;
+        }
+        final List<MacroNode> nodes = new ArrayList<>();
+        for (MacroNode node : this.shown.nodes) {
+            if (this.state.selectedNodes().contains(node.id) && !NodeLayout.of(node).sticky) {
+                nodes.add(node);
+            }
+        }
+        final ToggleDisabledCommand command = new ToggleDisabledCommand(this.shown, nodes);
+        if (command.isEmpty()) {
+            return false;
+        }
+        this.state.history().execute(command);
         return true;
     }
 

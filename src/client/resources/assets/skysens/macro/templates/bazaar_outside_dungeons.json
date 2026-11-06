@@ -1,0 +1,106 @@
+{
+  "format": "skysens-macro",
+  "version": 1,
+  "kind": "workflows",
+  "workflows": [
+    {
+      "id": "wf_bazaar_outside_dungeons",
+      "name": "Bazaar outside dungeons",
+      "active": false,
+      "viewport": {
+        "x": 0,
+        "y": 0,
+        "zoom": 1.0
+      },
+      "nodes": [
+        {
+          "id": "note",
+          "type": "note.sticky",
+          "x": 0,
+          "y": -100,
+          "w": 420,
+          "h": 80,
+          "params": {
+            "text": "Bind a key. It opens the Bazaar, also from inside an inventory, except during a dungeon run where it only shows a hint.",
+            "color": "YELLOW"
+          }
+        },
+        {
+          "id": "t",
+          "type": "trigger.hotkey",
+          "x": 0,
+          "y": 0,
+          "params": {
+            "input": {
+              "device": "KEYBOARD",
+              "code": -1,
+              "mods": []
+            },
+            "mode": "SINGLE",
+            "inGuis": true
+          }
+        },
+        {
+          "id": "if",
+          "type": "logic.if",
+          "x": 240,
+          "y": 0,
+          "params": {
+            "combinator": "AND",
+            "conditions": [
+              {
+                "id": "c_dun",
+                "type": "activity",
+                "negate": false,
+                "params": {
+                  "activity": "DUNGEON"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "msg",
+          "type": "action.toast",
+          "x": 500,
+          "y": -20,
+          "params": {
+            "title": "No Bazaar in dungeons",
+            "subtitle": "The macro did nothing",
+            "display": "DEFAULT",
+            "closeScreenFirst": false,
+            "cooldownMs": 0
+          }
+        },
+        {
+          "id": "bz",
+          "type": "action.command",
+          "x": 500,
+          "y": 60,
+          "params": {
+            "command": "/bz",
+            "closeScreenFirst": true,
+            "cooldownMs": 1000
+          }
+        }
+      ],
+      "connections": [
+        {
+          "from": "t",
+          "port": "main",
+          "to": "if"
+        },
+        {
+          "from": "if",
+          "port": "true",
+          "to": "msg"
+        },
+        {
+          "from": "if",
+          "port": "false",
+          "to": "bz"
+        }
+      ]
+    }
+  ]
+}

@@ -160,7 +160,8 @@ public final class MacroEngine {
                     return new Resolution(paths, -1, Resolution.Outcome.NO_MATCH_UNKNOWN_STATE, reason);
                 }
             }
-            return new Resolution(paths, -1, Resolution.Outcome.NO_ACTION, "no path reached an action");
+            final boolean disabledEnd = paths.stream().anyMatch(path -> path.end() == GraphWalker.End.DISABLED);
+            return new Resolution(paths, -1, Resolution.Outcome.NO_ACTION, disabledEnd ? "path ends at disabled node" : "no path reached an action");
         }
         final GraphWalker.PathResult path = paths.get(chosen);
         final MacroNode node = path.action();

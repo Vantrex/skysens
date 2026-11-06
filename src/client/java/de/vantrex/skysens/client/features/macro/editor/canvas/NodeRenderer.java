@@ -1,6 +1,5 @@
 package de.vantrex.skysens.client.features.macro.editor.canvas;
 
-import com.google.gson.JsonElement;
 import de.vantrex.skysens.client.features.macro.editor.Highlight;
 import de.vantrex.skysens.client.features.macro.model.MacroNode;
 import de.vantrex.skysens.client.features.macro.node.NodeCategory;
@@ -9,9 +8,7 @@ import de.vantrex.skysens.client.ui.render.RenderUtil;
 import de.vantrex.skysens.client.ui.render.Theme;
 import de.vantrex.skysens.client.ui.render.UiText;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.util.FormattedCharSequence;
 
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -57,7 +54,7 @@ public final class NodeRenderer {
         g.pose().pushMatrix();
         g.pose().translate(node.x, node.y);
         if (layout.sticky) {
-            renderSticky(g, layout, selected, hovered);
+            StickyNoteRenderer.render(g, layout, selected, hovered);
         } else {
             renderCard(g, layout, selected, hovered, highlight, highlightStrength, inputConnected, outputsConnected);
         }
@@ -133,32 +130,6 @@ public final class NodeRenderer {
     private static void port(GuiGraphicsExtractor g, int cx, int cy, boolean connected, float alpha) {
         RenderUtil.circle(g, cx, cy, NodeLayout.PORT_RADIUS + 1, a(Theme.POPOVER_BORDER | 0xFF000000, alpha));
         RenderUtil.circle(g, cx, cy, NodeLayout.PORT_RADIUS, a(connected ? Theme.TEXT_MUTED : Theme.TEXT_FAINT, alpha));
-    }
-
-    private static void renderSticky(GuiGraphicsExtractor g, NodeLayout layout, boolean selected, boolean hovered) {
-        final MacroNode node = layout.node;
-        final float alpha = node.disabled ? DISABLED_ALPHA : 1f;
-        int fill = 0xD0E8C547;
-        final JsonElement color = node.params.get("color");
-        if (color != null && color.isJsonPrimitive() && color.getAsJsonPrimitive().isNumber()) {
-            fill = color.getAsInt() | 0xD0000000;
-        }
-        RenderUtil.roundedRect(g, 0, 0, layout.w, layout.h, 4, a(fill, alpha));
-        final JsonElement text = node.params.get("text");
-        if (text != null && text.isJsonPrimitive()) {
-            final List<FormattedCharSequence> lines = UiText.wrap(text.getAsString(), layout.w - 16);
-            int y = 8;
-            for (FormattedCharSequence line : lines) {
-                if (y + UiText.lineHeight() > layout.h - 4) {
-                    break;
-                }
-                UiText.drawLine(g, line, 8, y, a(0xFF2A2410, alpha));
-                y += UiText.lineHeight() + 2;
-            }
-        }
-        if (selected || hovered) {
-            RenderUtil.roundedRing(g, -1, -1, layout.w + 2, layout.h + 2, 5, selected ? Theme.ACCENT : Theme.TEXT_FAINT);
-        }
     }
 
     private static int a(int argb, float alpha) {

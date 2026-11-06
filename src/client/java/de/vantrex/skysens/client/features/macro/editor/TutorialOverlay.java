@@ -34,7 +34,7 @@ public final class TutorialOverlay {
             new Step(Anchor.LOGIC_NODE, "If and Switch",
                     "If has a true and a false output. In a Switch, the first matching rule wins. \"Unknown\" (for example right after joining) never matches."),
             new Step(Anchor.CANVAS, "Navigate",
-                    "Drag on empty space to select. Pan with the middle mouse button, Space + drag or the scroll wheel, zoom with Ctrl + wheel. Ctrl+S saves right away (closing the editor saves too)."),
+                    "Drag on empty space to select. Pan with the middle mouse button, Space + drag or the scroll wheel, zoom with Ctrl + wheel. Ctrl+C / Ctrl+V copy and paste nodes, Ctrl+Z / Ctrl+Y undo and redo, D disables a node. Ctrl+S saves right away (closing the editor saves too). Press F1 or \"Keys\" any time for the full shortcut list."),
             new Step(Anchor.EXECUTIONS_TAB, "Test",
                     "Press the key in game and the path it took lights up green. The Executions tab shows why something did or didn't run.")
     );

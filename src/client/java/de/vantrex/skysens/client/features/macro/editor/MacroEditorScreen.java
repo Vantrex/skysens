@@ -1,12 +1,15 @@
 package de.vantrex.skysens.client.features.macro.editor;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import org.lwjgl.glfw.GLFW;
 import de.vantrex.skysens.client.config.SkysensConfig;
 import de.vantrex.skysens.client.features.macro.MacroService;
 import de.vantrex.skysens.client.features.macro.editor.canvas.CanvasView;
 import de.vantrex.skysens.client.features.macro.editor.details.NodeDetailsPanel;
 import de.vantrex.skysens.client.features.macro.editor.field.DropdownControl;
 import de.vantrex.skysens.client.features.macro.editor.field.KeybindParamField;
+import de.vantrex.skysens.client.features.macro.editor.history.EditorCommand;
+import de.vantrex.skysens.client.features.macro.editor.history.WorkflowCommands;
 import de.vantrex.skysens.client.features.macro.editor.picker.NodePicker;
 import de.vantrex.skysens.client.features.macro.editor.executions.ExecutionsPanel;
 import de.vantrex.skysens.client.features.macro.editor.list.MacroListPanel;
@@ -42,15 +45,18 @@ public class MacroEditorScreen extends Screen {
     private static final int TOGGLE_W = 22;
     private static final int TOGGLE_H = 12;
     private static final int HELP_SIZE = 20;
+    private static final int HISTORY_W = 44;
+    private static final int KEYS_W = 36;
 
     private final @Nullable Screen parent;
     private final EditorState state = new EditorState();
-    private final MacroListPanel list = new MacroListPanel(this.state, this::toggleActive, this.state::markDirty);
+    private final MacroListPanel list = new MacroListPanel(this.state, this::toggleActive);
     private final CanvasView canvas = new CanvasView(this.state);
     private final NodeDetailsPanel details = new NodeDetailsPanel(this.state);
     private final NodePicker picker = new NodePicker();
     private final ExecutionsPanel executions = new ExecutionsPanel(this.state, workflow -> this.state.select(workflow));
     private final TutorialOverlay tutorial = new TutorialOverlay(this::anchor, this::tutorialFinished);
+    private final ShortcutsOverlay shortcuts = new ShortcutsOverlay();
 
     private boolean tutorialChecked;
     private int lastMouseX;
@@ -72,6 +78,9 @@ public class MacroEditorScreen extends Screen {
     private int[] editorTab = new int[4];
     private int[] executionsTab = new int[4];
     private int[] helpButton = new int[4];
+    private int[] keysButton = new int[4];
+    private int[] undoButton = new int[4];
+    private int[] redoButton = new int[4];
     private int[] activeToggle = new int[4];
 
     public MacroEditorScreen(@Nullable Screen parent) {
@@ -159,10 +168,45 @@ public class MacroEditorScreen extends Screen {
 
     /** Active toggle (list knob and header): flips, then saves the repository and rebuilds the trigger index. */
     private void toggleActive(Workflow workflow) {
-        workflow.active = !workflow.active;
+        this.state.history().execute(new WorkflowCommands.ToggleActive(workflow));
         MacroService.getInstance().commit(this.state.workflows());
         this.state.clearDirty();
         OptionWidget.playClick();
+    }
+
+    /**
+     * The key as the keyboard layout labels it. GLFW key codes are US-layout positions, so on QWERTZ the key printed
+     * "Z" arrives as KEY_Y (and AZERTY swaps A/Q and Z/W). Letter shortcuts follow the printed letter, like in other
+     * apps; non-letter keys keep their code.
+     */
+    private static int layoutKey(KeyEvent e) {
+        final String name = GLFW.glfwGetKeyName(e.key(), e.scancode());
+        if (name != null && name.length() == 1) {
+            final char c = Character.toLowerCase(name.charAt(0));
+            if (c >= 'a' && c <= 'z') {
+                return InputConstants.KEY_A + (c - 'a');
+            }
+        }
+        return e.key();
+    }
+
+    /** Ctrl+Z / the Undo button (or Ctrl+Y / Ctrl+Shift+Z / Redo). Refused while a drag is running. */
+    private void stepHistory(boolean undo) {
+        if (!this.canvas.isIdle()) {
+            return;
+        }
+        final EditorCommand command = undo ? this.state.history().undo() : this.state.history().redo();
+        if (command == null) {
+            this.state.toast(undo ? "Nothing to undo" : "Nothing to redo", false);
+            return;
+        }
+        if (command.commitsImmediately()) {
+            MacroService.getInstance().commit(this.state.workflows());
+            this.state.clearDirty();
+        }
+        this.details.blur();
+        this.state.toast((undo ? "Undid: " : "Redid: ") + command.label(), false);
+        this.layoutAll();
     }
 
     // ------------------------------------------------------------------ layout
@@ -189,10 +233,13 @@ public class MacroEditorScreen extends Screen {
         final int activeX = right - activeLabelW - 6 - TOGGLE_W;
         this.activeToggle = new int[]{activeX, headerMid - TOGGLE_H / 2, TOGGLE_W, TOGGLE_H};
         this.helpButton = new int[]{activeX - 12 - HELP_SIZE, headerMid - HELP_SIZE / 2, HELP_SIZE, HELP_SIZE};
-        final int tabsX = this.helpButton[0] - 12 - 2 * TAB_W;
+        this.keysButton = new int[]{this.helpButton[0] - 6 - KEYS_W, headerMid - TAB_H / 2, KEYS_W, TAB_H};
+        final int tabsX = this.keysButton[0] - 12 - 2 * TAB_W;
+        this.redoButton = new int[]{tabsX - 12 - HISTORY_W, headerMid - TAB_H / 2, HISTORY_W, TAB_H};
+        this.undoButton = new int[]{this.redoButton[0] - 4 - HISTORY_W, headerMid - TAB_H / 2, HISTORY_W, TAB_H};
         this.editorTab = new int[]{tabsX, headerMid - TAB_H / 2, TAB_W, TAB_H};
         this.executionsTab = new int[]{tabsX + TAB_W, headerMid - TAB_H / 2, TAB_W, TAB_H};
-        this.nameMaxW = Math.max(30, tabsX - 12 - (this.contentX + 12));
+        this.nameMaxW = Math.max(30, this.undoButton[0] - 12 - (this.contentX + 12));
 
         if (this.state.tab() == EditorState.Tab.EXECUTIONS) {
             final int execW = Mth.clamp(this.contentW * 2 / 5, 230, 300);
@@ -204,6 +251,11 @@ public class MacroEditorScreen extends Screen {
         final int[] c = this.canvas.rect();
         this.details.layout(c[0], c[1], c[2], c[3]);
         this.canvas.setRightInset(this.detailsShown() ? this.details.width() : 0);
+    }
+
+    /** The tutorial or the shortcut list is open: the editor underneath takes no input. */
+    private boolean modalOpen() {
+        return this.tutorial.isOpen() || this.shortcuts.isOpen();
     }
 
     private boolean detailsShown() {
@@ -233,7 +285,7 @@ public class MacroEditorScreen extends Screen {
     @Override
     public void extractRenderState(GuiGraphicsExtractor g, int rawMouseX, int rawMouseY, float partialTick) {
         final float f = UiScale.factor();
-        final boolean modal = this.tutorial.isOpen();
+        final boolean modal = this.modalOpen();
         final int realMouseX = (int) (rawMouseX / f);
         final int realMouseY = (int) (rawMouseY / f);
         this.lastMouseX = realMouseX;
@@ -276,6 +328,7 @@ public class MacroEditorScreen extends Screen {
         this.picker.render(g, mouseX, mouseY);
 
         this.tutorial.render(g, realMouseX, realMouseY, this.sw, this.sh);
+        this.shortcuts.render(g, this.sw, this.sh);
         g.pose().popMatrix();
     }
 
@@ -299,6 +352,10 @@ public class MacroEditorScreen extends Screen {
         final String name = workflow == null ? "Macro editor" : workflow.name;
         UiText.draw(g, UiText.ellipsize(name, this.nameMaxW, UiText.Weight.SEMIBOLD), this.contentX + 12, mid - 4, Theme.TEXT, UiText.Weight.SEMIBOLD);
 
+        // Undo | Redo
+        this.historyButton(g, this.undoButton, "Undo", this.state.history().canUndo(), mx, my);
+        this.historyButton(g, this.redoButton, "Redo", this.state.history().canRedo(), mx, my);
+
         // Editor | Executions
         final int tabsX = this.editorTab[0];
         RenderUtil.roundedRect(g, tabsX, this.editorTab[1], 2 * TAB_W, TAB_H, 6, Theme.INPUT);
@@ -312,6 +369,8 @@ public class MacroEditorScreen extends Screen {
         final boolean helpHover = RenderUtil.inside(mx, my, this.helpButton[0], this.helpButton[1], HELP_SIZE, HELP_SIZE);
         RenderUtil.roundedRect(g, this.helpButton[0], this.helpButton[1], HELP_SIZE, HELP_SIZE, HELP_SIZE / 2, helpHover ? Theme.CARD_HOVER : Theme.CARD);
         UiText.drawCentered(g, "?", this.helpButton[0] + HELP_SIZE / 2, this.helpButton[1] + (HELP_SIZE - 9) / 2, Theme.TEXT_MUTED, UiText.Weight.SEMIBOLD);
+        // keyboard shortcuts (F1)
+        this.historyButton(g, this.keysButton, "Keys", true, mx, my);
 
         // active toggle
         final boolean on = workflow != null && workflow.active;
@@ -321,6 +380,12 @@ public class MacroEditorScreen extends Screen {
         final int r = (TOGGLE_H - 4) / 2;
         RenderUtil.knob(g, on ? tx + TOGGLE_W - 2 - r : tx + 2 + r, ty + TOGGLE_H / 2, r, on ? 1f : 0f);
         UiText.draw(g, "Active", tx + TOGGLE_W + 6, mid - 4, workflow == null ? Theme.TEXT_FAINT : on ? Theme.TEXT : Theme.TEXT_MUTED);
+    }
+
+    private void historyButton(GuiGraphicsExtractor g, int[] rect, String label, boolean enabled, int mx, int my) {
+        final boolean hover = enabled && RenderUtil.inside(mx, my, rect[0], rect[1], rect[2], rect[3]);
+        RenderUtil.roundedRect(g, rect[0], rect[1], rect[2], rect[3], 5, hover ? Theme.CARD_HOVER : Theme.CARD);
+        UiText.drawCentered(g, label, rect[0] + rect[2] / 2, rect[1] + (rect[3] - 9) / 2, enabled ? Theme.TEXT : Theme.TEXT_FAINT);
     }
 
     private void tabLabel(GuiGraphicsExtractor g, int[] rect, String label, boolean selected, int mx, int my) {
@@ -333,12 +398,31 @@ public class MacroEditorScreen extends Screen {
     // ------------------------------------------------------------------ input
 
     private boolean headerClicked(double mx, double my) {
+        if (RenderUtil.inside(mx, my, this.undoButton[0], this.undoButton[1], HISTORY_W, TAB_H)) {
+            if (this.state.history().canUndo()) {
+                OptionWidget.playClick();
+                this.stepHistory(true);
+            }
+            return true;
+        }
+        if (RenderUtil.inside(mx, my, this.redoButton[0], this.redoButton[1], HISTORY_W, TAB_H)) {
+            if (this.state.history().canRedo()) {
+                OptionWidget.playClick();
+                this.stepHistory(false);
+            }
+            return true;
+        }
         if (RenderUtil.inside(mx, my, this.editorTab[0], this.editorTab[1], TAB_W, TAB_H)) {
             this.setTab(EditorState.Tab.EDITOR);
             return true;
         }
         if (RenderUtil.inside(mx, my, this.executionsTab[0], this.executionsTab[1], TAB_W, TAB_H)) {
             this.setTab(EditorState.Tab.EXECUTIONS);
+            return true;
+        }
+        if (RenderUtil.inside(mx, my, this.keysButton[0], this.keysButton[1], KEYS_W, TAB_H)) {
+            OptionWidget.playClick();
+            this.shortcuts.open();
             return true;
         }
         if (RenderUtil.inside(mx, my, this.helpButton[0], this.helpButton[1], HELP_SIZE, HELP_SIZE)) {
@@ -368,6 +452,10 @@ public class MacroEditorScreen extends Screen {
         final float f = UiScale.factor();
         final double mx = e.x() / f;
         final double my = e.y() / f;
+        if (this.shortcuts.isOpen()) {
+            this.shortcuts.close();
+            return true;
+        }
         if (this.tutorial.isOpen()) {
             return this.tutorial.mouseClicked(mx, my, e.button());
         }
@@ -411,7 +499,7 @@ public class MacroEditorScreen extends Screen {
 
     @Override
     public boolean mouseDragged(MouseButtonEvent e, double dragX, double dragY) {
-        if (this.tutorial.isOpen()) {
+        if (this.modalOpen()) {
             return true;
         }
         final float f = UiScale.factor();
@@ -431,7 +519,7 @@ public class MacroEditorScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double rawX, double rawY, double scrollX, double scrollY) {
-        if (this.tutorial.isOpen()) {
+        if (this.modalOpen()) {
             return true;
         }
         final float f = UiScale.factor();
@@ -460,6 +548,16 @@ public class MacroEditorScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent e) {
+        if (this.shortcuts.isOpen()) {
+            if (e.isEscape() || e.key() == InputConstants.KEY_F1) {
+                this.shortcuts.close();
+            }
+            return true;
+        }
+        if (e.key() == InputConstants.KEY_F1 && !this.tutorial.isOpen() && !KeybindParamField.isCapturing()) {
+            this.shortcuts.open();
+            return true;
+        }
         if (this.tutorial.isOpen()) {
             return this.tutorial.keyPressed(e.key());
         }
@@ -482,10 +580,21 @@ public class MacroEditorScreen extends Screen {
         if (this.list.isEditing()) {
             return this.list.keyPressed(e);
         }
-        if (e.key() == InputConstants.KEY_S && e.hasControlDown()) {
+        final int key = layoutKey(e);
+        if (key == InputConstants.KEY_S && e.hasControlDown()) {
             this.canvas.storeViewport();
             this.save(true);
             return true;
+        }
+        if (e.hasControlDown() && this.state.tab() == EditorState.Tab.EDITOR) {
+            if (key == InputConstants.KEY_Z) {
+                this.stepHistory(!e.hasShiftDown());
+                return true;
+            }
+            if (key == InputConstants.KEY_Y) {
+                this.stepHistory(false);
+                return true;
+            }
         }
         if (this.detailsShown() && this.details.isTextFocused()) {
             if (e.isEscape()) {
@@ -503,7 +612,7 @@ public class MacroEditorScreen extends Screen {
             }
             return true;
         }
-        switch (e.key()) {
+        switch (key) {
             case InputConstants.KEY_TAB -> {
                 if (this.state.tab() == EditorState.Tab.EDITOR && this.state.current() != null) {
                     final boolean over = this.canvas.contains(this.lastMouseX, this.lastMouseY);
@@ -526,6 +635,29 @@ public class MacroEditorScreen extends Screen {
             case InputConstants.KEY_A -> {
                 if (e.hasControlDown()) {
                     this.canvas.selectAll();
+                    return true;
+                }
+            }
+            case InputConstants.KEY_C -> {
+                if (e.hasControlDown() && this.state.tab() == EditorState.Tab.EDITOR && this.canvas.copySelection()) {
+                    return true;
+                }
+            }
+            case InputConstants.KEY_X -> {
+                if (e.hasControlDown() && this.state.tab() == EditorState.Tab.EDITOR && this.canvas.cutSelection()) {
+                    this.layoutAll();
+                    return true;
+                }
+            }
+            case InputConstants.KEY_V -> {
+                if (e.hasControlDown() && this.state.tab() == EditorState.Tab.EDITOR && this.canvas.paste(this.lastMouseX, this.lastMouseY)) {
+                    this.layoutAll();
+                    return true;
+                }
+            }
+            case InputConstants.KEY_D -> {
+                if (this.state.tab() == EditorState.Tab.EDITOR
+                        && (e.hasControlDown() ? this.canvas.duplicateSelection() : this.canvas.toggleDisabledOnSelection())) {
                     return true;
                 }
             }
@@ -563,7 +695,7 @@ public class MacroEditorScreen extends Screen {
 
     @Override
     public boolean charTyped(CharacterEvent e) {
-        if (this.tutorial.isOpen() || KeybindParamField.isCapturing()) {
+        if (this.modalOpen() || KeybindParamField.isCapturing()) {
             return true;
         }
         final DropdownControl dropdown = DropdownControl.active();

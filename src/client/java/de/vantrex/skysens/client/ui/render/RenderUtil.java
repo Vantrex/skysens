@@ -101,17 +101,44 @@ public final class RenderUtil {
         // same clamp as roundedRect, so the ring's hole matches the inner fill of roundedRectWithBorder
         r = Math.max(0, Math.min(r, Math.min(w / 2, h / 2)));
         int ir = Math.max(0, r - 1);
-        for (int row = 0; row < h; row++) {
-            int oi = rowInset(r, h, row);
-            if (row == 0 || row == h - 1) {
-                g.fill(x + oi, y + row, x + w - oi, y + row + 1, argb);
+        // Rows with the same segments are merged into one fill, so the straight sides cost two fills instead of
+        // two per row. The pixels are the same as filling row by row.
+        int runStart = 0;
+        int a1 = 0, a2 = 0, b1 = 0, b2 = 0;
+        boolean full = false;
+        for (int row = 0; row <= h; row++) {
+            int na1 = 0, na2 = 0, nb1 = 0, nb2 = 0;
+            boolean nfull = false;
+            if (row < h) {
+                int oi = rowInset(r, h, row);
+                if (row == 0 || row == h - 1) {
+                    nfull = true;
+                    na1 = x + oi;
+                    na2 = x + w - oi;
+                } else {
+                    int ii = rowInset(ir, h - 2, row - 1);
+                    na1 = x + oi;
+                    na2 = Math.max(x + oi + 1, x + 1 + ii);
+                    nb1 = Math.min(x + w - oi - 1, x + w - 1 - ii);
+                    nb2 = x + w - oi;
+                }
+            }
+            boolean same = row > 0 && row < h && nfull == full && na1 == a1 && na2 == a2 && nb1 == b1 && nb2 == b2;
+            if (same) {
                 continue;
             }
-            int ii = rowInset(ir, h - 2, row - 1);
-            int leftEnd = Math.max(x + oi + 1, x + 1 + ii);
-            int rightStart = Math.min(x + w - oi - 1, x + w - 1 - ii);
-            g.fill(x + oi, y + row, leftEnd, y + row + 1, argb);
-            g.fill(rightStart, y + row, x + w - oi, y + row + 1, argb);
+            if (row > 0) {
+                g.fill(a1, y + runStart, a2, y + row, argb);
+                if (!full) {
+                    g.fill(b1, y + runStart, b2, y + row, argb);
+                }
+            }
+            runStart = row;
+            a1 = na1;
+            a2 = na2;
+            b1 = nb1;
+            b2 = nb2;
+            full = nfull;
         }
     }
 

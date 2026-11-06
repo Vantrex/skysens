@@ -18,13 +18,12 @@ import de.vantrex.skysens.client.features.macro.node.trigger.HotkeyTriggerNode;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayDeque;
-import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Direct mutations of workflows for the editor (no undo history yet). Each output port holds at most one wire, because
+ * Helpers that build and check workflow edits; the undoable steps themselves are the commands in {@code editor.history}. Each output port holds at most one wire, because
  * the engine follows a single path per press: connecting an already connected output replaces its wire.
  */
 public final class GraphEdit {
@@ -47,20 +46,26 @@ public final class GraphEdit {
     }
 
     public static MacroNode addNode(Workflow workflow, NodeType type, int x, int y) {
+        final MacroNode node = createNode(type, x, y);
+        workflow.nodes.add(node);
+        return node;
+    }
+
+    /** A new node with default params, not yet in any workflow. */
+    public static MacroNode createNode(NodeType type, int x, int y) {
         final MacroNode node = new MacroNode();
         node.id = Ids.next("n");
         node.type = type.id();
         node.x = x;
         node.y = y;
         node.params = type.defaultParams();
-        workflow.nodes.add(node);
         return node;
     }
 
     /** An If node holding one rule of the given condition type with default params (the picker's "Conditions" group). */
-    public static MacroNode addConditionNode(Workflow workflow, ConditionType condition, int x, int y) {
+    public static MacroNode createConditionNode(ConditionType condition, int x, int y) {
         final NodeType ifType = NodeTypes.resolve(IfNode.ID);
-        final MacroNode node = addNode(workflow, ifType, x, y);
+        final MacroNode node = createNode(ifType, x, y);
         final JsonArray rules = new JsonArray();
         rules.add(newRule(condition));
         node.params.add("conditions", rules);
@@ -112,8 +117,8 @@ public final class GraphEdit {
         return false;
     }
 
-    /** Wires {@code from.port -> to}, replacing the wire the output port had. Nothing changes unless the result is OK. */
-    public static ConnectResult connect(Workflow workflow, String fromId, String port, String toId) {
+    /** Whether {@code from.port -> to} may be wired. Changes nothing. */
+    public static ConnectResult check(Workflow workflow, String fromId, String port, String toId) {
         final MacroNode from = find(workflow, fromId);
         final MacroNode to = find(workflow, toId);
         if (from == null || to == null) {
@@ -132,8 +137,6 @@ public final class GraphEdit {
         if (wouldCycle(workflow, fromId, toId)) {
             return ConnectResult.CYCLE;
         }
-        workflow.connections.removeIf(c -> c.from.equals(fromId) && c.port.equals(port));
-        workflow.connections.add(new Connection(fromId, port, toId));
         return ConnectResult.OK;
     }
 
@@ -145,11 +148,6 @@ public final class GraphEdit {
             case NO_INPUT -> "That node has no input";
             case NO_PORT -> "That output doesn't exist";
         };
-    }
-
-    public static void deleteNodes(Workflow workflow, Collection<String> ids) {
-        workflow.nodes.removeIf(n -> ids.contains(n.id));
-        workflow.connections.removeIf(c -> ids.contains(c.from) || ids.contains(c.to));
     }
 
     /** Drops the wires of output ports a node no longer has (after a Switch rule was removed, say). Known types only. */
@@ -183,7 +181,7 @@ public final class GraphEdit {
         return copy;
     }
 
-    private static String uniqueName(String base, List<Workflow> existing) {
+    public static String uniqueName(String base, List<Workflow> existing) {
         String name = base;
         int i = 2;
         while (true) {

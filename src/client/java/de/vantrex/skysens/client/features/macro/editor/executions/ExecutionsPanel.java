@@ -328,7 +328,7 @@ public final class ExecutionsPanel {
         return switch (end) {
             case ACTION -> "action";
             case NO_ACTION -> "no action";
-            case DISABLED -> "disabled node";
+            case DISABLED -> "path ends at disabled node";
             case INVALID -> "broken wire";
             case END_UNKNOWN -> "state unknown";
         };

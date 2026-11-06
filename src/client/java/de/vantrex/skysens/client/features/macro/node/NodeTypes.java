@@ -8,6 +8,7 @@ import de.vantrex.skysens.client.features.macro.node.action.ToastNode;
 import de.vantrex.skysens.client.features.macro.node.action.ToggleOptionNode;
 import de.vantrex.skysens.client.features.macro.node.logic.IfNode;
 import de.vantrex.skysens.client.features.macro.node.logic.SwitchNode;
+import de.vantrex.skysens.client.features.macro.node.note.StickyNoteNode;
 import de.vantrex.skysens.client.features.macro.node.trigger.HotkeyTriggerNode;
 
 import java.util.Collection;
@@ -29,6 +30,7 @@ public final class NodeTypes {
         register(new PlaySoundNode());
         register(new OpenUiNode());
         register(new ToggleOptionNode());
+        register(new StickyNoteNode());
     }
 
     private NodeTypes() {

@@ -9,6 +9,11 @@ import de.vantrex.skysens.client.features.macro.editor.edit.GraphEdit;
 import de.vantrex.skysens.client.features.macro.editor.field.FieldContext;
 import de.vantrex.skysens.client.features.macro.editor.field.FieldUi;
 import de.vantrex.skysens.client.features.macro.editor.field.ParamFieldList;
+import de.vantrex.skysens.client.features.macro.editor.history.EditNodeCommand;
+import de.vantrex.skysens.client.features.macro.editor.history.ToggleDisabledCommand;
+import de.vantrex.skysens.client.features.macro.model.Connection;
+import de.vantrex.skysens.client.features.macro.node.NodeCategory;
+import de.vantrex.skysens.client.ui.widget.OptionWidget;
 import de.vantrex.skysens.client.features.macro.model.MacroNode;
 import de.vantrex.skysens.client.features.macro.model.Workflow;
 import de.vantrex.skysens.client.features.macro.node.NodeType;
@@ -54,6 +59,9 @@ public final class NodeDetailsPanel {
     private List<NodeIssue> issues = List.of();
     private long issuesTime;
     private boolean issuesStale = true;
+    private int builtEpoch = -1;
+    private EditNodeCommand.@Nullable Snapshot snapshot;
+    private int[] disabledRow = new int[4];
 
     public NodeDetailsPanel(EditorState state) {
         this.state = state;
@@ -110,6 +118,17 @@ public final class NodeDetailsPanel {
             return;
         }
         node.name = text.isBlank() ? null : text;
+        this.record(node, "$name", List.of());
+    }
+
+    /** Records the change since the last snapshot as an undo step (consecutive edits of one field merge). */
+    private void record(MacroNode node, String field, List<Connection> removedWires) {
+        final Workflow workflow = this.state.current();
+        final EditNodeCommand.Snapshot after = EditNodeCommand.Snapshot.of(node);
+        if (workflow != null && this.snapshot != null && !after.equals(this.snapshot)) {
+            this.state.history().record(new EditNodeCommand(workflow, node.id, field, this.snapshot, after, removedWires));
+        }
+        this.snapshot = after;
         this.edited();
     }
 
@@ -119,12 +138,16 @@ public final class NodeDetailsPanel {
     }
 
     private void ensureBuilt(MacroNode node, Workflow workflow) {
-        if (node.id.equals(this.builtFor) && workflow == this.builtWorkflow) {
+        if (node.id.equals(this.builtFor) && workflow == this.builtWorkflow && this.builtEpoch == this.state.epoch()) {
             return;
+        }
+        if (!node.id.equals(this.builtFor) || workflow != this.builtWorkflow) {
+            this.scroll = 0;
         }
         this.builtFor = node.id;
         this.builtWorkflow = workflow;
-        this.scroll = 0;
+        this.builtEpoch = this.state.epoch();
+        this.snapshot = EditNodeCommand.Snapshot.of(node);
         this.issuesStale = true;
         this.initialising = true;
         this.nameField.setText(node.name == null ? "" : node.name);
@@ -133,8 +156,15 @@ public final class NodeDetailsPanel {
         final NodeType type = NodeTypes.resolve(node.type);
         this.nameField.placeholder(type.displayName());
         final FieldContext ctx = new FieldContext(this.state.workflows(), workflow, node, key -> {
+            final List<Connection> wiresBefore = new ArrayList<>(workflow.connections);
             GraphEdit.pruneConnections(workflow, node);
-            this.edited();
+            final List<Connection> removed = new ArrayList<>();
+            for (Connection wire : wiresBefore) {
+                if (!workflow.connections.contains(wire)) {
+                    removed.add(wire);
+                }
+            }
+            this.record(node, key, removed);
         }, true);
         this.fields = new ParamFieldList(type.params(), node.params, ctx);
     }
@@ -191,6 +221,16 @@ public final class NodeDetailsPanel {
         this.nameField.render(g, mx, my);
         cy += 12 + 22 + ParamFieldList.GAP + 4;
 
+        if (type.category() != NodeCategory.NOTE && NodeTypes.isKnown(node.type)) {
+            UiText.draw(g, "Disabled", cx, cy + 4, Theme.TEXT);
+            FieldUi.toggle(g, cx + cw - FieldUi.TOGGLE_W, cy + 3, node.disabled);
+            this.disabledRow = new int[]{cx, cy, cw, 18};
+            UiText.draw(g, "A disabled node ends the path there", cx, cy + 18, Theme.TEXT_FAINT);
+            cy += 18 + UiText.lineHeight() + 2 + ParamFieldList.GAP;
+        } else {
+            this.disabledRow = new int[4];
+        }
+
         if (!NodeTypes.isKnown(node.type)) {
             for (FormattedCharSequence line : UiText.wrap("This node type is unknown to this version of SkySens. It is kept as it is and never runs.", cw)) {
                 UiText.drawLine(g, line, cx, cy, Theme.TEXT_MUTED);
@@ -238,6 +278,16 @@ public final class NodeDetailsPanel {
             return true;
         }
         if (button == 0 && this.nameField.mouseClicked(mx, my)) {
+            return true;
+        }
+        final MacroNode shown = this.node();
+        if (button == 0 && shown != null && this.disabledRow[2] > 0
+                && RenderUtil.inside(mx, my, this.disabledRow[0], this.disabledRow[1], this.disabledRow[2], this.disabledRow[3])) {
+            final Workflow workflow = this.state.current();
+            if (workflow != null) {
+                this.state.history().execute(new ToggleDisabledCommand(workflow, List.of(shown)));
+                OptionWidget.playClick();
+            }
             return true;
         }
         if (this.fields != null) {

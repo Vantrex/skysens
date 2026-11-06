@@ -2,7 +2,14 @@ package de.vantrex.skysens.client.features.macro.editor.list;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import de.vantrex.skysens.client.features.macro.editor.EditorState;
+import de.vantrex.skysens.client.features.macro.editor.clipboard.MacroClipboard;
 import de.vantrex.skysens.client.features.macro.editor.edit.GraphEdit;
+import de.vantrex.skysens.client.features.macro.editor.field.FieldUi;
+import de.vantrex.skysens.client.features.macro.editor.history.CompositeCommand;
+import de.vantrex.skysens.client.features.macro.editor.history.EditorCommand;
+import de.vantrex.skysens.client.features.macro.editor.history.WorkflowCommands;
+import de.vantrex.skysens.client.features.macro.model.MacroDocument;
+import de.vantrex.skysens.client.features.macro.template.MacroTemplates;
 import de.vantrex.skysens.client.features.macro.model.Workflow;
 import de.vantrex.skysens.client.ui.SearchField;
 import de.vantrex.skysens.client.ui.render.RenderUtil;
@@ -15,6 +22,7 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -34,11 +42,13 @@ public final class MacroListPanel {
     private static final int DRAG_THRESHOLD = 4;
     private static final int MENU_W = 130;
     private static final int MENU_ITEM_H = 20;
-    private static final String[] MENU = {"Rename", "Duplicate", "Delete"};
+    private static final String[] MENU = {"Rename", "Duplicate", "Export", "Delete"};
+    private static final int BUTTON_H = 20;
+    private static final int TEMPLATE_ROW_H = 34;
+    private static final int TEMPLATE_W = 230;
 
     private final EditorState state;
     private final Consumer<Workflow> onToggle;
-    private final Runnable onChanged;
     private final SearchField renameField = new SearchField(text -> { }).noHint().maxLength(40).placeholder("Macro name");
 
     private int x;
@@ -62,11 +72,14 @@ public final class MacroListPanel {
     private int menuX;
     private int menuY;
     private boolean confirmDelete;
+    private boolean templatesOpen;
+    private int[] importButton = new int[4];
+    private int[] exportButton = new int[4];
+    private int[] templatesButton = new int[4];
 
-    public MacroListPanel(EditorState state, Consumer<Workflow> onToggle, Runnable onChanged) {
+    public MacroListPanel(EditorState state, Consumer<Workflow> onToggle) {
         this.state = state;
         this.onToggle = onToggle;
-        this.onChanged = onChanged;
         this.renameField.onEnter(this::commitRename);
     }
 
@@ -91,12 +104,13 @@ public final class MacroListPanel {
     }
 
     public boolean menuOpen() {
-        return this.menuFor != null;
+        return this.menuFor != null || this.templatesOpen;
     }
 
     public void closeMenu() {
         this.menuFor = null;
         this.confirmDelete = false;
+        this.templatesOpen = false;
     }
 
     private int listTop() {
@@ -126,9 +140,19 @@ public final class MacroListPanel {
 
         // footer hint, wrapped
         final var hint = UiText.wrap("Evaluated top to bottom. Higher macros win when they share a key. Drag to reorder.", this.w - 2 * PAD - 4);
-        this.footerHeight = hint.size() * (UiText.lineHeight() + 2) + 14;
+        final int hintHeight = hint.size() * (UiText.lineHeight() + 2) + 14;
+        final int buttonsHeight = 2 * BUTTON_H + 3 * 4 + 2;
+        this.footerHeight = hintHeight + buttonsHeight;
         RenderUtil.rect(g, this.x, this.y + this.h - this.footerHeight, this.w, 1, Theme.DIVIDER);
-        int hy = this.y + this.h - this.footerHeight + 8;
+        final int by = this.y + this.h - this.footerHeight + 6;
+        final int half = (this.w - 2 * PAD - 4) / 2;
+        this.importButton = new int[]{this.x + PAD, by, half, BUTTON_H};
+        this.exportButton = new int[]{this.x + PAD + half + 4, by, half, BUTTON_H};
+        this.templatesButton = new int[]{this.x + PAD, by + BUTTON_H + 4, this.w - 2 * PAD, BUTTON_H};
+        FieldUi.button(g, this.importButton[0], this.importButton[1], this.importButton[2], BUTTON_H, "Import", mx, my);
+        FieldUi.button(g, this.exportButton[0], this.exportButton[1], this.exportButton[2], BUTTON_H, "Export", mx, my);
+        FieldUi.button(g, this.templatesButton[0], this.templatesButton[1], this.templatesButton[2], BUTTON_H, "Templates", mx, my);
+        int hy = this.y + this.h - hintHeight + 8;
         for (var line : hint) {
             UiText.drawLine(g, line, this.x + PAD + 2, hy, Theme.TEXT_FAINT);
             hy += UiText.lineHeight() + 2;
@@ -186,6 +210,10 @@ public final class MacroListPanel {
 
     /** The context menu; drawn last so it sits above the canvas and sidebar. */
     public void renderOverlay(GuiGraphicsExtractor g, int mx, int my) {
+        if (this.templatesOpen) {
+            this.renderTemplates(g, mx, my);
+            return;
+        }
         if (this.menuFor == null) {
             return;
         }
@@ -204,8 +232,54 @@ public final class MacroListPanel {
             return;
         }
         for (int i = 0; i < MENU.length; i++) {
-            this.menuItem(g, i, MENU[i], mx, my, i == 2 ? Theme.DANGER : Theme.TEXT, 0);
+            this.menuItem(g, i, MENU[i], mx, my, i == MENU.length - 1 ? Theme.DANGER : Theme.TEXT, 0);
         }
+    }
+
+    private int[] templatesRect() {
+        final int rows = MacroTemplates.entries().size();
+        final int height = 22 + rows * TEMPLATE_ROW_H + 6;
+        final int tx = this.x + this.w + 4;
+        final int ty = Math.max(4, Math.min(this.templatesButton[1] + BUTTON_H - height, UiScale.height() - height - 4));
+        return new int[]{tx, ty, TEMPLATE_W, height};
+    }
+
+    private void renderTemplates(GuiGraphicsExtractor g, int mx, int my) {
+        final int[] r = this.templatesRect();
+        RenderUtil.shadow(g, r[0], r[1], r[2], r[3], 4);
+        RenderUtil.roundedRectWithBorder(g, r[0], r[1], r[2], r[3], 4, Theme.POPOVER | 0xFF000000, Theme.POPOVER_BORDER);
+        UiText.draw(g, "Insert a template (added switched off)", r[0] + 10, r[1] + 8, Theme.TEXT_MUTED, UiText.Weight.SEMIBOLD);
+        int ry = r[1] + 22;
+        for (MacroTemplates.Entry entry : MacroTemplates.entries()) {
+            if (RenderUtil.inside(mx, my, r[0] + 3, ry, r[2] - 6, TEMPLATE_ROW_H)) {
+                RenderUtil.roundedRect(g, r[0] + 3, ry, r[2] - 6, TEMPLATE_ROW_H, 3, Theme.HOVER_OVERLAY);
+            }
+            UiText.draw(g, UiText.ellipsize(entry.title(), r[2] - 20, UiText.Weight.SEMIBOLD), r[0] + 10, ry + 5, Theme.TEXT, UiText.Weight.SEMIBOLD);
+            UiText.draw(g, UiText.ellipsize(entry.description(), r[2] - 20), r[0] + 10, ry + 18, Theme.TEXT_FAINT);
+            ry += TEMPLATE_ROW_H;
+        }
+    }
+
+    private boolean templatesClicked(double mx, double my) {
+        final int[] r = this.templatesRect();
+        if (!RenderUtil.inside(mx, my, r[0], r[1], r[2], r[3])) {
+            this.closeMenu();
+            return true;
+        }
+        final int index = (int) ((my - r[1] - 22) / TEMPLATE_ROW_H);
+        final List<MacroTemplates.Entry> entries = MacroTemplates.entries();
+        if (my >= r[1] + 22 && index >= 0 && index < entries.size()) {
+            this.closeMenu();
+            final MacroTemplates.Entry entry = entries.get(index);
+            final Workflow workflow = MacroTemplates.instantiate(entry, this.state.workflows());
+            if (workflow == null) {
+                this.state.toast("Could not load the template", true);
+            } else {
+                this.state.history().execute(new WorkflowCommands.Add(workflow, this.state.workflows().size(), "Insert template"));
+                this.state.toast("Added \"" + workflow.name + "\" (switched off)", false);
+            }
+        }
+        return true;
     }
 
     private void menuItem(GuiGraphicsExtractor g, int index, String label, int mx, int my, int color, int offset) {
@@ -245,9 +319,7 @@ public final class MacroListPanel {
 
     private void create() {
         final Workflow workflow = GraphEdit.newWorkflow(this.state.workflows());
-        this.state.workflows().add(workflow);
-        this.state.select(workflow);
-        this.onChanged.run();
+        this.state.history().execute(new WorkflowCommands.Add(workflow, this.state.workflows().size(), "New macro"));
         OptionWidget.playClick();
     }
 
@@ -261,8 +333,7 @@ public final class MacroListPanel {
         if (this.renaming != null) {
             final String text = this.renameField.text().trim();
             if (!text.isEmpty() && !text.equals(this.renaming.name)) {
-                this.renaming.name = text;
-                this.onChanged.run();
+                this.state.history().execute(new WorkflowCommands.Rename(this.renaming, text));
             }
         }
         this.cancelRename();
@@ -276,25 +347,49 @@ public final class MacroListPanel {
     private void duplicate(Workflow workflow) {
         final Workflow copy = GraphEdit.duplicate(workflow, this.state.workflows());
         final List<Workflow> list = this.state.workflows();
-        list.add(list.indexOf(workflow) + 1, copy);
-        this.state.select(copy);
-        this.onChanged.run();
+        this.state.history().execute(new WorkflowCommands.Add(copy, list.indexOf(workflow) + 1, "Duplicate macro"));
     }
 
     private void delete(Workflow workflow) {
-        final List<Workflow> list = this.state.workflows();
-        final int index = list.indexOf(workflow);
-        list.remove(workflow);
-        if (workflow == this.state.current()) {
-            this.state.select(list.isEmpty() ? null : list.get(Math.min(index, list.size() - 1)));
+        this.state.history().execute(new WorkflowCommands.Delete(workflow, this.state.workflows().indexOf(workflow)));
+    }
+
+    /** Copies the macro as macro JSON (a "workflows" envelope) to the clipboard. */
+    public void export(Workflow workflow) {
+        MacroClipboard.exportWorkflow(workflow);
+        this.state.toast("Copied \"" + workflow.name + "\" as macro JSON to the clipboard", false);
+    }
+
+    /** Adds the macros from the clipboard as new, switched-off macros. Bad content becomes a toast. */
+    public void importFromClipboard() {
+        final MacroDocument doc;
+        try {
+            doc = MacroClipboard.read();
+        } catch (Exception e) {
+            this.state.toast(MacroClipboard.describeFailure(e, "import"), true);
+            return;
         }
-        this.onChanged.run();
+        final List<Workflow> imported = MacroClipboard.workflowsFor(doc, this.state.workflows());
+        if (imported.isEmpty()) {
+            this.state.toast("The clipboard has no macros to import", true);
+            return;
+        }
+        final List<EditorCommand> parts = new ArrayList<>();
+        int index = this.state.workflows().size();
+        for (Workflow workflow : imported) {
+            parts.add(new WorkflowCommands.Add(workflow, index++, "Import macro"));
+        }
+        this.state.history().execute(new CompositeCommand("Import macros", parts));
+        this.state.toast("Imported " + imported.size() + (imported.size() == 1 ? " macro" : " macros") + " (switched off)", false);
     }
 
     // ------------------------------------------------------------------ input
 
     /** Clicks while the menu is open (always consumed). */
     public boolean menuClicked(double mx, double my) {
+        if (this.templatesOpen) {
+            return this.templatesClicked(mx, my);
+        }
         final Workflow workflow = this.menuFor;
         if (workflow == null) {
             return false;
@@ -324,7 +419,11 @@ public final class MacroListPanel {
                 this.closeMenu();
                 this.duplicate(workflow);
             }
-            case 2 -> this.confirmDelete = true;
+            case 2 -> {
+                this.closeMenu();
+                this.export(workflow);
+            }
+            case 3 -> this.confirmDelete = true;
             default -> {
             }
         }
@@ -347,6 +446,25 @@ public final class MacroListPanel {
         if (button == 0 && RenderUtil.inside(mx, my, add[0], add[1], add[2], add[3])) {
             this.create();
             return true;
+        }
+        if (button == 0) {
+            if (RenderUtil.inside(mx, my, this.importButton[0], this.importButton[1], this.importButton[2], this.importButton[3])) {
+                OptionWidget.playClick();
+                this.importFromClipboard();
+                return true;
+            }
+            if (RenderUtil.inside(mx, my, this.exportButton[0], this.exportButton[1], this.exportButton[2], this.exportButton[3])) {
+                OptionWidget.playClick();
+                if (this.state.current() != null) {
+                    this.export(this.state.current());
+                }
+                return true;
+            }
+            if (RenderUtil.inside(mx, my, this.templatesButton[0], this.templatesButton[1], this.templatesButton[2], this.templatesButton[3])) {
+                OptionWidget.playClick();
+                this.templatesOpen = true;
+                return true;
+            }
         }
         if (my < this.listTop() || my >= this.listTop() + this.listHeight()) {
             return true;
@@ -405,9 +523,8 @@ public final class MacroListPanel {
             final int from = this.pressIndex;
             final int to = this.dropSlot > from ? this.dropSlot - 1 : this.dropSlot;
             if (to != from && from < list.size()) {
-                final Workflow moved = list.remove(from);
-                list.add(Math.max(0, Math.min(list.size(), to)), moved);
-                this.onChanged.run();
+                final int target = Math.max(0, Math.min(list.size() - 1, to));
+                this.state.history().execute(new WorkflowCommands.Reorder(list.get(from), from, target));
             }
         }
         this.pressIndex = -1;

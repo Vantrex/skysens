@@ -1,17 +1,16 @@
 package de.vantrex.skysens.client.features.macro.editor.canvas;
 
 import de.vantrex.skysens.client.features.macro.model.MacroNode;
+import de.vantrex.skysens.client.features.macro.node.NodeCategory;
 import de.vantrex.skysens.client.features.macro.node.NodeType;
 import de.vantrex.skysens.client.features.macro.node.NodeTypes;
 import de.vantrex.skysens.client.features.macro.node.Port;
+import de.vantrex.skysens.client.features.macro.node.note.StickyNoteNode;
 
 import java.util.List;
 
 /** Size and port positions of a node, in world units relative to the node's top left corner. */
 public final class NodeLayout {
-
-    /** Type id of the sticky note (it has no NodeType; it is only drawn). */
-    public static final String NOTE_TYPE = "note.sticky";
 
     public static final int WIDTH = 150;
     public static final int WIDTH_LABELLED = 170;
@@ -31,14 +30,14 @@ public final class NodeLayout {
 
     private NodeLayout(MacroNode node) {
         this.node = node;
-        this.sticky = NOTE_TYPE.equals(node.type);
-        this.type = this.sticky ? null : NodeTypes.resolve(node.type);
+        this.type = NodeTypes.resolve(node.type);
+        this.sticky = this.type.category() == NodeCategory.NOTE;
         if (this.sticky) {
             this.inputs = List.of();
             this.outputs = List.of();
             this.labelled = false;
-            this.w = node.w > 0 ? node.w : 160;
-            this.h = node.h > 0 ? node.h : 100;
+            this.w = node.w > 0 ? node.w : StickyNoteNode.DEFAULT_W;
+            this.h = node.h > 0 ? node.h : StickyNoteNode.DEFAULT_H;
             return;
         }
         this.inputs = this.type.inputs(node);

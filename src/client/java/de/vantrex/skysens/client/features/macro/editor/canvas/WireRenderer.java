@@ -34,25 +34,34 @@ public final class WireRenderer {
         final double c1x = x1 + offset;
         final double c2x = x2 - offset;
         final double controlLength = Math.abs(c1x - x1) + Math.hypot(c2x - c1x, y2 - y1) + Math.abs(x2 - c2x);
-        final int samples = (int) Math.min(4000, Math.ceil(controlLength / thickness) + 1);
+        // The curve is drawn as straight, rotated pieces (one fill each) instead of a fill per pixel: about 8 px
+        // per piece is smooth at any zoom and keeps a wire at a few dozen draw calls.
+        final int segments = (int) Math.max(8, Math.min(64, Math.ceil(controlLength / 8)));
         final int half = thickness / 2;
-        int lastX = Integer.MIN_VALUE;
-        int lastY = Integer.MIN_VALUE;
-        for (int i = 0; i <= samples; i++) {
-            final double t = (double) i / samples;
+        double px = x1;
+        double py = y1;
+        for (int i = 1; i <= segments; i++) {
+            final double t = (double) i / segments;
             final double u = 1 - t;
             final double b0 = u * u * u;
             final double b1 = 3 * u * u * t;
             final double b2 = 3 * u * t * t;
             final double b3 = t * t * t;
-            final int px = (int) Math.round(b0 * x1 + b1 * c1x + b2 * c2x + b3 * x2) - half;
-            final int py = (int) Math.round((b0 + b1) * y1 + (b2 + b3) * y2) - half;
-            if (px == lastX && py == lastY) {
-                continue;
+            final double nx = b0 * x1 + b1 * c1x + b2 * c2x + b3 * x2;
+            final double ny = (b0 + b1) * y1 + (b2 + b3) * y2;
+            final double dx = nx - px;
+            final double dy = ny - py;
+            final double length = Math.sqrt(dx * dx + dy * dy);
+            if (length > 0.01) {
+                g.pose().pushMatrix();
+                g.pose().translate((float) px, (float) py);
+                g.pose().rotate((float) Math.atan2(dy, dx));
+                // overlap the neighbours by half the thickness, so the joints have no gaps
+                g.fill(-half, -half, (int) Math.ceil(length) + half, thickness - half, argb);
+                g.pose().popMatrix();
             }
-            lastX = px;
-            lastY = py;
-            g.fill(px, py, px + thickness, py + thickness, argb);
+            px = nx;
+            py = ny;
         }
     }
 
