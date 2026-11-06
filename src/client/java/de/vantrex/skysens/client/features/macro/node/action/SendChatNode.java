@@ -67,6 +67,10 @@ public final class SendChatNode implements ActionNodeType {
     public ActionOutcome execute(MacroNode node, MacroContext ctx) {
         final List<String> unresolved = new ArrayList<>();
         final String message = PlaceholderRenderer.render(Params.getString(node.params, "message", ""), ctx, unresolved);
+        if (!unresolved.isEmpty()) {
+            // never send a half-filled message
+            return ActionOutcome.failed(PlaceholderRenderer.notKnownMessage(unresolved));
+        }
         final Channel channel = Params.getEnum(node.params, "channel", Channel.class, Channel.ALL);
         return switch (channel) {
             case ALL -> MacroSender.sendChat(message);

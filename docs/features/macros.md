@@ -157,8 +157,10 @@ available.
 | `dungeon.floor`, `dungeon.class`, `dungeon.classLevel` | Your dungeon run |
 | `pet.type`, `pet.name`, `pet.rarity`, `pet.level`, `pet.heldItem` | Your active pet |
 
-A placeholder without a value turns into nothing, so give important ones a `default` or add a condition that makes
-sure the value exists (for example *Party: is leader* before using `party.members`).
+If a placeholder has no value (and no `default`), a command or chat message is **not sent**: you get a red hint like
+"{{ party.leader }} not known yet" instead of a half-filled command. In a toast the placeholder just turns into nothing.
+Give important ones a `default` (`{{ party.leader | default "nobody" }}`) or add a condition that makes sure the value
+exists (for example *Party: is leader* before using `party.members`).
 
 ## "Unknown" state and why nothing fires right after joining
 

@@ -60,6 +60,10 @@ public final class SendCommandNode implements ActionNodeType {
     public ActionOutcome execute(MacroNode node, MacroContext ctx) {
         final List<String> unresolved = new ArrayList<>();
         final String command = PlaceholderRenderer.render(Params.getString(node.params, "command", ""), ctx, unresolved);
+        if (!unresolved.isEmpty()) {
+            // never send a half-filled command (e.g. "/p transfer " without a leader)
+            return ActionOutcome.failed(PlaceholderRenderer.notKnownMessage(unresolved));
+        }
         return MacroSender.sendCommand(command);
     }
 

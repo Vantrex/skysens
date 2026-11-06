@@ -1,5 +1,9 @@
 package de.vantrex.skysens.client.features.macro;
 
+import de.vantrex.skysens.client.features.macro.model.MacroFormatUpgrader;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonArray;
 import de.vantrex.skysens.client.features.macro.analysis.GraphValidator;
 import de.vantrex.skysens.client.features.macro.analysis.KeybindConflicts;
 import de.vantrex.skysens.client.features.macro.analysis.ValidationResult;
@@ -77,7 +81,18 @@ public final class MacroService {
     }
 
     private void parse() {
-        this.workflows = new ArrayList<>(MacroJson.parseWorkflows(RepositoryRegistry.MACRO_REPOSITORY.workflows));
+        final MacroRepository repository = RepositoryRegistry.MACRO_REPOSITORY;
+        List<? extends JsonElement> raw = repository.workflows;
+        if (repository.version < MacroJson.CURRENT_VERSION && raw != null) {
+            // saved macros go through the same format upgrade as clipboard imports and templates
+            final JsonObject root = new JsonObject();
+            final JsonArray array = new JsonArray();
+            raw.forEach(array::add);
+            root.add("workflows", array);
+            MacroFormatUpgrader.upgrade(root, repository.version);
+            raw = root.getAsJsonArray("workflows").asList();
+        }
+        this.workflows = new ArrayList<>(MacroJson.parseWorkflows(raw));
         this.rebuildIndex();
         this.announceConflicts();
     }

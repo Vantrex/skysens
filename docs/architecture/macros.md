@@ -104,9 +104,9 @@ Copy, cut, export and templates use the same parser (`MacroJson.read/write`, `Ma
   `CURRENT_VERSION` ("Made with a newer SkySens"). Older versions go through `MacroFormatUpgrader` first.
 - Limits (`MacroClipboard`): 500 nodes, 256 KiB of text. Pasted/imported content is **always re-parsed** and gets new
   ids (`IdRemap`); imported macros and templates arrive **switched off**, with a unique name and (templates) no key bound.
-- Versioning caveat: the format upgrader is only wired into `MacroJson.read` (clipboard/templates). The repository's
-  `version` field is written but not read back, `MacroService.parse()` calls `parseWorkflows` directly. When you bump
-  `CURRENT_VERSION`, also run the upgrade for repository data.
+- Versioning: `MacroFormatUpgrader` runs for clipboard imports and templates (`MacroJson.read`) and for the saved
+  repository (`MacroService.parse()` upgrades when the stored `version` is older than `CURRENT_VERSION`). When you bump
+  `CURRENT_VERSION`, add the step to `MacroFormatUpgrader` only.
 
 ## Registries and extension points
 
@@ -168,8 +168,9 @@ other than the hotkey need engine work too: `TriggerIndex.build` only indexes `H
 ### Add a placeholder
 
 Add `RESOLVERS.put("path", ctx -> ...)` in `PlaceholderRegistry`. Return `null` when the value is unavailable
-(unknown state, no pet, ...). Users can write `{{ path | default "text" }}`. Note that the actions currently do **not**
-fail on an unresolved placeholder, see "Known gaps" below.
+(unknown state, no pet, ...). Users can write `{{ path | default "text" }}`. Send command and Send chat fail with
+"{{ path }} not known yet" (shown as a red hint) instead of sending a half-filled text when a placeholder has no value
+and no default; a toast just leaves the gap.
 
 ## Tri-state semantics
 
@@ -334,8 +335,4 @@ key+mode in several triggers, a trigger whose path always reaches an action, rep
 
 - Held-item and inventory-item conditions have no pet filters; pets are covered by the *Active pet* condition only
   (`HeldItemAttributes` deliberately does not offer pets).
-- Actions render placeholders but ignore which ones stayed unresolved (`unresolved` list is collected and dropped in
-  `SendCommandNode.execute`, `SendChatNode.execute`, `ToastNode.execute`): an unresolved placeholder becomes an empty string
-  unless it has a `default`. Use `| default "..."` or a condition that makes sure the value exists.
-- The repository `version` is not used to upgrade stored workflows (see "Versioning caveat").
 - `MacroService.rebuildIndex` detects the need for mayor data by searching the params string for `"type":"mayor"`.

@@ -199,6 +199,7 @@ public final class MacroEngine {
             return new Resolution(paths, chosen, Resolution.Outcome.RAN, outcome.message());
         }
         ClientUtil.sendDebug("Macro \"" + workflowName + "\" failed: " + outcome.message());
+        this.hint("\"" + workflowName + "\" not sent: " + outcome.message());
         return new Resolution(paths, chosen, Resolution.Outcome.FAILED, outcome.message());
     }
 

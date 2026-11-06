@@ -45,4 +45,16 @@ public final class PlaceholderRenderer {
         return out.toString();
     }
 
+    /** "{{ party.leader }} not known yet" for the paths {@link #render} could not fill (each listed once). */
+    public static String notKnownMessage(List<String> unresolved) {
+        final StringBuilder sb = new StringBuilder();
+        for (String path : new java.util.LinkedHashSet<>(unresolved)) {
+            if (!sb.isEmpty()) {
+                sb.append(", ");
+            }
+            sb.append("{{ ").append(path).append(" }}");
+        }
+        return sb.append(" not known yet").toString();
+    }
+
 }
